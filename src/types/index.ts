@@ -55,6 +55,26 @@ export interface PlaybackPosition extends DancerPosition {
   opacity: number;
 }
 
+// ─── DancerPath ───
+export interface PathPoint {
+  x: number;
+  y: number;
+}
+
+export interface DancerPath {
+  id: string;
+  formation_id: string;
+  dancer_label: string;
+  path_points: PathPoint[];
+  path_type: 'freehand' | 'geometric';
+  created_at: string;
+}
+
+export type DancerPathInsert = Omit<DancerPath, 'id' | 'created_at'>;
+
+// ─── Canvas Modes ───
+export type CanvasMode = 'select' | 'draw-freehand' | 'draw-geometric';
+
 // ─── DancerPosition ───
 export interface DancerPosition {
   id: string;
@@ -76,6 +96,7 @@ export interface Dancer {
   user_id: string;
   full_name: string;
   short_name: string;
+  birthday: string | null;
   color: string;
   is_active: boolean;
   created_at: string;

@@ -1,7 +1,9 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { usePlaybackStore } from '@/stores/playbackStore';
 import { useFormationStore } from '@/stores/formationStore';
-import type { PlaybackPosition, DancerPosition } from '@/types';
+import { usePathStore } from '@/stores/pathStore';
+import { getPointAtT, getSplinePointAtT } from '@/lib/pathUtils';
+import type { PlaybackPosition, DancerPosition, DancerPath, PathPoint } from '@/types';
 
 // ─── Easing Functions ───
 function applyEasing(t: number, easing: string): number {
@@ -19,17 +21,41 @@ function applyEasing(t: number, easing: string): number {
   }
 }
 
+// ─── Get position along a path at t ───
+function getPathPosition(
+  from: DancerPosition,
+  to: DancerPosition,
+  path: DancerPath,
+  t: number
+): PathPoint {
+  // Build full point array: [start, ...waypoints, end]
+  const fullPoints: PathPoint[] = [
+    { x: from.x, y: from.y },
+    ...path.path_points,
+    { x: to.x, y: to.y },
+  ];
+
+  if (path.path_type === 'freehand') {
+    // Smooth spline — tension 0.3 matches Konva rendering
+    return getSplinePointAtT(fullPoints, 0.3, t);
+  }
+  // Geometric — straight segments
+  return getPointAtT(fullPoints, t);
+}
+
 // ─── Interpolate between two formation snapshots ───
 function interpolatePositions(
   from: DancerPosition[],
   to: DancerPosition[],
   t: number,
-  easing: string
+  easing: string,
+  paths: DancerPath[]
 ): PlaybackPosition[] {
   const easedT = applyEasing(t, easing);
 
-  // Build lookup by dancer_label
+  // Build lookups
   const toMap = new Map(to.map((p) => [p.dancer_label, p]));
+  const pathMap = new Map(paths.map((p) => [p.dancer_label, p]));
 
   const result: PlaybackPosition[] = [];
   const seen = new Set<string>();
@@ -39,12 +65,23 @@ function interpolatePositions(
     seen.add(fp.dancer_label);
     const tp = toMap.get(fp.dancer_label);
     if (tp) {
-      // Present in both — interpolate position
+      const path = pathMap.get(fp.dancer_label);
+      let x: number, y: number;
+      if (path && path.path_points.length > 0) {
+        // Follow drawn path
+        const pos = getPathPosition(fp, tp, path, easedT);
+        x = pos.x;
+        y = pos.y;
+      } else {
+        // Straight-line interpolation
+        x = fp.x + (tp.x - fp.x) * easedT;
+        y = fp.y + (tp.y - fp.y) * easedT;
+      }
       result.push({
         ...fp,
-        x: fp.x + (tp.x - fp.x) * easedT,
-        y: fp.y + (tp.y - fp.y) * easedT,
-        color: tp.color, // use destination color
+        x,
+        y,
+        color: tp.color,
         opacity: 1,
       });
     } else {
@@ -85,19 +122,22 @@ export function usePlayback() {
   const setActiveFormation = useFormationStore((s) => s.setActiveFormation);
 
   // Compute which formation pair we're interpolating between
+  const allPaths = usePathStore((s) => s.paths);
+
   const fromFormation = formations[currentTransitionIndex];
   const toFormation = formations[currentTransitionIndex + 1];
 
   const fromPositions = fromFormation ? positions[fromFormation.id] ?? [] : [];
   const toPositions = toFormation ? positions[toFormation.id] ?? [] : [];
   const easing = toFormation?.transition_easing ?? 'ease-in-out';
+  const transitionPaths = fromFormation ? allPaths[fromFormation.id] ?? [] : [];
 
   // Interpolated positions for the current frame
   const interpolatedPositions: PlaybackPosition[] | null = useMemo(() => {
     if (!isPlaying && !isPaused) return null;
     if (!fromFormation || !toFormation) return null;
-    return interpolatePositions(fromPositions, toPositions, progress, easing);
-  }, [isPlaying, isPaused, fromFormation, toFormation, fromPositions, toPositions, progress, easing]);
+    return interpolatePositions(fromPositions, toPositions, progress, easing, transitionPaths);
+  }, [isPlaying, isPaused, fromFormation, toFormation, fromPositions, toPositions, progress, easing, transitionPaths]);
 
   // Update active formation in thumbnail strip as playback advances
   useEffect(() => {

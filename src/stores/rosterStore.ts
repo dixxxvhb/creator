@@ -5,6 +5,7 @@ import { toast } from '@/stores/toastStore';
 
 interface RosterState {
   dancers: Dancer[];
+  pieceAssignments: Record<string, { id: string; title: string }[]>;
   isLoading: boolean;
   load: () => Promise<void>;
   add: (dancer: DancerInsert) => Promise<Dancer | null>;
@@ -14,13 +15,17 @@ interface RosterState {
 
 export const useRosterStore = create<RosterState>((set) => ({
   dancers: [],
+  pieceAssignments: {},
   isLoading: false,
 
   load: async () => {
     set({ isLoading: true });
     try {
-      const dancers = await dancersService.fetchDancers();
-      set({ dancers, isLoading: false });
+      const [dancers, pieceAssignments] = await Promise.all([
+        dancersService.fetchDancers(),
+        dancersService.fetchDancerPieceAssignments(),
+      ]);
+      set({ dancers, pieceAssignments, isLoading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load dancers';
       set({ isLoading: false });

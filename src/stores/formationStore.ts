@@ -18,6 +18,7 @@ interface FormationState {
   removeFormation: (id: string) => Promise<void>;
   setActiveFormation: (id: string) => void;
   updateLocalPosition: (formationId: string, positionId: string, x: number, y: number) => void;
+  updateLocalPositionDancer: (formationId: string, positionId: string, dancerId: string | null) => void;
   savePositions: (formationId: string, positions: DancerPositionInsert[]) => Promise<void>;
   goNext: () => void;
   goPrev: () => void;
@@ -114,6 +115,22 @@ export const useFormationStore = create<FormationState>((set, get) => ({
           ...state.positions,
           [formationId]: formationPositions.map((p) =>
             p.id === positionId ? { ...p, x, y } : p
+          ),
+        },
+      };
+    });
+  },
+
+  updateLocalPositionDancer: (formationId, positionId, dancerId) => {
+    set((state) => {
+      const formationPositions = state.positions[formationId];
+      if (!formationPositions) return state;
+      return {
+        isDirty: true,
+        positions: {
+          ...state.positions,
+          [formationId]: formationPositions.map((p) =>
+            p.id === positionId ? { ...p, dancer_id: dancerId } : p
           ),
         },
       };

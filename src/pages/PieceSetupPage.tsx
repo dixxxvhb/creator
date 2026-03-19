@@ -17,7 +17,7 @@ function generateLabel(i: number): string {
 
 function generateStarterPositions(
   dancerCount: number,
-  groupSize: string,
+  _groupSize: string,
   stageWidth: number,
   stageDepth: number,
 ): Array<{ dancer_label: string; x: number; y: number; color: string }> {
@@ -25,11 +25,11 @@ function generateStarterPositions(
   const centerX = stageWidth / 2;
   const centerY = stageDepth / 2;
 
-  if (groupSize === 'solo' || dancerCount === 1) {
+  if (dancerCount === 1) {
     return [{ dancer_label: generateLabel(0), x: centerX, y: centerY, color: colors[0] }];
   }
 
-  if (groupSize === 'duo' || dancerCount === 2) {
+  if (dancerCount === 2) {
     const spacing = stageWidth * 0.15;
     return [
       { dancer_label: generateLabel(0), x: centerX - spacing, y: centerY, color: colors[0] },
@@ -37,7 +37,7 @@ function generateStarterPositions(
     ];
   }
 
-  if (groupSize === 'trio' || dancerCount === 3) {
+  if (dancerCount === 3) {
     const spreadX = stageWidth * 0.15;
     const spreadY = stageDepth * 0.12;
     return [

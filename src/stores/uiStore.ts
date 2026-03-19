@@ -1,14 +1,17 @@
 import { create } from 'zustand';
+import type { CanvasMode } from '@/types';
 
 interface UIState {
   theme: 'dark' | 'light';
   sidebarOpen: boolean;
   showGrid: boolean;
   snapToGrid: boolean;
+  canvasMode: CanvasMode;
   toggleTheme: () => void;
   setSidebarOpen: (open: boolean) => void;
   toggleGrid: () => void;
   toggleSnap: () => void;
+  setCanvasMode: (mode: CanvasMode) => void;
 }
 
 export const useUIStore = create<UIState>((set) => {
@@ -28,6 +31,7 @@ export const useUIStore = create<UIState>((set) => {
     sidebarOpen: false,
     showGrid: true,
     snapToGrid: false,
+    canvasMode: 'select' as CanvasMode,
     toggleTheme: () =>
       set((state) => {
         const next = state.theme === 'dark' ? 'light' : 'dark';
@@ -38,5 +42,6 @@ export const useUIStore = create<UIState>((set) => {
     setSidebarOpen: (open) => set({ sidebarOpen: open }),
     toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
     toggleSnap: () => set((state) => ({ snapToGrid: !state.snapToGrid })),
+    setCanvasMode: (mode) => set({ canvasMode: mode }),
   };
 });

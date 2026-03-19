@@ -1,12 +1,14 @@
 import { useRef } from 'react';
 import { Group, Circle, Text } from 'react-konva';
 import type Konva from 'konva';
-import type { DancerPosition } from '@/types';
+import type { DancerPosition, CanvasMode } from '@/types';
+import { usePathStore } from '@/stores/pathStore';
 
 interface DancerDotProps {
   position: DancerPosition;
   snapToGrid: boolean;
   interactive?: boolean;
+  canvasMode?: CanvasMode;
   opacity?: number;
   onDragMove: (id: string, x: number, y: number) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
@@ -15,8 +17,9 @@ interface DancerDotProps {
 const DOT_RADIUS = 0.8;
 const FONT_SIZE = 0.7;
 
-export function DancerDot({ position, snapToGrid, interactive = true, opacity = 1, onDragMove, onDragEnd }: DancerDotProps) {
+export function DancerDot({ position, snapToGrid, interactive = true, canvasMode = 'select', opacity = 1, onDragMove, onDragEnd }: DancerDotProps) {
   const groupRef = useRef<Konva.Group>(null);
+  const isDrawMode = canvasMode === 'draw-freehand' || canvasMode === 'draw-geometric';
 
   function handleDragMove() {
     const node = groupRef.current;
@@ -39,9 +42,15 @@ export function DancerDot({ position, snapToGrid, interactive = true, opacity = 
     onDragEnd(position.id, x, y);
   }
 
-  // Scale font size inversely so it stays readable at any zoom
+  // Handle click in draw mode — starts path drawing from this dancer
+  function handleDrawClick() {
+    if (!isDrawMode) return;
+    usePathStore.getState().startDrawing(position.dancer_label);
+  }
+
   const fontSize = FONT_SIZE;
   const label = position.dancer_label || '?';
+  const isDraggable = interactive && !isDrawMode;
 
   return (
     <Group
@@ -49,10 +58,23 @@ export function DancerDot({ position, snapToGrid, interactive = true, opacity = 
       x={position.x}
       y={position.y}
       opacity={opacity}
-      draggable={interactive}
-      onDragMove={interactive ? handleDragMove : undefined}
-      onDragEnd={interactive ? handleDragEnd : undefined}
+      draggable={isDraggable}
+      onDragMove={isDraggable ? handleDragMove : undefined}
+      onDragEnd={isDraggable ? handleDragEnd : undefined}
+      onClick={isDrawMode ? handleDrawClick : undefined}
+      onTap={isDrawMode ? handleDrawClick : undefined}
     >
+      {/* Draw-mode ring indicator */}
+      {isDrawMode && (
+        <Circle
+          radius={DOT_RADIUS + 0.2}
+          stroke={position.color}
+          strokeWidth={0.08}
+          opacity={0.6}
+          dash={[0.15, 0.1]}
+          listening={false}
+        />
+      )}
       {/* Shadow for depth */}
       <Circle
         radius={DOT_RADIUS}

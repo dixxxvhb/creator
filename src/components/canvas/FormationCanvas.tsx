@@ -3,9 +3,12 @@ import { Stage, Layer, Rect, Line, Text } from 'react-konva';
 import type Konva from 'konva';
 import { GridLayer } from './GridLayer';
 import { DancerLayer } from './DancerLayer';
+import { PathLayer } from './PathLayer';
 import { useUIStore } from '@/stores/uiStore';
 import { useFormationStore } from '@/stores/formationStore';
-import type { Piece, PlaybackPosition } from '@/types';
+import { usePathStore } from '@/stores/pathStore';
+import { simplifyPath } from '@/lib/pathUtils';
+import type { Piece, PlaybackPosition, DancerPath } from '@/types';
 
 interface FormationCanvasProps {
   piece: Piece;
@@ -30,14 +33,34 @@ export function FormationCanvas({ piece, playbackPositions }: FormationCanvasPro
 
   const showGrid = useUIStore((s) => s.showGrid);
   const snapToGrid = useUIStore((s) => s.snapToGrid);
+  const canvasMode = useUIStore((s) => s.canvasMode);
 
+  const formations = useFormationStore((s) => s.formations);
   const activeFormationId = useFormationStore((s) => s.activeFormationId);
-  const positions = useFormationStore((s) => s.positions);
+  const allPositions = useFormationStore((s) => s.positions);
   const updateLocalPosition = useFormationStore((s) => s.updateLocalPosition);
 
-  const storedPositions = activeFormationId ? positions[activeFormationId] ?? [] : [];
+  const paths = usePathStore((s) => s.paths);
+  const drawingPoints = usePathStore((s) => s.drawingPoints);
+  const drawingDancerLabel = usePathStore((s) => s.drawingDancerLabel);
+  const selectedPath = usePathStore((s) => s.selectedPath);
+  const isDrawing = usePathStore((s) => s.isDrawing);
+  const addDrawingPoint = usePathStore((s) => s.addDrawingPoint);
+  const finishDrawing = usePathStore((s) => s.finishDrawing);
+  const cancelDrawing = usePathStore((s) => s.cancelDrawing);
+  const stopEditing = usePathStore((s) => s.stopEditing);
+  const selectPath = usePathStore((s) => s.selectPath);
+  const savePath = usePathStore((s) => s.savePath);
+
+  const storedPositions = activeFormationId ? allPositions[activeFormationId] ?? [] : [];
   const isPlayback = playbackPositions != null && playbackPositions.length > 0;
   const activePositions = isPlayback ? playbackPositions : storedPositions;
+
+  // Next formation's positions (for path end points)
+  const activeIdx = formations.findIndex((f) => f.id === activeFormationId);
+  const nextFormation = activeIdx >= 0 && activeIdx + 1 < formations.length ? formations[activeIdx + 1] : null;
+  const nextPositions = nextFormation ? allPositions[nextFormation.id] ?? [] : [];
+  const activePaths: DancerPath[] = activeFormationId ? paths[activeFormationId] ?? [] : [];
 
   // ResizeObserver — NEVER hardcode dimensions
   useEffect(() => {
@@ -96,6 +119,106 @@ export function FormationCanvas({ piece, playbackPositions }: FormationCanvasPro
     [activeFormationId, updateLocalPosition]
   );
 
+  // Path drawing: convert pixel coords to stage coords
+  const pixelToStage = useCallback(
+    (pixelX: number, pixelY: number) => ({
+      x: (pixelX - offsetX) / scale,
+      y: (pixelY - offsetY) / scale,
+    }),
+    [offsetX, offsetY, scale]
+  );
+
+  // Freehand: mouse move adds points while drawing
+  const handleStageMouseMove = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      if (!isDrawing || canvasMode !== 'draw-freehand') return;
+      const stage = e.target.getStage();
+      if (!stage) return;
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+      const pt = pixelToStage(pointer.x, pointer.y);
+      addDrawingPoint(pt.x, pt.y);
+    },
+    [isDrawing, canvasMode, pixelToStage, addDrawingPoint]
+  );
+
+  // Freehand: mouse up finishes drawing
+  const handleStageMouseUp = useCallback(() => {
+    if (!isDrawing || canvasMode !== 'draw-freehand' || !activeFormationId) return;
+    // Simplify the path before saving
+    const simplified = simplifyPath(drawingPoints, 0.3);
+    if (simplified.length > 0 && drawingDancerLabel) {
+      savePath(activeFormationId, drawingDancerLabel, simplified, 'freehand');
+    }
+    cancelDrawing();
+  }, [isDrawing, canvasMode, activeFormationId, drawingPoints, drawingDancerLabel, savePath, cancelDrawing]);
+
+  // Geometric: click on stage adds a waypoint
+  const handleStageClick = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      if (canvasMode === 'select') {
+        // Deselect path if clicking on empty space
+        if (e.target === e.target.getStage() || e.target.getClassName() === 'Rect') {
+          stopEditing();
+        }
+        return;
+      }
+      if (canvasMode !== 'draw-geometric' || !isDrawing) return;
+      const stage = e.target.getStage();
+      if (!stage) return;
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+      const pt = pixelToStage(pointer.x, pointer.y);
+      addDrawingPoint(pt.x, pt.y);
+    },
+    [canvasMode, isDrawing, pixelToStage, addDrawingPoint, stopEditing]
+  );
+
+  // Geometric: double-click finishes drawing
+  const handleStageDblClick = useCallback(() => {
+    if (canvasMode !== 'draw-geometric' || !isDrawing || !activeFormationId) return;
+    finishDrawing(activeFormationId, 'geometric');
+  }, [canvasMode, isDrawing, activeFormationId, finishDrawing]);
+
+  // Escape key cancels drawing
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape' && isDrawing) {
+        cancelDrawing();
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedPath && activeFormationId) {
+          usePathStore.getState().removePath(activeFormationId, selectedPath.dancerLabel);
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isDrawing, cancelDrawing, selectedPath, activeFormationId]);
+
+  // Control point drag handler
+  const handleControlPointDrag = useCallback(
+    (dancerLabel: string, pointIndex: number, x: number, y: number) => {
+      if (!activeFormationId) return;
+      const currentPaths = usePathStore.getState().paths[activeFormationId] ?? [];
+      const path = currentPaths.find((p) => p.dancer_label === dancerLabel);
+      if (!path) return;
+      const newPoints = [...path.path_points];
+      newPoints[pointIndex] = { x, y };
+      savePath(activeFormationId, dancerLabel, newPoints, path.path_type);
+    },
+    [activeFormationId, savePath]
+  );
+
+  // Path click handler
+  const handlePathClick = useCallback(
+    (dancerLabel: string) => {
+      if (!activeFormationId || canvasMode !== 'select') return;
+      selectPath(activeFormationId, dancerLabel);
+    },
+    [activeFormationId, canvasMode, selectPath]
+  );
+
   return (
     <div
       ref={containerRef}
@@ -106,6 +229,14 @@ export function FormationCanvas({ piece, playbackPositions }: FormationCanvasPro
         width={containerSize.width}
         height={containerSize.height}
         onWheel={handleWheel}
+        onMouseMove={handleStageMouseMove}
+        onTouchMove={handleStageMouseMove}
+        onMouseUp={handleStageMouseUp}
+        onTouchEnd={handleStageMouseUp}
+        onClick={handleStageClick}
+        onTap={handleStageClick}
+        onDblClick={handleStageDblClick}
+        onDblTap={handleStageDblClick}
       >
         {/* Background + stage floor */}
         <Layer listening={false}>
@@ -170,17 +301,31 @@ export function FormationCanvas({ piece, playbackPositions }: FormationCanvasPro
           />
         </Layer>
 
-        {/* Grid + Dancers layer */}
+        {/* Grid + Paths + Dancers layer */}
         <Layer x={offsetX} y={offsetY} scaleX={scale} scaleY={scale}>
           <GridLayer
             stageWidth={piece.stage_width}
             stageDepth={piece.stage_depth}
             visible={showGrid}
           />
+          {!isPlayback && nextPositions.length > 0 && (
+            <PathLayer
+              paths={activePaths}
+              positions={storedPositions}
+              nextPositions={nextPositions}
+              drawingPoints={drawingPoints}
+              drawingDancerLabel={drawingDancerLabel}
+              selectedPath={selectedPath}
+              canvasMode={canvasMode}
+              onControlPointDrag={handleControlPointDrag}
+              onPathClick={handlePathClick}
+            />
+          )}
           <DancerLayer
             positions={activePositions}
             snapToGrid={snapToGrid}
-            interactive={!isPlayback}
+            interactive={!isPlayback && canvasMode === 'select'}
+            canvasMode={canvasMode}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
           />

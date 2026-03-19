@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Music, Users, Pencil, Check, X, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Save, Music, Users, Pencil, Check, X, Clock, ChevronDown, ChevronUp, Trash2 } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -14,6 +14,9 @@ import { EASING_OPTIONS } from '@/types';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useFormationStore } from '@/stores/formationStore';
 import { useUIStore } from '@/stores/uiStore';
+import { usePathStore } from '@/stores/pathStore';
+import { useRosterStore } from '@/stores/rosterStore';
+import { computeAverageAge } from '@/lib/age';
 import type { DancerPositionInsert, EasingType } from '@/types';
 
 export function PieceDetailPage() {
@@ -39,8 +42,19 @@ export function PieceDetailPage() {
 
   const showGrid = useUIStore((s) => s.showGrid);
   const snapToGrid = useUIStore((s) => s.snapToGrid);
+  const canvasMode = useUIStore((s) => s.canvasMode);
   const toggleGrid = useUIStore((s) => s.toggleGrid);
   const toggleSnap = useUIStore((s) => s.toggleSnap);
+  const setCanvasMode = useUIStore((s) => s.setCanvasMode);
+
+  const allPaths = usePathStore((s) => s.paths);
+  const selectedPath = usePathStore((s) => s.selectedPath);
+  const loadPaths = usePathStore((s) => s.loadPaths);
+  const removePath = usePathStore((s) => s.removePath);
+
+  const rosterDancers = useRosterStore((s) => s.dancers);
+  const loadRoster = useRosterStore((s) => s.load);
+  const updateLocalPositionDancer = useFormationStore((s) => s.updateLocalPositionDancer);
 
   const {
     isPlaying,
@@ -77,8 +91,21 @@ export function PieceDetailPage() {
     if (id) loadFormations(id);
     return () => {
       useFormationStore.getState().reset();
+      usePathStore.getState().reset();
     };
   }, [id, loadFormations]);
+
+  // Load paths when formations are available
+  useEffect(() => {
+    if (formations.length > 0) {
+      loadPaths(formations.map((f) => f.id));
+    }
+  }, [formations, loadPaths]);
+
+  // Load roster dancers for assignment dropdowns
+  useEffect(() => {
+    if (rosterDancers.length === 0) loadRoster();
+  }, [rosterDancers.length, loadRoster]);
 
   function handleTitleEdit() {
     if (!piece) return;
@@ -160,6 +187,15 @@ export function PieceDetailPage() {
       ? [piece.song_title, piece.song_artist].filter(Boolean).join(' — ')
       : null;
 
+  // Average age from assigned dancers across all formations
+  const assignedDancerIds = new Set(
+    Object.values(positions).flat().map((p) => p.dancer_id).filter(Boolean) as string[]
+  );
+  const assignedBirthdays = rosterDancers
+    .filter((d) => assignedDancerIds.has(d.id))
+    .map((d) => d.birthday);
+  const avgAge = computeAverageAge(assignedBirthdays);
+
   return (
     <PageContainer fullWidth>
       {/* Top bar */}
@@ -230,6 +266,11 @@ export function PieceDetailPage() {
                 {songText}
               </Badge>
             )}
+            {avgAge !== null && (
+              <Badge variant="default">
+                Avg age: {avgAge.toFixed(1)}
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -251,6 +292,8 @@ export function PieceDetailPage() {
               zoom={zoom}
               canGoPrev={canGoPrev && !isPlaying}
               canGoNext={canGoNext && !isPlaying}
+              canvasMode={canvasMode}
+              hasSelectedPath={selectedPath != null}
               onToggleGrid={toggleGrid}
               onToggleSnap={toggleSnap}
               onZoomIn={() => setZoom((z) => Math.min(3, z + 0.1))}
@@ -258,6 +301,12 @@ export function PieceDetailPage() {
               onZoomReset={() => setZoom(1)}
               onPrev={goPrev}
               onNext={goNext}
+              onSetCanvasMode={setCanvasMode}
+              onDeletePath={() => {
+                if (selectedPath && activeFormationId) {
+                  removePath(activeFormationId, selectedPath.dancerLabel);
+                }
+              }}
             />
             <PlaybackControls
               isPlaying={isPlaying}
@@ -348,7 +397,7 @@ export function PieceDetailPage() {
                 {activePositions.length === 0 ? (
                   <p className="text-sm text-slate-500">No positions in this formation</p>
                 ) : (
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     {activePositions.map((pos) => (
                       <div
                         key={pos.id}
@@ -358,9 +407,27 @@ export function PieceDetailPage() {
                           className="w-3 h-3 rounded-full shrink-0"
                           style={{ backgroundColor: pos.color }}
                         />
-                        <span className="font-mono text-xs">{pos.dancer_label}</span>
-                        <span className="text-slate-500 text-xs">
-                          ({Math.round(pos.x)}, {Math.round(pos.y)})
+                        <span className="font-mono text-xs w-5 shrink-0">{pos.dancer_label}</span>
+                        <select
+                          value={pos.dancer_id ?? ''}
+                          onChange={(e) => {
+                            if (activeFormationId) {
+                              updateLocalPositionDancer(
+                                activeFormationId,
+                                pos.id,
+                                e.target.value || null
+                              );
+                            }
+                          }}
+                          className="flex-1 text-xs bg-slate-700 border border-slate-600 rounded px-1.5 py-1 text-slate-200 min-w-0"
+                        >
+                          <option value="">Unassigned</option>
+                          {rosterDancers.map((d) => (
+                            <option key={d.id} value={d.id}>{d.short_name}</option>
+                          ))}
+                        </select>
+                        <span className="text-slate-500 text-[10px] shrink-0">
+                          ({Math.round(pos.x)},{Math.round(pos.y)})
                         </span>
                       </div>
                     ))}
@@ -425,6 +492,57 @@ export function PieceDetailPage() {
                 )}
               </Card>
             )}
+
+            {/* Paths panel — only show when not the last formation */}
+            {activeIdx >= 0 && activeIdx + 1 < formations.length && (() => {
+              const activePaths = activeFormationId ? allPaths[activeFormationId] ?? [] : [];
+              return activePaths.length > 0 ? (
+                <Card
+                  header={
+                    <h3 className="text-sm font-semibold text-slate-200">
+                      Paths ({activePaths.length})
+                    </h3>
+                  }
+                >
+                  <div className="space-y-1.5">
+                    {activePaths.map((path) => {
+                      const dancer = activePositions.find((p) => p.dancer_label === path.dancer_label);
+                      const isSelected = selectedPath?.dancerLabel === path.dancer_label;
+                      return (
+                        <div
+                          key={path.id}
+                          className={`flex items-center gap-2 text-sm rounded-lg px-2 py-1.5 cursor-pointer transition-colors ${
+                            isSelected ? 'bg-electric-500/10 text-slate-200' : 'text-slate-300 hover:bg-slate-700/50'
+                          }`}
+                          onClick={() => {
+                            if (activeFormationId) {
+                              usePathStore.getState().selectPath(activeFormationId, path.dancer_label);
+                            }
+                          }}
+                        >
+                          <span
+                            className="w-3 h-3 rounded-full shrink-0"
+                            style={{ backgroundColor: dancer?.color ?? '#3B82F6' }}
+                          />
+                          <span className="font-mono text-xs flex-1">{path.dancer_label}</span>
+                          <span className="text-[10px] text-slate-500 uppercase">{path.path_type}</span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (activeFormationId) removePath(activeFormationId, path.dancer_label);
+                            }}
+                            className="p-0.5 text-slate-500 hover:text-red-400 transition-colors"
+                            title="Delete path"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+              ) : null;
+            })()}
           </div>
         )}
       </div>

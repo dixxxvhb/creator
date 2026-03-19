@@ -5,3 +5,4 @@ export { GridLayer } from './GridLayer';
 export { DancerLayer } from './DancerLayer';
 export { DancerDot } from './DancerDot';
 export { PlaybackControls } from './PlaybackControls';
+export { PathLayer } from './PathLayer';

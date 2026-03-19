@@ -5,8 +5,13 @@ import {
   ZoomOut,
   ChevronLeft,
   ChevronRight,
+  MousePointer2,
+  Pen,
+  PenLine,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import type { CanvasMode } from '@/types';
 
 interface CanvasToolbarProps {
   showGrid: boolean;
@@ -14,6 +19,8 @@ interface CanvasToolbarProps {
   zoom: number;
   canGoPrev: boolean;
   canGoNext: boolean;
+  canvasMode: CanvasMode;
+  hasSelectedPath: boolean;
   onToggleGrid: () => void;
   onToggleSnap: () => void;
   onZoomIn: () => void;
@@ -21,6 +28,8 @@ interface CanvasToolbarProps {
   onZoomReset: () => void;
   onPrev: () => void;
   onNext: () => void;
+  onSetCanvasMode: (mode: CanvasMode) => void;
+  onDeletePath: () => void;
 }
 
 function ToolButton({
@@ -60,6 +69,8 @@ export function CanvasToolbar({
   zoom,
   canGoPrev,
   canGoNext,
+  canvasMode,
+  hasSelectedPath,
   onToggleGrid,
   onToggleSnap,
   onZoomIn,
@@ -67,6 +78,8 @@ export function CanvasToolbar({
   onZoomReset,
   onPrev,
   onNext,
+  onSetCanvasMode,
+  onDeletePath,
 }: CanvasToolbarProps) {
   return (
     <div className="flex items-center gap-1 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-xl px-2 py-1">
@@ -77,6 +90,25 @@ export function CanvasToolbar({
       <ToolButton onClick={onNext} disabled={!canGoNext} title="Next formation">
         <ChevronRight size={16} />
       </ToolButton>
+
+      <div className="w-px h-5 bg-slate-700 mx-1" />
+
+      {/* Canvas mode selector */}
+      <ToolButton onClick={() => onSetCanvasMode('select')} active={canvasMode === 'select'} title="Select mode">
+        <MousePointer2 size={16} />
+      </ToolButton>
+      <ToolButton onClick={() => onSetCanvasMode('draw-freehand')} active={canvasMode === 'draw-freehand'} title="Draw freehand path">
+        <Pen size={16} />
+      </ToolButton>
+      <ToolButton onClick={() => onSetCanvasMode('draw-geometric')} active={canvasMode === 'draw-geometric'} title="Draw geometric path">
+        <PenLine size={16} />
+      </ToolButton>
+
+      {hasSelectedPath && (
+        <ToolButton onClick={onDeletePath} title="Delete selected path">
+          <Trash2 size={16} />
+        </ToolButton>
+      )}
 
       <div className="w-px h-5 bg-slate-700 mx-1" />
 
