@@ -47,18 +47,24 @@ body {
   @apply bg-slate-950 text-slate-100 font-sans antialiased;
 }
 
-/* Light mode */
-html.light body {
-  @apply bg-slate-50 text-slate-900;
+/* Light mode — invert the slate scale via CSS variable overrides */
+html.light {
+  --color-slate-950: #ffffff;
+  --color-slate-900: #f8fafc;
+  --color-slate-800: #f1f5f9;
+  --color-slate-700: #e2e8f0;
+  --color-slate-600: #cbd5e1;
+  --color-slate-500: #94a3b8;
+  --color-slate-400: #64748b;
+  --color-slate-300: #475569;
+  --color-slate-200: #334155;
+  --color-slate-100: #1e293b;
+  --color-slate-50: #0f172a;
 }
 
 /* Focus ring utility */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-electric-500/50 focus:ring-offset-2 focus:ring-offset-slate-950;
-}
-
-html.light .focus-ring {
-  @apply focus:ring-offset-slate-50;
 }
 
 /* Scrollbar */
@@ -70,11 +76,11 @@ html.light .focus-ring {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--color-slate-700);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: var(--color-slate-600);
 }
 
 /* iOS safe area */
