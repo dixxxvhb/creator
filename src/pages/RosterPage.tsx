@@ -71,9 +71,9 @@ export function RosterPage() {
         </div>
       ) : dancers.length === 0 ? (
         <Card className="text-center py-12">
-          <Users size={40} className="mx-auto text-slate-600 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">No dancers yet</h3>
-          <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+          <Users size={40} className="mx-auto text-text-tertiary mb-4" />
+          <h3 className="text-lg font-semibold text-text-primary mb-2">No dancers yet</h3>
+          <p className="text-sm text-text-tertiary mb-6 max-w-md mx-auto">
             Add dancers to your roster to assign them to pieces and formations.
           </p>
           <Button onClick={handleAdd}>
@@ -109,7 +109,7 @@ export function RosterPage() {
         onClose={() => setDeleteTarget(null)}
         title="Delete Dancer"
       >
-        <p className="text-sm text-slate-300 mb-4">
+        <p className="text-sm text-text-primary mb-4">
           Remove <strong>{deleteTarget?.full_name}</strong> from the roster? They will be unassigned from all formations.
         </p>
         <div className="flex justify-end gap-2">

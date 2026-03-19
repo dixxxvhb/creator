@@ -19,7 +19,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        'p-4 sm:p-6 lg:p-8',
+        'p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 bg-surface-secondary min-h-full',
         !fullWidth && 'max-w-6xl mx-auto w-full',
         className,
       )}
@@ -27,7 +27,7 @@ export function PageContainer({
       {(title || actions) && (
         <div className="flex items-center justify-between gap-4 mb-6">
           {title && (
-            <h1 className="text-2xl font-bold text-slate-100 tracking-tight">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">
               {title}
             </h1>
           )}

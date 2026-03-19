@@ -137,3 +137,27 @@ export const DANCER_COLORS = [
   '#E879F9', '#FB923C', '#38BDF8', '#4ADE80', '#FBBF24',
   '#C084FC', '#F472B6', '#2DD4BF', '#818CF8', '#34D399',
 ] as const;
+
+// ─── User Profile (personalization) ───
+export interface UserProfile {
+  displayName: string;
+  studioName: string;
+  accentColor: string;
+  themePreference: 'light' | 'dark' | 'system';
+  customGreeting: string;
+  studioLogoUrl: string | null;
+  avatarUrl: string | null;
+}
+
+export const ACCENT_PRESETS = [
+  { value: '#007AFF', label: 'Blue' },
+  { value: '#FF2D55', label: 'Coral' },
+  { value: '#AF52DE', label: 'Purple' },
+  { value: '#34C759', label: 'Green' },
+  { value: '#FF9500', label: 'Orange' },
+  { value: '#FF3B30', label: 'Red' },
+  { value: '#5AC8FA', label: 'Teal' },
+  { value: '#5856D6', label: 'Indigo' },
+  { value: '#00C7BE', label: 'Mint' },
+  { value: '#8E8E93', label: 'Graphite' },
+] as const;

@@ -53,8 +53,8 @@ function ToolButton({
       className={cn(
         'p-2 rounded-lg transition-colors',
         active
-          ? 'bg-electric-500/20 text-electric-400'
-          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50',
+          ? 'accent-bg-light accent-text'
+          : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary',
         disabled && 'opacity-30 pointer-events-none'
       )}
     >
@@ -82,7 +82,7 @@ export function CanvasToolbar({
   onDeletePath,
 }: CanvasToolbarProps) {
   return (
-    <div className="flex items-center gap-1 bg-slate-800/80 backdrop-blur-sm border border-slate-700 rounded-xl px-2 py-1">
+    <div className="flex items-center gap-1 bg-surface-elevated/80 backdrop-blur-sm border border-border rounded-xl px-2 py-1">
       {/* Formation navigation */}
       <ToolButton onClick={onPrev} disabled={!canGoPrev} title="Previous formation">
         <ChevronLeft size={16} />
@@ -91,7 +91,7 @@ export function CanvasToolbar({
         <ChevronRight size={16} />
       </ToolButton>
 
-      <div className="w-px h-5 bg-slate-700 mx-1" />
+      <div className="w-px h-5 bg-border mx-1" />
 
       {/* Canvas mode selector */}
       <ToolButton onClick={() => onSetCanvasMode('select')} active={canvasMode === 'select'} title="Select mode">
@@ -110,7 +110,7 @@ export function CanvasToolbar({
         </ToolButton>
       )}
 
-      <div className="w-px h-5 bg-slate-700 mx-1" />
+      <div className="w-px h-5 bg-border mx-1" />
 
       {/* Grid & snap */}
       <ToolButton onClick={onToggleGrid} active={showGrid} title="Toggle grid">
@@ -120,7 +120,7 @@ export function CanvasToolbar({
         <Magnet size={16} />
       </ToolButton>
 
-      <div className="w-px h-5 bg-slate-700 mx-1" />
+      <div className="w-px h-5 bg-border mx-1" />
 
       {/* Zoom */}
       <ToolButton onClick={onZoomOut} title="Zoom out">
@@ -129,7 +129,7 @@ export function CanvasToolbar({
       <button
         onClick={onZoomReset}
         title="Reset zoom"
-        className="text-xs text-slate-400 hover:text-slate-200 font-mono w-10 text-center transition-colors"
+        className="text-xs text-text-secondary hover:text-text-primary font-mono w-10 text-center transition-colors"
       >
         {Math.round(zoom * 100)}%
       </button>

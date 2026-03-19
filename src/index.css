@@ -1,73 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400;500;600&display=swap');
 @import "tailwindcss";
 
-@theme {
-  /* Slate backgrounds */
-  --color-slate-950: #0a0f1a;
-  --color-slate-900: #0f172a;
-  --color-slate-800: #1e293b;
-  --color-slate-700: #334155;
-  --color-slate-600: #475569;
-  --color-slate-500: #64748b;
-  --color-slate-400: #94a3b8;
-  --color-slate-300: #cbd5e1;
-  --color-slate-200: #e2e8f0;
-  --color-slate-100: #f1f5f9;
-  --color-slate-50: #f8fafc;
+/* ─── Dark variant: use html.dark class instead of prefers-color-scheme ─── */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Electric Blue primary */
-  --color-electric-50: #eff6ff;
-  --color-electric-100: #dbeafe;
-  --color-electric-200: #bfdbfe;
-  --color-electric-300: #93c5fd;
-  --color-electric-400: #60a5fa;
-  --color-electric-500: #3B82F6;
-  --color-electric-600: #2563eb;
-  --color-electric-700: #1d4ed8;
-  --color-electric-800: #1e40af;
-  --color-electric-900: #1e3a8a;
+/* ─── Design Tokens (Tailwind v4 compile-time) ─── */
+@theme {
+  /* Semantic surfaces — light mode defaults */
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F2F2F7;
+  --color-surface-elevated: #FFFFFF;
+
+  /* Text hierarchy */
+  --color-text-primary: #1C1C1E;
+  --color-text-secondary: #8E8E93;
+  --color-text-tertiary: #C7C7CC;
+
+  /* Borders */
+  --color-border: #E5E5EA;
+  --color-border-light: #F2F2F7;
 
   /* Status colors */
   --color-success-50: #f0fdf4;
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-warning-50: #fffbeb;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
+  --color-success-500: #34C759;
+  --color-success-600: #30B350;
   --color-danger-50: #fef2f2;
-  --color-danger-500: #ef4444;
-  --color-danger-600: #dc2626;
+  --color-danger-500: #FF3B30;
+  --color-danger-600: #E0352B;
+  --color-warning-50: #fffbeb;
+  --color-warning-500: #FF9500;
+  --color-warning-600: #E08600;
 
   /* Fonts */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-brand: 'Raleway', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', monospace;
 }
 
-/* Dark mode default */
+/* ─── Accent Color System (runtime-changeable) ─── */
+:root {
+  --color-accent: #007AFF;
+  --color-accent-hover: #0066D6;
+  --color-accent-light: rgba(0, 122, 255, 0.1);
+}
+
+/* ─── Base Styles ─── */
 body {
-  @apply bg-slate-950 text-slate-100 font-sans antialiased;
+  @apply bg-surface text-text-primary font-sans antialiased;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-/* Light mode — invert the slate scale via CSS variable overrides */
-html.light {
-  --color-slate-950: #ffffff;
-  --color-slate-900: #f8fafc;
-  --color-slate-800: #f1f5f9;
-  --color-slate-700: #e2e8f0;
-  --color-slate-600: #cbd5e1;
-  --color-slate-500: #94a3b8;
-  --color-slate-400: #64748b;
-  --color-slate-300: #475569;
-  --color-slate-200: #334155;
-  --color-slate-100: #1e293b;
-  --color-slate-50: #0f172a;
+/* ─── Dark Mode ─── */
+html.dark {
+  --color-surface: #1C1C1E;
+  --color-surface-secondary: #2C2C2E;
+  --color-surface-elevated: #3A3A3C;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #8E8E93;
+  --color-text-tertiary: #48484A;
+  --color-border: #38383A;
+  --color-border-light: #2C2C2E;
+  --color-success-50: #0a1f0d;
+  --color-danger-50: #1f0a0a;
+  --color-warning-50: #1f160a;
 }
 
-/* Focus ring utility */
+/* ─── Accent Utilities (use var so they respond to runtime changes) ─── */
+.accent-bg {
+  background-color: var(--color-accent);
+}
+.accent-bg:hover {
+  background-color: var(--color-accent-hover);
+}
+.accent-text {
+  color: var(--color-accent);
+}
+.accent-border {
+  border-color: var(--color-accent);
+}
+.accent-bg-light {
+  background-color: var(--color-accent-light);
+}
+
+/* Focus ring that follows accent color */
+.focus-ring-accent {
+  outline: none;
+}
+.focus-ring-accent:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-accent-light), 0 0 0 1px var(--color-accent);
+}
+
+/* Legacy focus ring (remove after migration) */
 .focus-ring {
-  @apply focus:outline-none focus:ring-2 focus:ring-electric-500/50 focus:ring-offset-2 focus:ring-offset-slate-950;
+  @apply focus:outline-none;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-accent-light), 0 0 0 1px var(--color-accent);
 }
 
-/* Scrollbar */
+/* ─── Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -76,16 +108,25 @@ html.light {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-slate-700);
+  background: var(--color-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-slate-600);
+  background: var(--color-text-tertiary);
 }
 
-/* iOS safe area */
+/* ─── iOS Safe Areas ─── */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
 }
+
+/* ─── iOS-style hairline separator ─── */
+.hairline {
+  border-bottom: 0.5px solid var(--color-border);
+}
+

@@ -23,10 +23,10 @@ export function DancerCard({ dancer, pieces, onEdit, onDelete }: DancerCardProps
             style={{ backgroundColor: dancer.color }}
           />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-100 truncate">
+            <p className="text-sm font-semibold text-text-primary truncate">
               {dancer.full_name}
             </p>
-            <p className="text-xs text-slate-400 truncate">
+            <p className="text-xs text-text-secondary truncate">
               {dancer.short_name}
             </p>
           </div>
@@ -34,14 +34,14 @@ export function DancerCard({ dancer, pieces, onEdit, onDelete }: DancerCardProps
         <div className="flex items-center gap-1 shrink-0">
           <button
             onClick={() => onEdit(dancer)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+            className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
             title="Edit dancer"
           >
             <Pencil size={14} />
           </button>
           <button
             onClick={() => onDelete(dancer)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-700 transition-colors"
+            className="p-1.5 rounded-lg text-text-secondary hover:text-red-400 hover:bg-surface-secondary transition-colors"
             title="Delete dancer"
           >
             <Trash2 size={14} />
@@ -49,11 +49,11 @@ export function DancerCard({ dancer, pieces, onEdit, onDelete }: DancerCardProps
         </div>
       </div>
 
-      <div className="text-xs text-slate-400">
+      <div className="text-xs text-text-secondary">
         {age !== null ? (
           <span>Age {age}{dancer.birthday ? ` (${dancer.birthday})` : ''}</span>
         ) : (
-          <span className="text-slate-500">No birthday</span>
+          <span className="text-text-tertiary">No birthday</span>
         )}
       </div>
 
@@ -66,7 +66,7 @@ export function DancerCard({ dancer, pieces, onEdit, onDelete }: DancerCardProps
           ))}
         </div>
       ) : (
-        <p className="text-xs text-slate-500">No pieces assigned</p>
+        <p className="text-xs text-text-tertiary">No pieces assigned</p>
       )}
     </Card>
   );

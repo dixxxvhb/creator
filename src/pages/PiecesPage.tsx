@@ -35,9 +35,9 @@ export function PiecesPage() {
         </div>
       ) : pieces.length === 0 ? (
         <Card className="text-center py-12">
-          <Layers size={40} className="mx-auto text-slate-600 mb-4" />
-          <h3 className="text-lg font-semibold text-slate-300 mb-2">No pieces yet</h3>
-          <p className="text-sm text-slate-500 mb-6 max-w-md mx-auto">
+          <Layers size={40} className="mx-auto text-text-tertiary mb-4" />
+          <h3 className="text-lg font-semibold text-text-primary mb-2">No pieces yet</h3>
+          <p className="text-sm text-text-tertiary mb-6 max-w-md mx-auto">
             Create your first piece to start building formations and mapping choreography.
           </p>
           <Link to="/pieces/new">

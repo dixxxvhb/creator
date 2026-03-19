@@ -162,7 +162,7 @@ export function PieceDetailPage() {
     return (
       <PageContainer>
         <div className="flex flex-col items-center justify-center py-20">
-          <p className="text-slate-400 mb-4">Piece not found</p>
+          <p className="text-text-secondary mb-4">Piece not found</p>
           <Button variant="secondary" onClick={() => navigate('/pieces')}>
             <ArrowLeft size={16} />
             Back to Pieces
@@ -204,7 +204,7 @@ export function PieceDetailPage() {
           <div className="flex items-center gap-2 mb-2">
             <button
               onClick={() => navigate('/pieces')}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors shrink-0"
+              className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors shrink-0"
               aria-label="Back to pieces"
             >
               <ArrowLeft size={18} />
@@ -220,7 +220,8 @@ export function PieceDetailPage() {
                     if (e.key === 'Enter') handleTitleSave();
                     if (e.key === 'Escape') handleTitleCancel();
                   }}
-                  className="text-xl font-bold text-slate-100 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-electric-500/50"
+                  className="text-xl font-bold text-text-primary bg-surface-elevated border border-border rounded-lg px-2 py-1 focus:outline-none focus:ring-2"
+                  style={{ '--tw-ring-color': 'color-mix(in srgb, var(--color-accent) 50%, transparent)' } as React.CSSProperties}
                   autoFocus
                 />
                 <button
@@ -232,7 +233,7 @@ export function PieceDetailPage() {
                 </button>
                 <button
                   onClick={handleTitleCancel}
-                  className="p-1 text-slate-400 hover:text-slate-200 transition-colors"
+                  className="p-1 text-text-secondary hover:text-text-primary transition-colors"
                   aria-label="Cancel editing"
                 >
                   <X size={18} />
@@ -243,12 +244,12 @@ export function PieceDetailPage() {
                 onClick={handleTitleEdit}
                 className="flex items-center gap-2 group text-left"
               >
-                <h2 className="text-xl font-bold text-slate-100 truncate">
+                <h2 className="text-xl font-bold text-text-primary truncate">
                   {piece.title}
                 </h2>
                 <Pencil
                   size={14}
-                  className="text-slate-600 group-hover:text-slate-400 transition-colors shrink-0"
+                  className="text-text-tertiary group-hover:text-text-secondary transition-colors shrink-0"
                 />
               </button>
             )}
@@ -325,7 +326,7 @@ export function PieceDetailPage() {
               onToggleLoop={toggleLoop}
             />
             {activeFormation && (
-              <span className="text-sm text-slate-400 font-medium">
+              <span className="text-sm text-text-secondary font-medium">
                 {activeFormation.label || `Formation ${activeIdx + 1}`}
               </span>
             )}
@@ -358,7 +359,7 @@ export function PieceDetailPage() {
           <div className="lg:w-80 shrink-0 space-y-4">
             <Card
               header={
-                <h3 className="text-sm font-semibold text-slate-200">
+                <h3 className="text-sm font-semibold text-text-primary">
                   {activeFormation.label} — Notes
                 </h3>
               }
@@ -391,17 +392,17 @@ export function PieceDetailPage() {
 
             <Card>
               <div className="space-y-2">
-                <h4 className="text-xs font-medium text-slate-400 uppercase tracking-wide">
+                <h4 className="text-xs font-medium text-text-secondary uppercase tracking-wide">
                   Positions
                 </h4>
                 {activePositions.length === 0 ? (
-                  <p className="text-sm text-slate-500">No positions in this formation</p>
+                  <p className="text-sm text-text-tertiary">No positions in this formation</p>
                 ) : (
                   <div className="space-y-1.5">
                     {activePositions.map((pos) => (
                       <div
                         key={pos.id}
-                        className="flex items-center gap-2 text-sm text-slate-300"
+                        className="flex items-center gap-2 text-sm text-text-primary"
                       >
                         <span
                           className="w-3 h-3 rounded-full shrink-0"
@@ -419,14 +420,14 @@ export function PieceDetailPage() {
                               );
                             }
                           }}
-                          className="flex-1 text-xs bg-slate-700 border border-slate-600 rounded px-1.5 py-1 text-slate-200 min-w-0"
+                          className="flex-1 text-xs bg-surface-secondary border border-border rounded px-1.5 py-1 text-text-primary min-w-0"
                         >
                           <option value="">Unassigned</option>
                           {rosterDancers.map((d) => (
                             <option key={d.id} value={d.id}>{d.short_name}</option>
                           ))}
                         </select>
-                        <span className="text-slate-500 text-[10px] shrink-0">
+                        <span className="text-text-tertiary text-[10px] shrink-0">
                           ({Math.round(pos.x)},{Math.round(pos.y)})
                         </span>
                       </div>
@@ -444,18 +445,18 @@ export function PieceDetailPage() {
                     onClick={() => setTransitionOpen((o) => !o)}
                     className="flex items-center justify-between w-full"
                   >
-                    <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                    <h3 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
                       <Clock size={14} />
                       Transition
                     </h3>
-                    {transitionOpen ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                    {transitionOpen ? <ChevronUp size={14} className="text-text-secondary" /> : <ChevronDown size={14} className="text-text-secondary" />}
                   </button>
                 }
               >
                 {transitionOpen && (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                      <label className="block text-xs font-medium text-text-secondary mb-1.5">
                         Duration: {activeFormation.transition_duration_ms ?? 2000}ms
                         {piece.bpm ? ` (${((activeFormation.transition_duration_ms ?? 2000) / (60000 / piece.bpm)).toFixed(1)} counts)` : ''}
                       </label>
@@ -470,9 +471,10 @@ export function PieceDetailPage() {
                             transition_duration_ms: parseInt(e.target.value),
                           })
                         }
-                        className="w-full accent-electric-500"
+                        className="w-full"
+                        style={{ accentColor: 'var(--color-accent)' }}
                       />
-                      <div className="flex justify-between text-[10px] text-slate-600 mt-0.5">
+                      <div className="flex justify-between text-[10px] text-text-tertiary mt-0.5">
                         <span>0.5s</span>
                         <span>5s</span>
                       </div>
@@ -499,7 +501,7 @@ export function PieceDetailPage() {
               return activePaths.length > 0 ? (
                 <Card
                   header={
-                    <h3 className="text-sm font-semibold text-slate-200">
+                    <h3 className="text-sm font-semibold text-text-primary">
                       Paths ({activePaths.length})
                     </h3>
                   }
@@ -512,7 +514,7 @@ export function PieceDetailPage() {
                         <div
                           key={path.id}
                           className={`flex items-center gap-2 text-sm rounded-lg px-2 py-1.5 cursor-pointer transition-colors ${
-                            isSelected ? 'bg-electric-500/10 text-slate-200' : 'text-slate-300 hover:bg-slate-700/50'
+                            isSelected ? 'accent-bg-light text-text-primary' : 'text-text-primary hover:bg-surface-secondary/50'
                           }`}
                           onClick={() => {
                             if (activeFormationId) {
@@ -525,13 +527,13 @@ export function PieceDetailPage() {
                             style={{ backgroundColor: dancer?.color ?? '#3B82F6' }}
                           />
                           <span className="font-mono text-xs flex-1">{path.dancer_label}</span>
-                          <span className="text-[10px] text-slate-500 uppercase">{path.path_type}</span>
+                          <span className="text-[10px] text-text-tertiary uppercase">{path.path_type}</span>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               if (activeFormationId) removePath(activeFormationId, path.dancer_label);
                             }}
-                            className="p-0.5 text-slate-500 hover:text-red-400 transition-colors"
+                            className="p-0.5 text-text-tertiary hover:text-red-400 transition-colors"
                             title="Delete path"
                           >
                             <Trash2 size={12} />

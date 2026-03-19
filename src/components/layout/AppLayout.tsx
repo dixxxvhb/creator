@@ -1,24 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
-
-const THEME_KEY = 'creator-theme';
-
-function getInitialTheme(): 'dark' | 'light' {
-  if (typeof window === 'undefined') return 'dark';
-  const stored = localStorage.getItem(THEME_KEY);
-  if (stored === 'light' || stored === 'dark') return stored;
-  return 'dark';
-}
-
-function applyTheme(theme: 'dark' | 'light') {
-  if (theme === 'light') {
-    document.documentElement.classList.add('light');
-  } else {
-    document.documentElement.classList.remove('light');
-  }
-}
+import { BottomTabBar } from './BottomTabBar';
+import { useProfileStore } from '@/stores/profileStore';
 
 const routeTitles: Record<string, string> = {
   '/': 'Home',
@@ -30,58 +15,51 @@ const routeTitles: Record<string, string> = {
 };
 
 export function AppLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>(getInitialTheme);
   const location = useLocation();
+  const themePreference = useProfileStore((s) => s.themePreference);
+  const setTheme = useProfileStore((s) => s.setTheme);
+  const initProfile = useProfileStore((s) => s.initProfile);
 
   const pageTitle = routeTitles[location.pathname] ?? 'Creator';
 
-  useEffect(() => {
-    applyTheme(theme);
-    localStorage.setItem(THEME_KEY, theme);
-  }, [theme]);
+  const effectiveTheme: 'dark' | 'light' =
+    themePreference === 'system'
+      ? (typeof window !== 'undefined' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light')
+      : themePreference;
 
-  // Close mobile sidebar on route change
   useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
+    initProfile();
+  }, [initProfile]);
 
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  }, []);
+  function toggleTheme() {
+    setTheme(effectiveTheme === 'dark' ? 'light' : 'dark');
+  }
 
   return (
-    <div className="flex h-dvh overflow-hidden">
+    <div className="flex h-dvh overflow-hidden bg-surface">
       {/* Desktop sidebar */}
       <div className="hidden md:flex">
         <Sidebar />
       </div>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <div className="relative z-50">
-            <Sidebar onNavigate={() => setSidebarOpen(false)} />
-          </div>
-        </div>
-      )}
-
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopBar
           title={pageTitle}
-          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
-          theme={theme}
+          onToggleSidebar={() => {}}
+          theme={effectiveTheme}
           onToggleTheme={toggleTheme}
         />
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>
       </div>
+
+      {/* Mobile bottom tabs */}
+      <BottomTabBar />
     </div>
   );
 }

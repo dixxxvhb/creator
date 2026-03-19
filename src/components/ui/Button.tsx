@@ -14,11 +14,11 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
-    'bg-electric-500 text-white hover:bg-electric-600 active:bg-electric-700',
+    'text-white hover:opacity-90 active:opacity-80',
   secondary:
-    'bg-slate-700 text-slate-100 hover:bg-slate-600 active:bg-slate-500',
+    'bg-surface-secondary text-text-primary hover:bg-border active:bg-border',
   ghost:
-    'bg-transparent text-slate-300 hover:bg-slate-800 hover:text-slate-100 active:bg-slate-700',
+    'bg-transparent text-text-secondary hover:bg-surface-secondary hover:text-text-primary active:bg-surface-secondary',
   danger:
     'bg-danger-500 text-white hover:bg-danger-600 active:bg-danger-600',
 };
@@ -36,19 +36,25 @@ export function Button({
   disabled,
   className,
   children,
+  style,
   ...props
 }: ButtonProps) {
   return (
     <button
       disabled={disabled || loading}
       className={cn(
-        'inline-flex items-center justify-center rounded-full font-medium transition-colors',
-        'focus:outline-none focus:ring-2 focus:ring-electric-500/50 focus:ring-offset-2 focus:ring-offset-slate-950',
-        'disabled:opacity-50 disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center rounded-xl font-medium transition-colors',
+        'focus:outline-none focus-ring-accent',
+        'disabled:opacity-50',
         variantStyles[variant],
         sizeStyles[size],
         className,
       )}
+      style={
+        variant === 'primary'
+          ? { backgroundColor: 'var(--color-accent)', ...style }
+          : style
+      }
       {...props}
     >
       {loading && <Spinner size="sm" />}

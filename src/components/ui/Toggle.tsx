@@ -23,9 +23,10 @@ export function Toggle({ checked, onChange, label, disabled = false }: TogglePro
         onClick={() => onChange(!checked)}
         className={cn(
           'relative inline-flex h-6 w-11 shrink-0 rounded-full border-2 border-transparent transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-electric-500/50 focus:ring-offset-2 focus:ring-offset-slate-950',
-          checked ? 'bg-electric-500' : 'bg-slate-600',
+          'focus:outline-none focus-ring-accent',
+          !checked && 'bg-border',
         )}
+        style={checked ? { backgroundColor: 'var(--color-accent)' } : undefined}
       >
         <span
           className={cn(
@@ -34,7 +35,7 @@ export function Toggle({ checked, onChange, label, disabled = false }: TogglePro
           )}
         />
       </button>
-      {label && <span className="text-sm text-slate-300">{label}</span>}
+      {label && <span className="text-sm text-text-secondary">{label}</span>}
     </label>
   );
 }

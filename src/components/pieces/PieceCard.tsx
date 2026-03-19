@@ -18,10 +18,10 @@ export function PieceCard({ piece }: PieceCardProps) {
 
   return (
     <Card
-      className="cursor-pointer hover:border-slate-600 transition-colors"
+      className="cursor-pointer hover:border-border transition-colors"
     >
       <div onClick={() => navigate(`/pieces/${piece.id}`)} className="space-y-3">
-        <h3 className="text-base font-semibold text-slate-100 truncate">
+        <h3 className="text-base font-semibold text-text-primary truncate">
           {piece.title}
         </h3>
 
@@ -29,12 +29,12 @@ export function PieceCard({ piece }: PieceCardProps) {
           <Badge>{piece.style}</Badge>
         )}
 
-        <div className="flex items-center gap-1.5 text-sm text-slate-400">
+        <div className="flex items-center gap-1.5 text-sm text-text-secondary">
           <Music size={14} className="shrink-0" />
           <span className="truncate">{songText}</span>
         </div>
 
-        <div className="flex items-center gap-1.5 text-sm text-slate-400">
+        <div className="flex items-center gap-1.5 text-sm text-text-secondary">
           <Users size={14} className="shrink-0" />
           <span>
             {piece.dancer_count} dancer{piece.dancer_count !== 1 ? 's' : ''}

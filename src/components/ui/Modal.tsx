@@ -43,20 +43,20 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
     >
       <div
         className={cn(
-          'bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full mx-4',
-          'shadow-xl animate-in fade-in zoom-in-95',
+          'bg-surface-elevated rounded-2xl w-full sm:max-w-lg sm:mx-4',
+          'shadow-2xl animate-in fade-in zoom-in-95',
           className,
         )}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-100">{title}</h2>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
+            className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
             aria-label="Close"
           >
             <X size={18} />

@@ -222,7 +222,7 @@ export function FormationCanvas({ piece, playbackPositions }: FormationCanvasPro
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-[400px] bg-slate-900 rounded-xl overflow-hidden border border-slate-700 relative"
+      className="w-full h-full min-h-[400px] bg-surface rounded-xl overflow-hidden border border-border relative"
     >
       <Stage
         ref={stageRef}
@@ -333,7 +333,7 @@ export function FormationCanvas({ piece, playbackPositions }: FormationCanvasPro
       </Stage>
 
       {/* Zoom indicator */}
-      <div className="absolute bottom-3 right-3 bg-slate-800/80 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs text-slate-400 font-mono">
+      <div className="absolute bottom-3 right-3 bg-surface-elevated/80 backdrop-blur-sm rounded-lg px-2.5 py-1 text-xs text-text-secondary font-mono">
         {Math.round(zoom * 100)}%
       </div>
     </div>

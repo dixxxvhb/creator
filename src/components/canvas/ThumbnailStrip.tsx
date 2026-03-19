@@ -37,9 +37,10 @@ function MiniFormation({
       <div
         className={`w-[120px] h-[80px] rounded-lg border-2 relative overflow-hidden transition-colors ${
           isActive
-            ? 'border-electric-500 bg-slate-800'
-            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+            ? 'bg-surface-elevated'
+            : 'border-border bg-surface-secondary hover:border-text-tertiary'
         }`}
+        style={isActive ? { borderColor: 'var(--color-accent)' } : undefined}
       >
         {/* Mini stage background */}
         <svg width={thumbW} height={thumbH}>
@@ -48,7 +49,7 @@ function MiniFormation({
             y={offsetY}
             width={piece.stage_width * scale}
             height={piece.stage_depth * scale}
-            fill="#1a1f2e"
+            fill="var(--color-surface-secondary, #1a1f2e)"
             rx={2}
           />
           {/* Dancer dots */}
@@ -65,7 +66,7 @@ function MiniFormation({
       </div>
       <span
         className={`text-[10px] font-medium truncate max-w-[120px] ${
-          isActive ? 'text-electric-400' : 'text-slate-500 group-hover:text-slate-400'
+          isActive ? 'accent-text' : 'text-text-tertiary group-hover:text-text-secondary'
         }`}
       >
         {formation.label || `Formation ${formation.index + 1}`}
@@ -98,7 +99,10 @@ export function ThumbnailStrip({
       {/* Add formation button */}
       <button
         onClick={onAdd}
-        className="shrink-0 w-[120px] h-[80px] rounded-lg border-2 border-dashed border-slate-700 hover:border-electric-500/50 flex items-center justify-center text-slate-500 hover:text-electric-400 transition-colors"
+        className="shrink-0 w-[120px] h-[80px] rounded-lg border-2 border-dashed border-border flex items-center justify-center text-text-tertiary transition-colors"
+        style={{ ['--hover-border' as string]: 'var(--color-accent)' }}
+        onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-accent)'; e.currentTarget.style.color = 'var(--color-accent)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.color = ''; }}
         title="Add formation"
       >
         <Plus size={20} />

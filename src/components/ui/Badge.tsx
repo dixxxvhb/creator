@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, CSSProperties } from 'react';
 import { cn } from '@/lib/utils';
 
 type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info';
@@ -10,14 +10,22 @@ interface BadgeProps {
 }
 
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-electric-500/15 text-electric-400 border-electric-500/25',
-  info: 'bg-electric-500/15 text-electric-400 border-electric-500/25',
+  default: '',
+  info: '',
   success: 'bg-success-500/15 text-success-500 border-success-500/25',
   warning: 'bg-warning-500/15 text-warning-500 border-warning-500/25',
   danger: 'bg-danger-500/15 text-danger-500 border-danger-500/25',
 };
 
+const accentStyle: CSSProperties = {
+  backgroundColor: 'var(--color-accent-light)',
+  color: 'var(--color-accent)',
+  borderColor: 'var(--color-accent-light)',
+};
+
 export function Badge({ children, variant = 'default', className }: BadgeProps) {
+  const useAccent = variant === 'default' || variant === 'info';
+
   return (
     <span
       className={cn(
@@ -25,6 +33,7 @@ export function Badge({ children, variant = 'default', className }: BadgeProps) 
         variantStyles[variant],
         className,
       )}
+      style={useAccent ? accentStyle : undefined}
     >
       {children}
     </span>

@@ -71,7 +71,7 @@ export function DancerFormModal({ open, onClose, onSave, dancer, defaultColor }:
           onChange={(e) => setBirthday(e.target.value)}
         />
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-slate-300">Color</label>
+          <label className="text-sm font-medium text-text-secondary">Color</label>
           <div className="flex flex-wrap gap-2">
             {DANCER_COLORS.map((c) => (
               <button
@@ -81,7 +81,7 @@ export function DancerFormModal({ open, onClose, onSave, dancer, defaultColor }:
                 className={cn(
                   'w-7 h-7 rounded-full transition-all',
                   color === c
-                    ? 'ring-2 ring-white ring-offset-2 ring-offset-slate-800 scale-110'
+                    ? 'ring-2 ring-white ring-offset-2 ring-offset-surface-elevated scale-110'
                     : 'hover:scale-110'
                 )}
                 style={{ backgroundColor: c }}

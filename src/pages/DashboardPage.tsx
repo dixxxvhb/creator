@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { PieceCard } from '@/components/pieces';
 import { usePieceStore } from '@/stores/pieceStore';
+import { useProfileStore } from '@/stores/profileStore';
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', {
@@ -21,51 +22,61 @@ export function DashboardPage() {
   const pieces = usePieceStore((s) => s.pieces);
   const isLoading = usePieceStore((s) => s.isLoading);
   const load = usePieceStore((s) => s.load);
+  const displayName = useProfileStore((s) => s.displayName);
+  const studioName = useProfileStore((s) => s.studioName);
+  const customGreeting = useProfileStore((s) => s.customGreeting);
 
   useEffect(() => {
     load();
   }, [load]);
 
+  const greeting = customGreeting
+    || (displayName ? `Welcome back, ${displayName}` : 'Welcome back');
+
   const stats = [
-    { label: 'Total Pieces', value: pieces.length, icon: Layers },
-    { label: 'Total Seasons', value: 0, icon: Trophy },
-    { label: 'Total Dancers', value: 0, icon: Users },
+    { label: 'Pieces', value: pieces.length, icon: Layers },
+    { label: 'Seasons', value: 0, icon: Trophy },
+    { label: 'Dancers', value: 0, icon: Users },
   ];
 
   return (
     <PageContainer>
-      {/* Greeting */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-100 mb-1">Welcome back</h2>
-        <p className="text-sm text-slate-400">{formatDate(new Date())}</p>
+      {/* CREATOR wordmark hero */}
+      <div className="text-center pt-4 pb-8">
+        <h1
+          className="text-text-primary uppercase font-brand mb-3"
+          style={{ fontWeight: 200, letterSpacing: '0.3em', fontSize: '2.5rem' }}
+        >
+          Creator
+        </h1>
+        <p className="text-sm text-text-tertiary tracking-wide">
+          Choreography, visualized.
+        </p>
       </div>
 
-      {/* Hero card */}
-      <Card className="mb-8 relative overflow-hidden border-electric-500/20">
-        <div className="absolute inset-0 bg-gradient-to-br from-electric-600/20 via-electric-500/10 to-transparent pointer-events-none" />
-        <div className="relative py-2">
-          <h3 className="text-lg font-semibold text-slate-100 mb-2">
-            Your complete choreography studio
-          </h3>
-          <p className="text-sm text-slate-300 max-w-xl leading-relaxed">
-            Build formations, map transitions, manage your season, and bring every piece
-            to life — all in one place.
+      {/* Studio branding + greeting */}
+      <div className="text-center mb-8">
+        {studioName && (
+          <p className="text-xs font-semibold text-text-tertiary uppercase tracking-widest mb-1">
+            {studioName}
           </p>
-        </div>
-      </Card>
+        )}
+        <p className="text-lg font-semibold text-text-primary">{greeting}</p>
+        <p className="text-sm text-text-secondary mt-1">{formatDate(new Date())}</p>
+      </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
         {stats.map(({ label, value, icon: Icon }) => (
           <Card key={label}>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-electric-500/10">
-                <Icon size={20} className="text-electric-400" />
+            <div className="flex flex-col items-center gap-2 py-1">
+              <div
+                className="flex items-center justify-center w-10 h-10 rounded-xl accent-bg-light"
+              >
+                <Icon size={20} className="accent-text" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-slate-100">{value}</p>
-                <p className="text-xs text-slate-400">{label}</p>
-              </div>
+              <p className="text-2xl font-bold text-text-primary">{value}</p>
+              <p className="text-xs font-medium text-text-secondary">{label}</p>
             </div>
           </Card>
         ))}
@@ -74,11 +85,11 @@ export function DashboardPage() {
       {/* Recent Pieces */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-100">Recent Pieces</h3>
+          <h3 className="text-lg font-semibold text-text-primary">Recent Pieces</h3>
           {pieces.length > 0 && (
             <Link
               to="/pieces"
-              className="text-sm text-electric-400 hover:text-electric-300 transition-colors"
+              className="text-sm font-medium accent-text hover:opacity-80 transition-opacity"
             >
               View all
             </Link>
@@ -90,9 +101,11 @@ export function DashboardPage() {
             <Spinner size="lg" />
           </div>
         ) : pieces.length === 0 ? (
-          <Card className="text-center py-8">
-            <Layers size={32} className="mx-auto text-slate-600 mb-3" />
-            <p className="text-slate-400 mb-4">No pieces yet. Start building your first choreography.</p>
+          <Card className="text-center py-10">
+            <Layers size={36} className="mx-auto text-text-tertiary mb-3" />
+            <p className="text-text-secondary mb-4">
+              No pieces yet. Start building your first choreography.
+            </p>
             <Link to="/pieces/new">
               <Button>
                 <Plus size={16} />

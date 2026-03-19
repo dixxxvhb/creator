@@ -31,14 +31,17 @@ interface SidebarProps {
 
 export function Sidebar({ onNavigate }: SidebarProps) {
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 h-screen flex flex-col shrink-0">
-      <div className="px-5 py-5">
-        <span className="text-xl font-bold text-electric-500 tracking-tight">
+    <aside className="w-64 bg-surface border-r border-border h-screen flex flex-col shrink-0">
+      <div className="px-5 py-5 flex items-center gap-2.5">
+        <span
+          className="text-text-primary uppercase font-brand"
+          style={{ fontWeight: 200, letterSpacing: '0.3em', fontSize: '1.1rem' }}
+        >
           Creator
         </span>
       </div>
 
-      <nav className="flex-1 px-2 py-2 space-y-0.5">
+      <nav className="flex-1 px-3 py-2 space-y-1">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -47,21 +50,21 @@ export function Sidebar({ onNavigate }: SidebarProps) {
             onClick={onNavigate}
             className={({ isActive }) =>
               cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-electric-500/10 text-electric-400 border-l-[3px] border-l-electric-500 ml-0 pl-[9px]'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50',
+                  ? 'accent-bg-light accent-text'
+                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary',
               )
             }
           >
-            <Icon size={18} />
+            <Icon size={20} />
             {label}
           </NavLink>
         ))}
       </nav>
 
-      <div className="px-4 py-3 border-t border-slate-800">
-        <p className="text-xs text-slate-600">v0.1.0</p>
+      <div className="px-4 py-3 border-t border-border">
+        <p className="text-xs text-text-tertiary">v0.1.0</p>
       </div>
     </aside>
   );
