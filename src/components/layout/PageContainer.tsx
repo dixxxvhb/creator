@@ -1,0 +1,40 @@
+import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+
+interface PageContainerProps {
+  title?: string;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  fullWidth?: boolean;
+}
+
+export function PageContainer({
+  title,
+  actions,
+  children,
+  className,
+  fullWidth = false,
+}: PageContainerProps) {
+  return (
+    <div
+      className={cn(
+        'p-4 sm:p-6 lg:p-8',
+        !fullWidth && 'max-w-6xl mx-auto w-full',
+        className,
+      )}
+    >
+      {(title || actions) && (
+        <div className="flex items-center justify-between gap-4 mb-6">
+          {title && (
+            <h1 className="text-2xl font-bold text-slate-100 tracking-tight">
+              {title}
+            </h1>
+          )}
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
