@@ -31,7 +31,7 @@ interface SidebarProps {
 
 export function Sidebar({ onNavigate }: SidebarProps) {
   return (
-    <aside className="w-64 bg-surface border-r border-border h-screen flex flex-col shrink-0">
+    <aside className="w-64 glass border-r border-border/50 h-screen flex flex-col shrink-0">
       <div className="px-5 py-5 flex items-center gap-2.5">
         <span
           className="text-text-primary uppercase font-brand"

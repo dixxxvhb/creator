@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Plus, Layers } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
@@ -7,6 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
 import { PieceCard } from '@/components/pieces';
 import { usePieceStore } from '@/stores/pieceStore';
+import { staggerContainer, staggerItem } from '@/lib/motion';
 
 export function PiecesPage() {
   const pieces = usePieceStore((s) => s.pieces);
@@ -48,11 +50,18 @@ export function PiecesPage() {
           </Link>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
           {pieces.map((piece) => (
-            <PieceCard key={piece.id} piece={piece} />
+            <motion.div key={piece.id} variants={staggerItem}>
+              <PieceCard piece={piece} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </PageContainer>
   );

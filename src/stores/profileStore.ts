@@ -52,11 +52,17 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function hexToRgb(hex: string): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  return `${(num >> 16) & 0xff}, ${(num >> 8) & 0xff}, ${num & 0xff}`;
+}
+
 function applyAccentColor(hex: string) {
   const root = document.documentElement;
   root.style.setProperty('--color-accent', hex);
   root.style.setProperty('--color-accent-hover', darkenHex(hex, 0.15));
   root.style.setProperty('--color-accent-light', hexToRgba(hex, 0.1));
+  root.style.setProperty('--accent-rgb', hexToRgb(hex));
 }
 
 function applyTheme(pref: 'light' | 'dark' | 'system') {

@@ -25,7 +25,7 @@ const tabs: TabItem[] = [
 
 export function BottomTabBar() {
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface/80 backdrop-blur-xl border-t border-border safe-bottom">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border/50 safe-bottom">
       <div className="flex items-center justify-around px-2 py-1">
         {tabs.map(({ to, label, icon: Icon }) => (
           <NavLink

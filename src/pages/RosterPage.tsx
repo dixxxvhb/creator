@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Plus, Users } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { DancerFormModal, DancerCard } from '@/components/roster';
 import { useRosterStore } from '@/stores/rosterStore';
 import { DANCER_COLORS } from '@/types';
+import { staggerContainer, staggerItem } from '@/lib/motion';
 import type { Dancer, DancerInsert } from '@/types';
 
 export function RosterPage() {
@@ -82,17 +84,23 @@ export function RosterPage() {
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <motion.div
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
           {dancers.map((dancer) => (
-            <DancerCard
-              key={dancer.id}
-              dancer={dancer}
-              pieces={pieceAssignments[dancer.id] ?? []}
-              onEdit={handleEdit}
-              onDelete={setDeleteTarget}
-            />
+            <motion.div key={dancer.id} variants={staggerItem}>
+              <DancerCard
+                dancer={dancer}
+                pieces={pieceAssignments[dancer.id] ?? []}
+                onEdit={handleEdit}
+                onDelete={setDeleteTarget}
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <DancerFormModal

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@200;300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Raleway:wght@200;300;400;500;600&display=swap');
 @import "tailwindcss";
 
 /* ─── Dark variant: use html.dark class instead of prefers-color-scheme ─── */
@@ -32,7 +32,7 @@
   --color-warning-600: #E08600;
 
   /* Fonts */
-  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-brand: 'Raleway', sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', monospace;
 }
@@ -128,5 +128,63 @@ html.dark {
 /* ─── iOS-style hairline separator ─── */
 .hairline {
   border-bottom: 0.5px solid var(--color-border);
+}
+
+/* ─── Card hover lift ─── */
+.card-interactive {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.card-interactive:active {
+  transform: scale(0.98);
+}
+
+/* ─── Skeleton loading shimmer ─── */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 25%,
+    var(--color-border-light) 37%,
+    var(--color-surface-secondary) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Subtle gradient backgrounds ─── */
+.gradient-hero {
+  background: radial-gradient(
+    ellipse at 50% 0%,
+    var(--color-accent-light) 0%,
+    transparent 70%
+  );
+}
+
+/* ─── Glass surface ─── */
+.glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+html.dark .glass {
+  background: rgba(28, 28, 30, 0.72);
+}
+
+/* ─── Accent glow (dark mode only) ─── */
+html.dark .accent-glow {
+  box-shadow: 0 0 20px rgba(var(--accent-rgb, 0, 122, 255), 0.35),
+              0 0 6px rgba(var(--accent-rgb, 0, 122, 255), 0.2);
+}
+html.dark .accent-glow:hover {
+  box-shadow: 0 0 28px rgba(var(--accent-rgb, 0, 122, 255), 0.45),
+              0 0 8px rgba(var(--accent-rgb, 0, 122, 255), 0.3);
 }
 

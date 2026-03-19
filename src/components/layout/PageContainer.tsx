@@ -19,22 +19,26 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        'p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 bg-surface-secondary min-h-full',
+        'pb-24 md:pb-8 bg-surface-secondary min-h-full',
         !fullWidth && 'max-w-6xl mx-auto w-full',
         className,
       )}
     >
       {(title || actions) && (
-        <div className="flex items-center justify-between gap-4 mb-6">
-          {title && (
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight">
-              {title}
-            </h1>
-          )}
-          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        <div className="sticky top-0 z-10 glass border-b border-border/50 px-4 sm:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {title && (
+              <h1 className="text-xl font-bold text-text-primary tracking-tight">
+                {title}
+              </h1>
+            )}
+            {actions && <div className="flex items-center gap-2">{actions}</div>}
+          </div>
         </div>
       )}
-      {children}
+      <div className="p-4 sm:p-6 lg:p-8">
+        {children}
+      </div>
     </div>
   );
 }

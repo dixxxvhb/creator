@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Toaster } from 'sonner';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { BottomTabBar } from './BottomTabBar';
 import { useProfileStore } from '@/stores/profileStore';
+import { pageVariants, pageTransition } from '@/lib/motion';
 
 const routeTitles: Record<string, string> = {
   '/': 'Home',
@@ -54,12 +57,35 @@ export function AppLayout() {
           onToggleTheme={toggleTheme}
         />
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={pageTransition}
+              className="h-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
 
       {/* Mobile bottom tabs */}
       <BottomTabBar />
+
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: 'var(--color-surface-elevated)',
+            border: '1px solid var(--color-border)',
+            color: 'var(--color-text-primary)',
+          },
+        }}
+      />
     </div>
   );
 }

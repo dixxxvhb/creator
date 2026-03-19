@@ -1,6 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Spinner } from './Spinner';
+import { buttonTap } from '@/lib/motion';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -40,25 +42,28 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button
-      disabled={disabled || loading}
-      className={cn(
-        'inline-flex items-center justify-center rounded-xl font-medium transition-colors',
-        'focus:outline-none focus-ring-accent',
-        'disabled:opacity-50',
-        variantStyles[variant],
-        sizeStyles[size],
-        className,
-      )}
-      style={
-        variant === 'primary'
-          ? { backgroundColor: 'var(--color-accent)', ...style }
-          : style
-      }
-      {...props}
-    >
-      {loading && <Spinner size="sm" />}
-      {children}
-    </button>
+    <motion.div {...buttonTap} className="inline-flex">
+      <button
+        disabled={disabled || loading}
+        className={cn(
+          'inline-flex items-center justify-center rounded-xl font-medium transition-all',
+          'focus:outline-none focus-ring-accent',
+          'disabled:opacity-50',
+          variant === 'primary' && 'accent-glow',
+          variantStyles[variant],
+          sizeStyles[size],
+          className,
+        )}
+        style={
+          variant === 'primary'
+            ? { backgroundColor: 'var(--color-accent)', ...style }
+            : style
+        }
+        {...props}
+      >
+        {loading && <Spinner size="sm" />}
+        {children}
+      </button>
+    </motion.div>
   );
 }
