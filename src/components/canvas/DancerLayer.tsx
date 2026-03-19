@@ -3,13 +3,14 @@ import { DancerDot } from './DancerDot';
 import type { DancerPosition } from '@/types';
 
 interface DancerLayerProps {
-  positions: DancerPosition[];
+  positions: (DancerPosition & { opacity?: number })[];
   snapToGrid: boolean;
+  interactive?: boolean;
   onDragMove: (id: string, x: number, y: number) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
 }
 
-export function DancerLayer({ positions, snapToGrid, onDragMove, onDragEnd }: DancerLayerProps) {
+export function DancerLayer({ positions, snapToGrid, interactive = true, onDragMove, onDragEnd }: DancerLayerProps) {
   return (
     <Group>
       {positions.map((pos) => (
@@ -17,6 +18,8 @@ export function DancerLayer({ positions, snapToGrid, onDragMove, onDragEnd }: Da
           key={pos.id}
           position={pos}
           snapToGrid={snapToGrid}
+          interactive={interactive}
+          opacity={'opacity' in pos ? pos.opacity : 1}
           onDragMove={onDragMove}
           onDragEnd={onDragEnd}
         />

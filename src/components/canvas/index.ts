@@ -4,3 +4,4 @@ export { CanvasToolbar } from './CanvasToolbar';
 export { GridLayer } from './GridLayer';
 export { DancerLayer } from './DancerLayer';
 export { DancerDot } from './DancerDot';
+export { PlaybackControls } from './PlaybackControls';

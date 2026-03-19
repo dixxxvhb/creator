@@ -31,12 +31,29 @@ export interface Formation {
   timestamp_seconds: number | null;
   choreo_notes: string;
   counts_notes: string;
+  transition_duration_ms: number;
+  transition_easing: string;
   created_at: string;
   updated_at: string;
 }
 
 export type FormationInsert = Omit<Formation, 'id' | 'created_at' | 'updated_at'>;
 export type FormationUpdate = Partial<Omit<FormationInsert, 'piece_id'>>;
+
+// ─── Easing Options ───
+export const EASING_OPTIONS = [
+  { value: 'linear', label: 'Linear' },
+  { value: 'ease-in', label: 'Ease In' },
+  { value: 'ease-out', label: 'Ease Out' },
+  { value: 'ease-in-out', label: 'Ease In-Out' },
+] as const;
+
+export type EasingType = (typeof EASING_OPTIONS)[number]['value'];
+
+// ─── Playback Position (extends DancerPosition with opacity) ───
+export interface PlaybackPosition extends DancerPosition {
+  opacity: number;
+}
 
 // ─── DancerPosition ───
 export interface DancerPosition {

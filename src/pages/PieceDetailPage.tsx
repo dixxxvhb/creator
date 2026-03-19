@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Music, Users, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Save, Music, Users, Pencil, Check, X, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Textarea } from '@/components/ui/Textarea';
+import { Select } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
-import { FormationCanvas, ThumbnailStrip, CanvasToolbar } from '@/components/canvas';
+import { FormationCanvas, ThumbnailStrip, CanvasToolbar, PlaybackControls } from '@/components/canvas';
+import { usePlayback } from '@/hooks/usePlayback';
+import { EASING_OPTIONS } from '@/types';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useFormationStore } from '@/stores/formationStore';
 import { useUIStore } from '@/stores/uiStore';
-import type { DancerPositionInsert } from '@/types';
+import type { DancerPositionInsert, EasingType } from '@/types';
 
 export function PieceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -39,6 +42,24 @@ export function PieceDetailPage() {
   const toggleGrid = useUIStore((s) => s.toggleGrid);
   const toggleSnap = useUIStore((s) => s.toggleSnap);
 
+  const {
+    isPlaying,
+    isPaused,
+    interpolatedPositions,
+    startPlayback,
+    pause: pausePlayback,
+    resume: resumePlayback,
+    stop: stopPlayback,
+    setSpeed,
+    toggleLoop,
+    playbackSpeed,
+    loopEnabled,
+    progress: playbackProgress,
+    currentTransitionIndex,
+    totalTransitions,
+  } = usePlayback();
+
+  const [transitionOpen, setTransitionOpen] = useState(true);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -90,6 +111,8 @@ export function PieceDetailPage() {
       timestamp_seconds: null,
       choreo_notes: '',
       counts_notes: '',
+      transition_duration_ms: 2000,
+      transition_easing: 'ease-in-out',
     });
   }
 
@@ -210,7 +233,7 @@ export function PieceDetailPage() {
           </div>
         </div>
 
-        <Button onClick={handleSavePositions} loading={isSaving}>
+        <Button onClick={handleSavePositions} loading={isSaving} disabled={isPlaying || isPaused}>
           <Save size={16} />
           Save
         </Button>
@@ -221,13 +244,13 @@ export function PieceDetailPage() {
         {/* Canvas area */}
         <div className="flex-1 flex flex-col gap-3">
           {/* Toolbar */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <CanvasToolbar
               showGrid={showGrid}
               snapToGrid={snapToGrid}
               zoom={zoom}
-              canGoPrev={canGoPrev}
-              canGoNext={canGoNext}
+              canGoPrev={canGoPrev && !isPlaying}
+              canGoNext={canGoNext && !isPlaying}
               onToggleGrid={toggleGrid}
               onToggleSnap={toggleSnap}
               onZoomIn={() => setZoom((z) => Math.min(3, z + 0.1))}
@@ -235,6 +258,22 @@ export function PieceDetailPage() {
               onZoomReset={() => setZoom(1)}
               onPrev={goPrev}
               onNext={goNext}
+            />
+            <PlaybackControls
+              isPlaying={isPlaying}
+              isPaused={isPaused}
+              playbackSpeed={playbackSpeed}
+              loopEnabled={loopEnabled}
+              progress={playbackProgress}
+              currentTransitionIndex={currentTransitionIndex}
+              totalTransitions={totalTransitions}
+              canPlay={formations.length >= 2}
+              onPlay={() => startPlayback('sequence')}
+              onPause={pausePlayback}
+              onResume={resumePlayback}
+              onStop={stopPlayback}
+              onSetSpeed={setSpeed}
+              onToggleLoop={toggleLoop}
             />
             {activeFormation && (
               <span className="text-sm text-slate-400 font-medium">
@@ -245,7 +284,7 @@ export function PieceDetailPage() {
 
           {/* Formation Canvas */}
           <div className="flex-1 min-h-[400px]">
-            <FormationCanvas piece={piece} />
+            <FormationCanvas piece={piece} playbackPositions={interpolatedPositions} />
           </div>
 
           {/* Thumbnail strip */}
@@ -329,6 +368,63 @@ export function PieceDetailPage() {
                 )}
               </div>
             </Card>
+
+            {/* Transition Settings */}
+            {activeIdx > 0 && (
+              <Card
+                header={
+                  <button
+                    onClick={() => setTransitionOpen((o) => !o)}
+                    className="flex items-center justify-between w-full"
+                  >
+                    <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-1.5">
+                      <Clock size={14} />
+                      Transition
+                    </h3>
+                    {transitionOpen ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                  </button>
+                }
+              >
+                {transitionOpen && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                        Duration: {activeFormation.transition_duration_ms ?? 2000}ms
+                        {piece.bpm ? ` (${((activeFormation.transition_duration_ms ?? 2000) / (60000 / piece.bpm)).toFixed(1)} counts)` : ''}
+                      </label>
+                      <input
+                        type="range"
+                        min={500}
+                        max={5000}
+                        step={100}
+                        value={activeFormation.transition_duration_ms ?? 2000}
+                        onChange={(e) =>
+                          updateFormation(activeFormation.id, {
+                            transition_duration_ms: parseInt(e.target.value),
+                          })
+                        }
+                        className="w-full accent-electric-500"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-600 mt-0.5">
+                        <span>0.5s</span>
+                        <span>5s</span>
+                      </div>
+                    </div>
+
+                    <Select
+                      label="Easing"
+                      options={EASING_OPTIONS.map((e) => ({ value: e.value, label: e.label }))}
+                      value={(activeFormation.transition_easing ?? 'ease-in-out') as EasingType}
+                      onChange={(e) =>
+                        updateFormation(activeFormation.id, {
+                          transition_easing: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                )}
+              </Card>
+            )}
           </div>
         )}
       </div>

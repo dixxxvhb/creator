@@ -118,6 +118,8 @@ export function PieceSetupPage() {
         timestamp_seconds: null,
         choreo_notes: '',
         counts_notes: '',
+        transition_duration_ms: 2000,
+        transition_easing: 'ease-in-out',
       });
 
       if (formation) {

@@ -6,6 +6,8 @@ import type { DancerPosition } from '@/types';
 interface DancerDotProps {
   position: DancerPosition;
   snapToGrid: boolean;
+  interactive?: boolean;
+  opacity?: number;
   onDragMove: (id: string, x: number, y: number) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
 }
@@ -13,7 +15,7 @@ interface DancerDotProps {
 const DOT_RADIUS = 0.8;
 const FONT_SIZE = 0.7;
 
-export function DancerDot({ position, snapToGrid, onDragMove, onDragEnd }: DancerDotProps) {
+export function DancerDot({ position, snapToGrid, interactive = true, opacity = 1, onDragMove, onDragEnd }: DancerDotProps) {
   const groupRef = useRef<Konva.Group>(null);
 
   function handleDragMove() {
@@ -46,9 +48,10 @@ export function DancerDot({ position, snapToGrid, onDragMove, onDragEnd }: Dance
       ref={groupRef}
       x={position.x}
       y={position.y}
-      draggable
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
+      opacity={opacity}
+      draggable={interactive}
+      onDragMove={interactive ? handleDragMove : undefined}
+      onDragEnd={interactive ? handleDragEnd : undefined}
     >
       {/* Shadow for depth */}
       <Circle

@@ -5,10 +5,11 @@ import { GridLayer } from './GridLayer';
 import { DancerLayer } from './DancerLayer';
 import { useUIStore } from '@/stores/uiStore';
 import { useFormationStore } from '@/stores/formationStore';
-import type { Piece } from '@/types';
+import type { Piece, PlaybackPosition } from '@/types';
 
 interface FormationCanvasProps {
   piece: Piece;
+  playbackPositions?: PlaybackPosition[] | null;
 }
 
 const MIN_ZOOM = 0.5;
@@ -20,7 +21,7 @@ const STAGE_BG = '#141824';
 const STAGE_BORDER = '#334155';
 const LABEL_COLOR = '#64748b';
 
-export function FormationCanvas({ piece }: FormationCanvasProps) {
+export function FormationCanvas({ piece, playbackPositions }: FormationCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
 
@@ -34,7 +35,9 @@ export function FormationCanvas({ piece }: FormationCanvasProps) {
   const positions = useFormationStore((s) => s.positions);
   const updateLocalPosition = useFormationStore((s) => s.updateLocalPosition);
 
-  const activePositions = activeFormationId ? positions[activeFormationId] ?? [] : [];
+  const storedPositions = activeFormationId ? positions[activeFormationId] ?? [] : [];
+  const isPlayback = playbackPositions != null && playbackPositions.length > 0;
+  const activePositions = isPlayback ? playbackPositions : storedPositions;
 
   // ResizeObserver — NEVER hardcode dimensions
   useEffect(() => {
@@ -177,6 +180,7 @@ export function FormationCanvas({ piece }: FormationCanvasProps) {
           <DancerLayer
             positions={activePositions}
             snapToGrid={snapToGrid}
+            interactive={!isPlayback}
             onDragMove={handleDragMove}
             onDragEnd={handleDragEnd}
           />
