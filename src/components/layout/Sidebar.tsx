@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CreatorLogo } from '@/components/branding/CreatorLogo';
 
 interface NavItem {
   to: string;
@@ -32,7 +33,8 @@ interface SidebarProps {
 export function Sidebar({ onNavigate }: SidebarProps) {
   return (
     <aside className="w-64 glass border-r border-border/50 h-screen flex flex-col shrink-0">
-      <div className="px-5 py-5 flex items-center gap-2.5">
+      <div className="px-5 py-5 flex items-center gap-3">
+        <CreatorLogo size={24} className="text-text-primary" />
         <span
           className="text-text-primary uppercase font-brand"
           style={{ fontWeight: 200, letterSpacing: '0.3em', fontSize: '1.1rem' }}

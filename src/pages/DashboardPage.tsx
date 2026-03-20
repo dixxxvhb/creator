@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useProfileStore } from '@/stores/profileStore';
+import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { staggerContainer, staggerItem } from '@/lib/motion';
 
 function formatDate(date: Date): string {
@@ -51,12 +52,15 @@ export function DashboardPage() {
                     {studioName}
                   </p>
                 )}
-                <h1
-                  className="text-text-primary uppercase font-brand mb-2"
-                  style={{ fontWeight: 200, letterSpacing: '0.25em', fontSize: '1.8rem', lineHeight: 1.1 }}
-                >
-                  Creator
-                </h1>
+                <div className="flex items-center gap-3 mb-2">
+                  <CreatorLogo size={32} className="text-text-primary" />
+                  <h1
+                    className="text-text-primary uppercase font-brand"
+                    style={{ fontWeight: 200, letterSpacing: '0.25em', fontSize: '1.8rem', lineHeight: 1.1 }}
+                  >
+                    Creator
+                  </h1>
+                </div>
                 <p className="text-xs text-text-tertiary tracking-wide">
                   Choreography, visualized.
                 </p>
