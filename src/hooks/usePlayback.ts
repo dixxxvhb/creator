@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo } from 'react';
 import { usePlaybackStore } from '@/stores/playbackStore';
 import { useFormationStore } from '@/stores/formationStore';
 import { usePathStore } from '@/stores/pathStore';
+import { useAudioStore } from '@/stores/audioStore';
 import { getPointAtT, getSplinePointAtT } from '@/lib/pathUtils';
 import type { PlaybackPosition, DancerPosition, DancerPath, PathPoint } from '@/types';
 
@@ -49,7 +50,8 @@ function interpolatePositions(
   to: DancerPosition[],
   t: number,
   easing: string,
-  paths: DancerPath[]
+  paths: DancerPath[],
+  soloDancerLabel: string | null = null
 ): PlaybackPosition[] {
   const easedT = applyEasing(t, easing);
 
@@ -64,6 +66,13 @@ function interpolatePositions(
   for (const fp of from) {
     seen.add(fp.dancer_label);
     const tp = toMap.get(fp.dancer_label);
+
+    // If solo mode, freeze all dancers except the solo one
+    if (soloDancerLabel && fp.dancer_label !== soloDancerLabel) {
+      result.push({ ...fp, opacity: 1 });
+      continue;
+    }
+
     if (tp) {
       const path = pathMap.get(fp.dancer_label);
       let x: number, y: number;
@@ -93,9 +102,10 @@ function interpolatePositions(
     }
   }
 
-  // Dancers only in 'to' — fade in
+  // Dancers only in 'to' — fade in (skip if solo and not the solo dancer)
   for (const tp of to) {
     if (!seen.has(tp.dancer_label)) {
+      if (soloDancerLabel && tp.dancer_label !== soloDancerLabel) continue;
       result.push({
         ...tp,
         opacity: easedT,
@@ -115,7 +125,14 @@ export function usePlayback() {
   const isPaused = usePlaybackStore((s) => s.isPaused);
   const progress = usePlaybackStore((s) => s.progress);
   const currentTransitionIndex = usePlaybackStore((s) => s.currentTransitionIndex);
+  const audioMode = usePlaybackStore((s) => s.audioMode);
   const tick = usePlaybackStore((s) => s.tick);
+  const tickAudio = usePlaybackStore((s) => s.tickAudio);
+
+  const soloDancerLabel = usePlaybackStore((s) => s.soloDancerLabel);
+
+  const audioCurrentTime = useAudioStore((s) => s.currentTime);
+  const isAudioPlaying = useAudioStore((s) => s.isAudioPlaying);
 
   const formations = useFormationStore((s) => s.formations);
   const positions = useFormationStore((s) => s.positions);
@@ -136,8 +153,8 @@ export function usePlayback() {
   const interpolatedPositions: PlaybackPosition[] | null = useMemo(() => {
     if (!isPlaying && !isPaused) return null;
     if (!fromFormation || !toFormation) return null;
-    return interpolatePositions(fromPositions, toPositions, progress, easing, transitionPaths);
-  }, [isPlaying, isPaused, fromFormation, toFormation, fromPositions, toPositions, progress, easing, transitionPaths]);
+    return interpolatePositions(fromPositions, toPositions, progress, easing, transitionPaths, soloDancerLabel);
+  }, [isPlaying, isPaused, fromFormation, toFormation, fromPositions, toPositions, progress, easing, transitionPaths, soloDancerLabel]);
 
   // Update active formation in thumbnail strip as playback advances
   useEffect(() => {
@@ -148,8 +165,24 @@ export function usePlayback() {
     }
   }, [isPlaying, isPaused, fromFormation, setActiveFormation]);
 
-  // rAF loop
+  // Audio-driven: update playback state from audio currentTime
   useEffect(() => {
+    if (!audioMode || !isAudioPlaying) return;
+
+    const timestamps = formations.map((f) => f.timestamp_seconds);
+    tickAudio(audioCurrentTime, timestamps);
+  }, [audioMode, isAudioPlaying, audioCurrentTime, formations, tickAudio]);
+
+  // Stop playback state when audio stops
+  useEffect(() => {
+    if (audioMode && !isAudioPlaying && isPlaying) {
+      usePlaybackStore.getState().stop();
+    }
+  }, [audioMode, isAudioPlaying, isPlaying]);
+
+  // rAF loop (timer-based mode only)
+  useEffect(() => {
+    if (audioMode) return; // Audio mode uses its own timing
     if (!isPlaying || isPaused) {
       lastTimeRef.current = 0;
       return;
@@ -178,7 +211,7 @@ export function usePlayback() {
         cancelAnimationFrame(rafRef.current);
       }
     };
-  }, [isPlaying, isPaused, tick]);
+  }, [isPlaying, isPaused, tick, audioMode]);
 
   // Helper to start playback
   function startPlayback(mode: 'single' | 'sequence' = 'sequence') {

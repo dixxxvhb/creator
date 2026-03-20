@@ -1,4 +1,5 @@
 export { FormationCanvas } from './FormationCanvas';
+export type { FormationCanvasHandle } from './FormationCanvas';
 export { ThumbnailStrip } from './ThumbnailStrip';
 export { CanvasToolbar } from './CanvasToolbar';
 export { GridLayer } from './GridLayer';
@@ -6,3 +7,4 @@ export { DancerLayer } from './DancerLayer';
 export { DancerDot } from './DancerDot';
 export { PlaybackControls } from './PlaybackControls';
 export { PathLayer } from './PathLayer';
+export { TemplatePickerModal } from './TemplatePickerModal';

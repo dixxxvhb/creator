@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
 import { usePieceStore } from '@/stores/pieceStore';
+import { useSeasonStore } from '@/stores/seasonStore';
+import { useRosterStore } from '@/stores/rosterStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { staggerContainer, staggerItem } from '@/lib/motion';
@@ -23,13 +25,19 @@ export function DashboardPage() {
   const pieces = usePieceStore((s) => s.pieces);
   const isLoading = usePieceStore((s) => s.isLoading);
   const load = usePieceStore((s) => s.load);
+  const seasons = useSeasonStore((s) => s.seasons);
+  const loadSeasons = useSeasonStore((s) => s.loadSeasons);
+  const dancers = useRosterStore((s) => s.dancers);
+  const loadRoster = useRosterStore((s) => s.load);
   const displayName = useProfileStore((s) => s.displayName);
   const studioName = useProfileStore((s) => s.studioName);
   const customGreeting = useProfileStore((s) => s.customGreeting);
 
   useEffect(() => {
     load();
-  }, [load]);
+    loadSeasons();
+    loadRoster();
+  }, [load, loadSeasons, loadRoster]);
 
   const greeting = customGreeting
     || (displayName ? `Welcome back, ${displayName}` : 'Welcome back');
@@ -96,7 +104,7 @@ export function DashboardPage() {
                 <div className="flex items-center justify-center w-11 h-11 rounded-2xl accent-bg-light">
                   <Trophy size={22} className="accent-text" />
                 </div>
-                <p className="text-3xl font-bold text-text-primary tracking-tight">0</p>
+                <p className="text-3xl font-bold text-text-primary tracking-tight">{seasons.length}</p>
                 <p className="text-xs font-medium text-text-secondary">Seasons</p>
               </div>
             </Card>
@@ -111,7 +119,7 @@ export function DashboardPage() {
                 <div className="flex items-center justify-center w-11 h-11 rounded-2xl accent-bg-light">
                   <Users size={22} className="accent-text" />
                 </div>
-                <p className="text-3xl font-bold text-text-primary tracking-tight">0</p>
+                <p className="text-3xl font-bold text-text-primary tracking-tight">{dancers.length}</p>
                 <p className="text-xs font-medium text-text-secondary">Dancers</p>
               </div>
             </Card>

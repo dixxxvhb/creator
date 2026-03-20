@@ -1,4 +1,4 @@
-import { Group, Line, Circle } from 'react-konva';
+import { Group, Line, Circle, Text } from 'react-konva';
 import type { DancerPath, DancerPosition, PathPoint, CanvasMode } from '@/types';
 
 interface PathLayerProps {
@@ -9,12 +9,14 @@ interface PathLayerProps {
   drawingDancerLabel: string | null;
   selectedPath: { formationId: string; dancerLabel: string } | null;
   canvasMode: CanvasMode;
+  isDrawing?: boolean;
   onControlPointDrag: (dancerLabel: string, pointIndex: number, x: number, y: number) => void;
   onPathClick: (dancerLabel: string) => void;
 }
 
 const CONTROL_POINT_RADIUS = 0.25;
 const PATH_STROKE_WIDTH = 0.15;
+const GHOST_DOT_RADIUS = 0.6;
 
 function getFullPoints(
   path: DancerPath,
@@ -41,11 +43,61 @@ export function PathLayer({
   drawingDancerLabel,
   selectedPath,
   canvasMode,
+  isDrawing = false,
   onControlPointDrag,
   onPathClick,
 }: PathLayerProps) {
+  const isDrawMode = canvasMode === 'draw-freehand' || canvasMode === 'draw-geometric';
+
   return (
     <Group>
+      {/* Ghost dots — show where dancers end up in next formation */}
+      {isDrawMode && nextPositions.map((nextPos) => {
+        const currentPos = positions.find((p) => p.dancer_label === nextPos.dancer_label);
+        if (!currentPos) return null;
+        // Only show ghost if position actually changes
+        const dx = nextPos.x - currentPos.x;
+        const dy = nextPos.y - currentPos.y;
+        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null;
+
+        // Highlight the active drawing target's ghost more
+        const isTarget = isDrawing && drawingDancerLabel === nextPos.dancer_label;
+
+        return (
+          <Group key={`ghost-${nextPos.dancer_label}`}>
+            {/* Ghost dot outline */}
+            <Circle
+              x={nextPos.x}
+              y={nextPos.y}
+              radius={GHOST_DOT_RADIUS}
+              stroke={nextPos.color}
+              strokeWidth={0.08}
+              opacity={isTarget ? 0.7 : 0.25}
+              dash={[0.15, 0.1]}
+              listening={false}
+            />
+            {/* Ghost label */}
+            <Text
+              x={nextPos.x}
+              y={nextPos.y}
+              text={nextPos.dancer_label}
+              fontSize={0.5}
+              fill={nextPos.color}
+              fontStyle="bold"
+              fontFamily="Inter, system-ui, sans-serif"
+              align="center"
+              verticalAlign="middle"
+              width={GHOST_DOT_RADIUS * 2}
+              height={GHOST_DOT_RADIUS * 2}
+              offsetX={GHOST_DOT_RADIUS}
+              offsetY={GHOST_DOT_RADIUS}
+              opacity={isTarget ? 0.6 : 0.2}
+              listening={false}
+            />
+          </Group>
+        );
+      })}
+
       {/* Saved paths */}
       {paths.map((path) => {
         const fullPoints = getFullPoints(path, positions, nextPositions);
@@ -107,18 +159,36 @@ export function PathLayer({
           points.push(pt.x, pt.y);
         }
 
+        const isGeometric = canvasMode === 'draw-geometric';
+
         return (
-          <Line
-            points={points}
-            stroke={dancer.color}
-            strokeWidth={PATH_STROKE_WIDTH}
-            opacity={0.7}
-            tension={canvasMode === 'draw-freehand' ? 0.3 : 0}
-            lineCap="round"
-            lineJoin="round"
-            dash={[0.2, 0.15]}
-            listening={false}
-          />
+          <Group>
+            <Line
+              points={points}
+              stroke={dancer.color}
+              strokeWidth={0.2}
+              opacity={0.9}
+              tension={isGeometric ? 0 : 0.3}
+              lineCap="round"
+              lineJoin="round"
+              dash={[0.2, 0.15]}
+              listening={false}
+            />
+            {/* Waypoint markers for geometric mode */}
+            {isGeometric && drawingPoints.map((pt, idx) => (
+              <Circle
+                key={idx}
+                x={pt.x}
+                y={pt.y}
+                radius={0.18}
+                fill={dancer.color}
+                stroke="#ffffff"
+                strokeWidth={0.05}
+                opacity={0.9}
+                listening={false}
+              />
+            ))}
+          </Group>
         );
       })()}
     </Group>

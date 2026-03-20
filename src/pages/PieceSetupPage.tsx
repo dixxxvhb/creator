@@ -1,19 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Zap, ClipboardList } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { PieceSetupForm } from '@/components/pieces';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useFormationStore } from '@/stores/formationStore';
 import type { PieceInsert, DancerPositionInsert } from '@/types';
 import { DANCER_COLORS } from '@/types';
-
-function generateLabel(i: number): string {
-  if (i < 26) return String.fromCharCode(65 + i);
-  return (
-    String.fromCharCode(65 + Math.floor(i / 26) - 1) +
-    String.fromCharCode(65 + (i % 26))
-  );
-}
+import { generateLabel } from '@/lib/formationTemplates';
 
 function generateStarterPositions(
   dancerCount: number,
@@ -100,8 +94,52 @@ export function PieceSetupPage() {
   const addFormation = useFormationStore((s) => s.addFormation);
   const savePositions = useFormationStore((s) => s.savePositions);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mode, setMode] = useState<'choose' | 'full'>('choose');
 
-  async function handleSubmit(data: PieceInsert, groupSize: string) {
+  async function handleQuickStart() {
+    setIsSubmitting(true);
+    try {
+      const data: PieceInsert = {
+        title: 'Untitled Piece',
+        style: 'Contemporary',
+        group_size: 'small-group',
+        dancer_count: 0,
+        song_title: null,
+        song_artist: null,
+        bpm: null,
+        duration_seconds: null,
+        audio_url: null,
+        stage_width: 40,
+        stage_depth: 30,
+        notes: '',
+        sort_order: 0,
+      };
+
+      const piece = await addPiece(data);
+      if (!piece) {
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Create first formation (empty — no dancers yet)
+      await addFormation({
+        piece_id: piece.id,
+        index: 0,
+        label: 'Formation 1',
+        timestamp_seconds: null,
+        choreo_notes: '',
+        counts_notes: '',
+        transition_duration_ms: 2000,
+        transition_easing: 'ease-in-out',
+      });
+
+      navigate(`/pieces/${piece.id}`);
+    } catch {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleSubmit(data: PieceInsert, groupSize: string, selectedDancerIds: string[]) {
     setIsSubmitting(true);
     try {
       const piece = await addPiece(data);
@@ -110,7 +148,6 @@ export function PieceSetupPage() {
         return;
       }
 
-      // Create first formation
       const formation = await addFormation({
         piece_id: piece.id,
         index: 0,
@@ -123,7 +160,6 @@ export function PieceSetupPage() {
       });
 
       if (formation) {
-        // Generate starter positions
         const starterPositions = generateStarterPositions(
           piece.dancer_count,
           groupSize,
@@ -131,9 +167,9 @@ export function PieceSetupPage() {
           piece.stage_depth,
         );
 
-        const positionInserts: DancerPositionInsert[] = starterPositions.map((pos) => ({
+        const positionInserts: DancerPositionInsert[] = starterPositions.map((pos, i) => ({
           formation_id: formation.id,
-          dancer_id: null,
+          dancer_id: selectedDancerIds[i] ?? null,
           dancer_label: pos.dancer_label,
           x: pos.x,
           y: pos.y,
@@ -147,6 +183,45 @@ export function PieceSetupPage() {
     } catch {
       setIsSubmitting(false);
     }
+  }
+
+  if (mode === 'choose') {
+    return (
+      <PageContainer title="New Piece">
+        <div className="max-w-xl mx-auto space-y-4 pt-4">
+          <button
+            onClick={handleQuickStart}
+            disabled={isSubmitting}
+            className="w-full flex items-center gap-4 p-5 rounded-2xl border-2 border-[var(--color-accent)] accent-bg-light hover:brightness-105 transition-all text-left group"
+          >
+            <div className="p-3 rounded-xl bg-[var(--color-accent)]/15 text-[var(--color-accent)] shrink-0">
+              <Zap size={24} />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-text-primary">Quick Start</p>
+              <p className="text-sm text-text-secondary mt-0.5">
+                Jump straight to the canvas. Add title, dancers, and details later.
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => setMode('full')}
+            className="w-full flex items-center gap-4 p-5 rounded-2xl border border-border hover:border-text-tertiary hover:bg-surface-secondary/50 transition-all text-left"
+          >
+            <div className="p-3 rounded-xl bg-surface-secondary text-text-secondary shrink-0">
+              <ClipboardList size={24} />
+            </div>
+            <div>
+              <p className="text-base font-semibold text-text-primary">Full Setup</p>
+              <p className="text-sm text-text-secondary mt-0.5">
+                Set title, style, dancers, song info, and stage size upfront.
+              </p>
+            </div>
+          </button>
+        </div>
+      </PageContainer>
+    );
   }
 
   return (

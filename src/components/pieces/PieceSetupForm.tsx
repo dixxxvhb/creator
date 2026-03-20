@@ -1,13 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Check, Plus, X } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
-import type { PieceInsert } from '@/types';
-import { DANCE_STYLES, GROUP_SIZES } from '@/types';
+import { cn } from '@/lib/utils';
+import { useRosterStore } from '@/stores/rosterStore';
+import type { PieceInsert, DancerInsert } from '@/types';
+import { DANCE_STYLES, GROUP_SIZES, DANCER_COLORS } from '@/types';
 
 interface PieceSetupFormProps {
-  onSubmit: (data: PieceInsert, groupSize: string) => void;
+  onSubmit: (data: PieceInsert, groupSize: string, selectedDancerIds: string[]) => void;
   isSubmitting: boolean;
 }
 
@@ -26,10 +29,56 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
   const [seconds, setSeconds] = useState('');
   const [notes, setNotes] = useState('');
 
+  // Dancer selection
+  const [selectedDancerIds, setSelectedDancerIds] = useState<string[]>([]);
+  const [showNewDancer, setShowNewDancer] = useState(false);
+  const [newDancerName, setNewDancerName] = useState('');
+  const [newDancerShort, setNewDancerShort] = useState('');
+
+  const rosterDancers = useRosterStore((s) => s.dancers);
+  const loadRoster = useRosterStore((s) => s.load);
+  const addRosterDancer = useRosterStore((s) => s.add);
+
+  useEffect(() => {
+    if (rosterDancers.length === 0) loadRoster();
+  }, [rosterDancers.length, loadRoster]);
+
+  // Sync dancer count when selections change
+  useEffect(() => {
+    if (selectedDancerIds.length > 0) {
+      setDancerCount(selectedDancerIds.length);
+    }
+  }, [selectedDancerIds]);
+
   function handleGroupSizeChange(value: string) {
     setGroupSize(value);
     const match = GROUP_SIZES.find((g) => g.value === value);
-    if (match) setDancerCount(match.defaultCount);
+    if (match && selectedDancerIds.length === 0) setDancerCount(match.defaultCount);
+  }
+
+  function toggleDancer(id: string) {
+    setSelectedDancerIds((prev) =>
+      prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]
+    );
+  }
+
+  async function handleAddNewDancer() {
+    if (!newDancerName.trim()) return;
+    const color = DANCER_COLORS[rosterDancers.length % DANCER_COLORS.length];
+    const insert: DancerInsert = {
+      full_name: newDancerName.trim(),
+      short_name: newDancerShort.trim() || newDancerName.trim().split(' ')[0],
+      birthday: null,
+      color,
+      is_active: true,
+    };
+    const created = await addRosterDancer(insert);
+    if (created) {
+      setSelectedDancerIds((prev) => [...prev, created.id]);
+      setNewDancerName('');
+      setNewDancerShort('');
+      setShowNewDancer(false);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -56,12 +105,12 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
       sort_order: 0,
     };
 
-    onSubmit(data, groupSize);
+    onSubmit(data, groupSize, selectedDancerIds);
   }
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-      {/* Title — full width */}
+      {/* Title */}
       <Input
         label="Title"
         value={title}
@@ -86,15 +135,92 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
         />
       </div>
 
-      {/* Dancer Count */}
-      <Input
-        label="Dancer Count"
-        type="number"
-        min={1}
-        value={dancerCount}
-        onChange={(e) => setDancerCount(parseInt(e.target.value) || 1)}
-        required
-      />
+      {/* Dancers section */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-text-secondary">
+            Dancers ({selectedDancerIds.length > 0 ? `${selectedDancerIds.length} selected` : dancerCount})
+          </label>
+          {selectedDancerIds.length === 0 && (
+            <span className="text-xs text-text-tertiary">Pick dancers or set a count below</span>
+          )}
+        </div>
+
+        {/* Roster dancer chips */}
+        {rosterDancers.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {rosterDancers.map((dancer) => {
+              const isSelected = selectedDancerIds.includes(dancer.id);
+              return (
+                <button
+                  key={dancer.id}
+                  type="button"
+                  onClick={() => toggleDancer(dancer.id)}
+                  className={cn(
+                    'flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-sm transition-all',
+                    isSelected
+                      ? 'border-[var(--color-accent)] accent-bg-light font-medium'
+                      : 'border-border hover:border-text-tertiary text-text-secondary hover:text-text-primary'
+                  )}
+                >
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: dancer.color }}
+                  />
+                  {dancer.short_name}
+                  {isSelected && <Check size={12} className="text-[var(--color-accent)]" />}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Quick-add new dancer */}
+        {showNewDancer ? (
+          <div className="flex items-end gap-2 p-3 border border-border rounded-xl bg-surface-secondary/30">
+            <Input
+              label="Full Name"
+              value={newDancerName}
+              onChange={(e) => setNewDancerName(e.target.value)}
+              placeholder="Jane Doe"
+              autoFocus
+            />
+            <Input
+              label="Display Name"
+              value={newDancerShort}
+              onChange={(e) => setNewDancerShort(e.target.value)}
+              placeholder="Jane"
+            />
+            <Button type="button" size="sm" onClick={handleAddNewDancer} disabled={!newDancerName.trim()}>
+              Add
+            </Button>
+            <button type="button" onClick={() => setShowNewDancer(false)} className="p-2 text-text-tertiary hover:text-text-primary">
+              <X size={16} />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowNewDancer(true)}
+            className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <Plus size={14} />
+            New dancer
+          </button>
+        )}
+
+        {/* Manual count fallback — only show when no dancers selected */}
+        {selectedDancerIds.length === 0 && (
+          <Input
+            label="Dancer Count"
+            type="number"
+            min={1}
+            value={dancerCount}
+            onChange={(e) => setDancerCount(parseInt(e.target.value) || 1)}
+            required
+          />
+        )}
+      </div>
 
       {/* Song info */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

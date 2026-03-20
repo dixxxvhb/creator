@@ -19,7 +19,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        'pb-24 md:pb-8 bg-surface-secondary min-h-full',
+        'pb-24 md:pb-8 bg-surface-secondary min-h-full overflow-x-hidden',
         !fullWidth && 'max-w-6xl mx-auto w-full',
         className,
       )}

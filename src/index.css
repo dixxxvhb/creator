@@ -115,6 +115,15 @@ html.dark {
   background: var(--color-text-tertiary);
 }
 
+/* ─── Hide scrollbar utility ─── */
+@utility scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* ─── iOS Safe Areas ─── */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .safe-bottom {

@@ -161,3 +161,107 @@ export const ACCENT_PRESETS = [
   { value: '#00C7BE', label: 'Mint' },
   { value: '#8E8E93', label: 'Graphite' },
 ] as const;
+
+// ─── Season ───
+export interface Season {
+  id: string;
+  user_id: string | null;
+  name: string;
+  year: number;
+  start_date: string | null;
+  end_date: string | null;
+  notes: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SeasonInsert = Omit<Season, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
+export type SeasonUpdate = Partial<SeasonInsert>;
+
+// ─── Piece-Season join ───
+export interface PieceSeason {
+  id: string;
+  piece_id: string;
+  season_id: string;
+}
+
+// ─── Competition ───
+export interface Competition {
+  id: string;
+  season_id: string;
+  name: string;
+  location: string;
+  date: string | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CompetitionInsert = Omit<Competition, 'id' | 'created_at' | 'updated_at'>;
+export type CompetitionUpdate = Partial<Omit<CompetitionInsert, 'season_id'>>;
+
+// ─── Competition Entry ───
+export interface CompetitionEntry {
+  id: string;
+  competition_id: string;
+  piece_id: string;
+  category: string;
+  placement: string | null;
+  score: number | null;
+  special_awards: string | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CompetitionEntryInsert = Omit<CompetitionEntry, 'id' | 'created_at' | 'updated_at'>;
+export type CompetitionEntryUpdate = Partial<Omit<CompetitionEntryInsert, 'competition_id'>>;
+
+// ─── Costume ───
+export interface Costume {
+  id: string;
+  piece_id: string;
+  name: string;
+  description: string;
+  color: string;
+  image_url: string | null;
+  cost: number | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CostumeInsert = Omit<Costume, 'id' | 'created_at' | 'updated_at'>;
+export type CostumeUpdate = Partial<Omit<CostumeInsert, 'piece_id'>>;
+
+// ─── Costume Assignment ───
+export const COSTUME_STATUSES = ['needed', 'ordered', 'received', 'altered', 'ready'] as const;
+export type CostumeStatus = (typeof COSTUME_STATUSES)[number];
+
+export interface CostumeAssignment {
+  id: string;
+  costume_id: string;
+  dancer_id: string;
+  size: string;
+  alteration_notes: string;
+  status: CostumeStatus;
+}
+
+export type CostumeAssignmentInsert = Omit<CostumeAssignment, 'id'>;
+export type CostumeAssignmentUpdate = Partial<Omit<CostumeAssignmentInsert, 'costume_id' | 'dancer_id'>>;
+
+// ─── Prop ───
+export interface Prop {
+  id: string;
+  piece_id: string;
+  name: string;
+  quantity: number;
+  cost: number | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PropInsert = Omit<Prop, 'id' | 'created_at' | 'updated_at'>;
+export type PropUpdate = Partial<Omit<PropInsert, 'piece_id'>>;

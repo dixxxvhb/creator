@@ -10,7 +10,9 @@ interface PlaybackControlsProps {
   currentTransitionIndex: number;
   totalTransitions: number;
   canPlay: boolean; // needs 2+ formations
+  canPlaySingle: boolean; // current formation has a next
   onPlay: () => void;
+  onPlaySingle: () => void;
   onPause: () => void;
   onResume: () => void;
   onStop: () => void;
@@ -29,7 +31,9 @@ export function PlaybackControls({
   currentTransitionIndex,
   totalTransitions,
   canPlay,
+  canPlaySingle,
   onPlay,
+  onPlaySingle,
   onPause,
   onResume,
   onStop,
@@ -47,20 +51,33 @@ export function PlaybackControls({
   if (!active) {
     // Compact idle state — just a play button
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <button
-          onClick={onPlay}
-          disabled={!canPlay}
-          title={canPlay ? 'Play transitions' : 'Need 2+ formations to play'}
+          onClick={onPlaySingle}
+          disabled={!canPlaySingle}
+          title={canPlaySingle ? 'Play this transition only' : 'No next formation'}
           className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-            canPlay
+            canPlaySingle
               ? 'accent-bg-light accent-text hover:opacity-80'
               : 'bg-surface-secondary text-text-tertiary cursor-not-allowed'
           )}
         >
           <Play size={14} />
           Play
+        </button>
+        <button
+          onClick={onPlay}
+          disabled={!canPlay}
+          title={canPlay ? 'Play all transitions' : 'Need 2+ formations'}
+          className={cn(
+            'flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors',
+            canPlay
+              ? 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary'
+              : 'bg-surface-secondary text-text-tertiary cursor-not-allowed'
+          )}
+        >
+          All
         </button>
       </div>
     );

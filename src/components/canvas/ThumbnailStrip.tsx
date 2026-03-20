@@ -1,13 +1,22 @@
-import { Plus } from 'lucide-react';
-import type { Formation, DancerPosition, Piece } from '@/types';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Plus, X, Trash2, ArrowRight, Pencil, Play } from 'lucide-react';
+import type { Formation, DancerPosition, DancerPath, Piece, Dancer } from '@/types';
 
 interface ThumbnailStripProps {
   piece: Piece;
   formations: Formation[];
   positions: Record<string, DancerPosition[]>;
+  paths: Record<string, DancerPath[]>;
+  rosterDancers?: Dancer[];
   activeFormationId: string | null;
   onSelect: (id: string) => void;
   onAdd: () => void;
+  onDelete?: (id: string) => void;
+  onDeletePath?: (formationId: string, dancerLabel: string) => void;
+  onDeleteAllPaths?: (formationId: string) => void;
+  onEditPath?: (formationId: string, dancerLabel: string) => void;
+  onPlayPath?: (formationId: string, dancerLabel: string) => void;
 }
 
 function MiniFormation({
@@ -15,13 +24,17 @@ function MiniFormation({
   positions,
   piece,
   isActive,
+  canDelete,
   onClick,
+  onDelete,
 }: {
   formation: Formation;
   positions: DancerPosition[];
   piece: Piece;
   isActive: boolean;
+  canDelete: boolean;
   onClick: () => void;
+  onDelete?: () => void;
 }) {
   const thumbW = 120;
   const thumbH = 80;
@@ -32,8 +45,18 @@ function MiniFormation({
   return (
     <button
       onClick={onClick}
-      className={`shrink-0 flex flex-col items-center gap-1 group`}
+      className={`shrink-0 flex flex-col items-center gap-1 group relative`}
     >
+      {/* Delete button */}
+      {canDelete && (
+        <span
+          onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
+          className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 rounded-full bg-danger-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-danger-600"
+          title="Delete formation"
+        >
+          <X size={12} />
+        </span>
+      )}
       <div
         className={`w-[120px] h-[80px] rounded-lg border-2 relative overflow-hidden transition-colors ${
           isActive
@@ -75,25 +98,186 @@ function MiniFormation({
   );
 }
 
+/** Path indicator between two formation thumbnails */
+function TransitionIndicator({
+  formationId,
+  formationPaths,
+  allPositions,
+  dancerNameMap,
+  onDeletePath,
+  onDeleteAll,
+  onEditPath,
+  onPlayPath,
+}: {
+  formationId: string;
+  formationPaths: DancerPath[];
+  allPositions: DancerPosition[];
+  dancerNameMap: Map<string, string>;
+  onDeletePath?: (formationId: string, dancerLabel: string) => void;
+  onDeleteAll?: (formationId: string) => void;
+  onEditPath?: (formationId: string, dancerLabel: string) => void;
+  onPlayPath?: (formationId: string, dancerLabel: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+  const count = formationPaths.length;
+
+  // Compute dropdown position from button rect
+  useEffect(() => {
+    if (!open || !btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    setPos({ top: rect.top, left: rect.left + rect.width / 2 });
+  }, [open]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (btnRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div className="shrink-0 flex flex-col items-center justify-center self-start mt-5">
+      <button
+        ref={btnRef}
+        onClick={() => setOpen(!open)}
+        className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium transition-colors ${
+          count > 0
+            ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25'
+            : 'text-text-tertiary hover:text-text-secondary'
+        }`}
+        title={count > 0 ? `${count} path${count !== 1 ? 's' : ''} — click to manage` : 'No paths'}
+      >
+        <ArrowRight size={10} />
+        {count > 0 && <span>{count}</span>}
+      </button>
+
+      {/* Portal dropdown — escapes overflow:auto parent */}
+      {open && count > 0 && pos && createPortal(
+        <div
+          className="fixed z-50 bg-surface-elevated border border-border rounded-lg shadow-lg p-1.5 min-w-[140px]"
+          style={{ top: pos.top - 4, left: pos.left, transform: 'translate(-50%, -100%)' }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          {formationPaths.map((path) => {
+            const dancer = allPositions.find((p) => p.dancer_label === path.dancer_label);
+            return (
+              <div
+                key={path.id}
+                className="flex items-center gap-1.5 px-2 py-1 rounded text-[11px] hover:bg-surface-secondary/50"
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: dancer?.color ?? '#3B82F6' }}
+                />
+                {dancer?.dancer_id && dancerNameMap.has(dancer.dancer_id) ? (
+                  <span className="flex-1 truncate">{dancerNameMap.get(dancer.dancer_id)}</span>
+                ) : (
+                  <span className="flex-1 font-mono">{path.dancer_label}</span>
+                )}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditPath?.(formationId, path.dancer_label);
+                    setOpen(false);
+                  }}
+                  className="p-0.5 text-text-tertiary hover:text-[var(--color-accent)] transition-colors"
+                  title="Edit path"
+                >
+                  <Pencil size={10} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPlayPath?.(formationId, path.dancer_label);
+                    setOpen(false);
+                  }}
+                  className="p-0.5 text-text-tertiary hover:text-green-400 transition-colors"
+                  title="Play this transition"
+                >
+                  <Play size={10} />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeletePath?.(formationId, path.dancer_label);
+                  }}
+                  className="p-0.5 text-text-tertiary hover:text-red-400 transition-colors"
+                  title="Delete path"
+                >
+                  <Trash2 size={10} />
+                </button>
+              </div>
+            );
+          })}
+          <div className="border-t border-border mt-1 pt-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteAll?.(formationId);
+                setOpen(false);
+              }}
+              className="w-full text-left px-2 py-1 rounded text-[11px] text-red-400 hover:bg-red-500/10 transition-colors"
+            >
+              Delete all paths
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 export function ThumbnailStrip({
   piece,
   formations,
   positions,
+  paths,
+  rosterDancers = [],
   activeFormationId,
   onSelect,
   onAdd,
+  onDelete,
+  onDeletePath,
+  onDeleteAllPaths,
+  onEditPath,
+  onPlayPath,
 }: ThumbnailStripProps) {
+  const dancerNameMap = new Map(rosterDancers.map((d) => [d.id, d.short_name]));
+
   return (
-    <div className="flex gap-3 overflow-x-auto pb-2 px-1 items-end">
-      {formations.map((f) => (
-        <MiniFormation
-          key={f.id}
-          formation={f}
-          positions={positions[f.id] ?? []}
-          piece={piece}
-          isActive={f.id === activeFormationId}
-          onClick={() => onSelect(f.id)}
-        />
+    <div className="flex gap-1.5 overflow-x-auto pb-2 px-1 items-end">
+      {formations.map((f, i) => (
+        <div key={f.id} className="contents">
+          <MiniFormation
+            formation={f}
+            positions={positions[f.id] ?? []}
+            piece={piece}
+            isActive={f.id === activeFormationId}
+            canDelete={formations.length > 1}
+            onClick={() => onSelect(f.id)}
+            onDelete={() => onDelete?.(f.id)}
+          />
+          {/* Transition indicator between this and next formation */}
+          {i < formations.length - 1 && (
+            <TransitionIndicator
+              formationId={f.id}
+              formationPaths={paths[f.id] ?? []}
+              allPositions={positions[f.id] ?? []}
+              dancerNameMap={dancerNameMap}
+              onDeletePath={onDeletePath}
+              onDeleteAll={onDeleteAllPaths}
+              onEditPath={onEditPath}
+              onPlayPath={onPlayPath}
+            />
+          )}
+        </div>
       ))}
 
       {/* Add formation button */}

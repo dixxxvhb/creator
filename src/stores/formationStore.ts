@@ -18,8 +18,8 @@ interface FormationState {
   removeFormation: (id: string) => Promise<void>;
   setActiveFormation: (id: string) => void;
   updateLocalPosition: (formationId: string, positionId: string, x: number, y: number) => void;
-  updateLocalPositionDancer: (formationId: string, positionId: string, dancerId: string | null) => void;
-  savePositions: (formationId: string, positions: DancerPositionInsert[]) => Promise<void>;
+  updateLocalPositionDancer: (formationId: string, positionId: string, dancerId: string | null, color?: string) => void;
+  savePositions: (formationId: string, positions: DancerPositionInsert[], silent?: boolean) => Promise<void>;
   goNext: () => void;
   goPrev: () => void;
   reset: () => void;
@@ -121,19 +121,27 @@ export const useFormationStore = create<FormationState>((set, get) => ({
     });
   },
 
-  updateLocalPositionDancer: (formationId, positionId, dancerId) => {
+  updateLocalPositionDancer: (formationId, positionId, dancerId, color) => {
     set((state) => {
       const formationPositions = state.positions[formationId];
       if (!formationPositions) return state;
-      return {
-        isDirty: true,
-        positions: {
-          ...state.positions,
-          [formationId]: formationPositions.map((p) =>
-            p.id === positionId ? { ...p, dancer_id: dancerId } : p
-          ),
-        },
-      };
+
+      // Find the dancer_label for this position so we can propagate
+      const targetPos = formationPositions.find((p) => p.id === positionId);
+      if (!targetPos) return state;
+      const label = targetPos.dancer_label;
+
+      // Update this position AND all positions with the same label in other formations
+      const newPositions = { ...state.positions };
+      for (const [fId, fPositions] of Object.entries(newPositions)) {
+        newPositions[fId] = fPositions.map((p) =>
+          p.dancer_label === label
+            ? { ...p, dancer_id: dancerId, ...(color ? { color } : {}) }
+            : p
+        );
+      }
+
+      return { isDirty: true, positions: newPositions };
     });
   },
 
@@ -153,14 +161,14 @@ export const useFormationStore = create<FormationState>((set, get) => ({
     }
   },
 
-  savePositions: async (formationId, positionInserts) => {
+  savePositions: async (formationId, positionInserts, silent = false) => {
     try {
       const saved = await positionsService.upsertPositions(formationId, positionInserts);
       set((state) => ({
         positions: { ...state.positions, [formationId]: saved },
         isDirty: false,
       }));
-      toast.success('Positions saved');
+      if (!silent) toast.success('Positions saved');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save positions';
       toast.error(message);
