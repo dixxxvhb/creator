@@ -63,8 +63,8 @@ export function DashboardPage() {
                 <div className="flex items-center gap-3 mb-2">
                   <CreatorLogo size={32} className="text-text-primary" />
                   <h1
-                    className="text-text-primary uppercase font-brand"
-                    style={{ fontWeight: 200, letterSpacing: '0.25em', fontSize: '1.8rem', lineHeight: 1.1 }}
+                    className="text-text-primary uppercase font-sans"
+                    style={{ fontWeight: 300, letterSpacing: '0.25em', fontSize: '1.8rem', lineHeight: 1.1 }}
                   >
                     Creator
                   </h1>

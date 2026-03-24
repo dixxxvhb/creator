@@ -189,11 +189,11 @@ html.dark .glass {
 
 /* ─── Accent glow (dark mode only) ─── */
 html.dark .accent-glow {
-  box-shadow: 0 0 20px rgba(var(--accent-rgb, 0, 122, 255), 0.35),
-              0 0 6px rgba(var(--accent-rgb, 0, 122, 255), 0.2);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb, 59, 130, 246), 0.35),
+              0 0 6px rgba(var(--accent-rgb, 59, 130, 246), 0.2);
 }
 html.dark .accent-glow:hover {
-  box-shadow: 0 0 28px rgba(var(--accent-rgb, 0, 122, 255), 0.45),
-              0 0 8px rgba(var(--accent-rgb, 0, 122, 255), 0.3);
+  box-shadow: 0 0 28px rgba(var(--accent-rgb, 59, 130, 246), 0.45),
+              0 0 8px rgba(var(--accent-rgb, 59, 130, 246), 0.3);
 }
 
