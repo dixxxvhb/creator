@@ -20,8 +20,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   isInitialized: false,
 
   signUp: async (email, password) => {
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) return { error: error.message };
+    // If email confirmation is enabled, auto-sign-in immediately
+    if (data.user && !data.session) {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        return { error: 'Account created but confirmation may be required. Try logging in.' };
+      }
+    }
     return { error: null };
   },
 

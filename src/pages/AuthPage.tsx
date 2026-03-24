@@ -41,9 +41,9 @@ export function AuthPage() {
       const { error } = await signUp(email, password);
       if (error) {
         setError(error);
-      } else {
-        setSignupSuccess(true);
       }
+      // If signup + auto-sign-in worked, auth state listener will redirect automatically
+      // Only show "check email" if there's a specific confirmation error
     }
 
     setIsSubmitting(false);
