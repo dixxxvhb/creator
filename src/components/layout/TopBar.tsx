@@ -13,12 +13,12 @@ export function TopBar({
   onToggleTheme,
 }: TopBarProps) {
   return (
-    <header className="h-14 border-b border-border/50 glass flex items-center justify-between px-4 md:px-6 shrink-0">
-      <h1 className="text-lg font-semibold text-text-primary">{title}</h1>
+    <header className="h-14 border-b border-border-light glass flex items-center justify-between px-4 md:px-6 shrink-0">
+      <h1 className="font-display text-lg font-semibold text-text-primary tracking-wide">{title}</h1>
 
       <button
         onClick={onToggleTheme}
-        className="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-xl transition-colors"
+        className="p-2.5 text-text-secondary hover:text-text-primary hover:bg-surface-secondary rounded-xl transition-all duration-150 min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Toggle theme"
       >
         {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}

@@ -167,16 +167,16 @@ export interface UserProfile {
 }
 
 export const ACCENT_PRESETS = [
-  { value: '#3B82F6', label: 'Electric Blue' },
-  { value: '#FF2D55', label: 'Coral' },
-  { value: '#AF52DE', label: 'Purple' },
-  { value: '#34C759', label: 'Green' },
-  { value: '#FF9500', label: 'Orange' },
-  { value: '#FF3B30', label: 'Red' },
-  { value: '#5AC8FA', label: 'Teal' },
-  { value: '#5856D6', label: 'Indigo' },
-  { value: '#00C7BE', label: 'Mint' },
-  { value: '#8E8E93', label: 'Graphite' },
+  { value: '#B4838D', label: 'Rose' },
+  { value: '#8B7355', label: 'Bronze' },
+  { value: '#7C6D8E', label: 'Lavender' },
+  { value: '#5B8A72', label: 'Sage' },
+  { value: '#C4956A', label: 'Copper' },
+  { value: '#6B8FAD', label: 'Steel Blue' },
+  { value: '#9B6B6B', label: 'Dusty Rose' },
+  { value: '#5C7A6B', label: 'Forest' },
+  { value: '#8B6B4A', label: 'Amber' },
+  { value: '#6B6B7B', label: 'Slate' },
 ] as const;
 
 // ─── Season ───

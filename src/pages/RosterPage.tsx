@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Users } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
-import { Modal } from '@/components/ui/Modal';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { SearchInput } from '@/components/shared/SearchInput';
 import { DancerFormModal, DancerCard } from '@/components/roster';
 import { useRosterStore } from '@/stores/rosterStore';
 import { DANCER_COLORS } from '@/types';
@@ -25,14 +26,24 @@ export function RosterPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingDancer, setEditingDancer] = useState<Dancer | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Dancer | null>(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     load();
   }, [load]);
 
-  // Next unused color for new dancers
   const usedColors = new Set(dancers.map((d) => d.color));
   const nextColor = DANCER_COLORS.find((c) => !usedColors.has(c)) ?? DANCER_COLORS[0];
+
+  const filtered = useMemo(() => {
+    if (!search.trim()) return dancers;
+    const q = search.toLowerCase();
+    return dancers.filter(
+      (d) =>
+        d.full_name.toLowerCase().includes(q) ||
+        (d.short_name && d.short_name.toLowerCase().includes(q)),
+    );
+  }, [dancers, search]);
 
   function handleAdd() {
     setEditingDancer(null);
@@ -69,68 +80,75 @@ export function RosterPage() {
       }
     >
       <TierGate feature="roster">
-      {isLoading ? (
-        <div className="flex justify-center py-16">
-          <Spinner size="lg" />
-        </div>
-      ) : dancers.length === 0 ? (
-        <Card className="text-center py-12">
-          <Users size={40} className="mx-auto text-text-tertiary mb-4" />
-          <h3 className="text-lg font-semibold text-text-primary mb-2">No dancers yet</h3>
-          <p className="text-sm text-text-tertiary mb-6 max-w-md mx-auto">
-            Add dancers to your roster to assign them to pieces and formations.
-          </p>
-          <Button onClick={handleAdd}>
-            <Plus size={16} />
-            Add Dancer
-          </Button>
-        </Card>
-      ) : (
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
-        >
-          {dancers.map((dancer) => (
-            <motion.div key={dancer.id} variants={staggerItem}>
-              <DancerCard
-                dancer={dancer}
-                pieces={pieceAssignments[dancer.id] ?? []}
-                onEdit={handleEdit}
-                onDelete={setDeleteTarget}
-              />
+        {isLoading ? (
+          <div className="flex justify-center py-16">
+            <Spinner size="lg" />
+          </div>
+        ) : dancers.length === 0 ? (
+          <EmptyState
+            icon={Users}
+            title="No dancers yet"
+            description="Add dancers to your roster to assign them to pieces, formations, and costumes."
+            action={
+              <Button onClick={handleAdd}>
+                <Plus size={16} />
+                Add Your First Dancer
+              </Button>
+            }
+          />
+        ) : (
+          <>
+            {dancers.length > 5 && (
+              <div className="mb-6">
+                <SearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search dancers..."
+                  className="max-w-md"
+                />
+              </div>
+            )}
+            <motion.div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              variants={staggerContainer}
+              initial="initial"
+              animate="animate"
+            >
+              {filtered.map((dancer) => (
+                <motion.div key={dancer.id} variants={staggerItem}>
+                  <DancerCard
+                    dancer={dancer}
+                    pieces={pieceAssignments[dancer.id] ?? []}
+                    onEdit={handleEdit}
+                    onDelete={setDeleteTarget}
+                  />
+                </motion.div>
+              ))}
             </motion.div>
-          ))}
-        </motion.div>
-      )}
+            {search && filtered.length === 0 && (
+              <p className="text-center text-sm text-text-tertiary py-12">
+                No dancers match "{search}"
+              </p>
+            )}
+          </>
+        )}
 
-      <DancerFormModal
-        open={formOpen}
-        onClose={() => setFormOpen(false)}
-        onSave={handleSave}
-        dancer={editingDancer}
-        defaultColor={nextColor}
-      />
+        <DancerFormModal
+          open={formOpen}
+          onClose={() => setFormOpen(false)}
+          onSave={handleSave}
+          dancer={editingDancer}
+          defaultColor={nextColor}
+        />
 
-      {/* Delete confirmation */}
-      <Modal
-        open={deleteTarget != null}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Dancer"
-      >
-        <p className="text-sm text-text-primary mb-4">
-          Remove <strong>{deleteTarget?.full_name}</strong> from the roster? They will be unassigned from all formations.
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="secondary" onClick={() => setDeleteTarget(null)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleConfirmDelete}>
-            Delete
-          </Button>
-        </div>
-      </Modal>
+        <ConfirmDialog
+          open={deleteTarget != null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={handleConfirmDelete}
+          title="Delete Dancer"
+          description={`Remove ${deleteTarget?.full_name ?? 'this dancer'} from the roster? They will be unassigned from all formations.`}
+          confirmLabel="Delete"
+        />
       </TierGate>
     </PageContainer>
   );

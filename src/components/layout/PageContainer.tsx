@@ -25,10 +25,10 @@ export function PageContainer({
       )}
     >
       {(title || actions) && (
-        <div className="sticky top-0 z-10 glass border-b border-border/50 px-4 sm:px-6 lg:px-8 py-3">
+        <div className="sticky top-0 z-10 glass border-b border-border-light px-4 sm:px-6 lg:px-8 py-3.5">
           <div className="flex items-center justify-between gap-4">
             {title && (
-              <h1 className="text-xl font-bold text-text-primary tracking-tight">
+              <h1 className="font-display text-2xl font-semibold text-text-primary tracking-wide">
                 {title}
               </h1>
             )}

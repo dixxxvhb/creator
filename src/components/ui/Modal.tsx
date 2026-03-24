@@ -12,9 +12,16 @@ interface ModalProps {
   title: string;
   children: ReactNode;
   className?: string;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+const sizeClasses = {
+  sm: 'sm:max-w-md',
+  md: 'sm:max-w-lg',
+  lg: 'sm:max-w-2xl',
+};
+
+export function Modal({ open, onClose, title, children, className, size = 'md' }: ModalProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   const handleEscape = useCallback(
@@ -50,7 +57,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
           animate="animate"
           exit="exit"
           transition={{ duration: 0.15 }}
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
         >
           {/* Desktop: centered modal with scale animation */}
           <motion.div
@@ -59,22 +66,23 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             animate="animate"
             exit="exit"
             className={cn(
-              'bg-surface-elevated rounded-2xl w-full sm:max-w-lg sm:mx-4',
-              'shadow-2xl hidden sm:block',
+              'bg-surface-elevated rounded-2xl w-full sm:mx-4',
+              'shadow-2xl hidden sm:block border border-border-light',
+              sizeClasses[size],
               className,
             )}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border-light">
+              <h2 className="font-display text-lg font-semibold text-text-primary">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
                 aria-label="Close"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="px-5 py-4">{children}</div>
+            <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">{children}</div>
           </motion.div>
 
           {/* Mobile: bottom sheet with slide-up animation */}
@@ -89,17 +97,17 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
               className,
             )}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-              <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border-light">
+              <h2 className="font-display text-lg font-semibold text-text-primary">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors"
+                className="p-2 rounded-xl text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-all min-w-[36px] min-h-[36px] flex items-center justify-center"
                 aria-label="Close"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="px-5 py-4 pb-8">{children}</div>
+            <div className="px-5 py-5 pb-8 max-h-[80vh] overflow-y-auto">{children}</div>
           </motion.div>
         </motion.div>
       )}

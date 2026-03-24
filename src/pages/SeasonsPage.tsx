@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trophy, Calendar, ArrowRight, Trash2 } from 'lucide-react';
+import { Plus, Trophy, Calendar, ArrowRight } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { SeasonFormModal } from '@/components/seasons/SeasonFormModal';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { usePieceStore } from '@/stores/pieceStore';
@@ -23,7 +25,7 @@ export function SeasonsPage() {
   const loadPieces = usePieceStore((s) => s.load);
 
   const [showForm, setShowForm] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   useEffect(() => {
     loadSeasons();
@@ -46,47 +48,48 @@ export function SeasonsPage() {
     return `Until ${fmt(end!)}`;
   }
 
+  const deleteSeasonName = deleteTarget ? seasons.find((s) => s.id === deleteTarget)?.name : '';
+
   return (
     <PageContainer title="Seasons">
       <TierGate feature="seasons">
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-text-secondary">
-          Organize competitions, track awards, and plan your season.
-        </p>
-        <Button size="sm" onClick={() => setShowForm(true)}>
-          <Plus size={14} />
-          New Season
-        </Button>
-      </div>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12">
-          <Spinner size="lg" />
-        </div>
-      ) : seasons.length === 0 ? (
-        <Card className="text-center py-12">
-          <Trophy size={40} className="mx-auto text-text-tertiary mb-4" />
-          <h3 className="text-lg font-semibold text-text-primary mb-2">No seasons yet</h3>
-          <p className="text-sm text-text-tertiary max-w-md mx-auto mb-4">
-            Create a season to start organizing competitions and tracking results.
+        <div className="flex items-center justify-between mb-6">
+          <p className="text-sm text-text-secondary">
+            Organize competitions, track awards, and plan your season.
           </p>
-          <Button onClick={() => setShowForm(true)}>
+          <Button size="sm" onClick={() => setShowForm(true)}>
             <Plus size={14} />
-            Create Season
+            New Season
           </Button>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {seasons.map((season) => {
-            const pieceCount = getPieceCount(season.id);
-            const dateRange = formatDateRange(season.start_date, season.end_date);
-            return (
-              <div key={season.id} className="relative group">
-                <Link to={`/seasons/${season.id}`}>
-                  <Card className="h-full hover:border-border transition-colors cursor-pointer">
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        ) : seasons.length === 0 ? (
+          <EmptyState
+            icon={Trophy}
+            title="No seasons yet"
+            description="Create a season to start organizing competitions and tracking results."
+            action={
+              <Button onClick={() => setShowForm(true)}>
+                <Plus size={14} />
+                Create Your First Season
+              </Button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {seasons.map((season) => {
+              const pieceCount = getPieceCount(season.id);
+              const dateRange = formatDateRange(season.start_date, season.end_date);
+              return (
+                <Link key={season.id} to={`/seasons/${season.id}`}>
+                  <Card interactive className="h-full">
                     <div className="flex flex-col gap-3">
                       <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2.5">
                           <div className="flex items-center justify-center w-10 h-10 rounded-xl accent-bg-light">
                             <Trophy size={20} className="accent-text" />
                           </div>
@@ -95,7 +98,7 @@ export function SeasonsPage() {
                             <p className="text-xs text-text-secondary">{season.year}</p>
                           </div>
                         </div>
-                        <ArrowRight size={16} className="text-text-tertiary group-hover:text-text-secondary transition-colors mt-1" />
+                        <ArrowRight size={16} className="text-text-tertiary mt-1" />
                       </div>
 
                       <div className="flex items-center gap-3 text-xs text-text-secondary">
@@ -117,36 +120,30 @@ export function SeasonsPage() {
                     </div>
                   </Card>
                 </Link>
+              );
+            })}
+          </div>
+        )}
 
-                {/* Delete button */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (deleteConfirm === season.id) {
-                      removeSeason(season.id);
-                      setDeleteConfirm(null);
-                    } else {
-                      setDeleteConfirm(season.id);
-                    }
-                  }}
-                  onBlur={() => setDeleteConfirm(null)}
-                  className="absolute top-3 right-10 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 text-text-tertiary hover:text-danger-500 hover:bg-surface-secondary transition-all"
-                  title={deleteConfirm === season.id ? 'Click again to confirm' : 'Delete season'}
-                >
-                  <Trash2 size={14} className={deleteConfirm === season.id ? 'text-danger-500' : ''} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+        <SeasonFormModal
+          open={showForm}
+          onClose={() => setShowForm(false)}
+          onSubmit={handleCreate}
+        />
 
-      <SeasonFormModal
-        open={showForm}
-        onClose={() => setShowForm(false)}
-        onSubmit={handleCreate}
-      />
+        <ConfirmDialog
+          open={deleteTarget != null}
+          onClose={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            if (deleteTarget) {
+              removeSeason(deleteTarget);
+              setDeleteTarget(null);
+            }
+          }}
+          title="Delete Season"
+          description={`Delete "${deleteSeasonName}"? All competitions and entries in this season will also be removed.`}
+          confirmLabel="Delete Season"
+        />
       </TierGate>
     </PageContainer>
   );

@@ -53,12 +53,9 @@ export function AuthPage() {
     <div className="min-h-dvh bg-surface flex items-center justify-center p-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <CreatorLogo size={28} className="text-text-primary" />
-            <span
-              className="text-text-primary uppercase font-sans"
-              style={{ fontWeight: 300, letterSpacing: '0.25em', fontSize: '1.2rem' }}
-            >
+          <div className="flex items-center justify-center gap-2.5 mb-3">
+            <CreatorLogo size={32} className="accent-text" />
+            <span className="font-display text-text-primary text-2xl font-semibold tracking-wide">
               Creator
             </span>
           </div>

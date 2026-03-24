@@ -27,6 +27,9 @@ const navItems: NavItem[] = [
   { to: '/roster', label: 'Roster', icon: Users, tierFeature: 'roster' },
   { to: '/seasons', label: 'Seasons', icon: Trophy, tierFeature: 'seasons' },
   { to: '/costumes', label: 'Costumes', icon: Shirt, tierFeature: 'costumes' },
+];
+
+const bottomItems: NavItem[] = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -37,50 +40,55 @@ interface SidebarProps {
 export function Sidebar({ onNavigate }: SidebarProps) {
   const hasFeature = useTierStore((s) => s.hasFeature);
 
+  function renderNavItem({ to, label, icon: Icon, tierFeature }: NavItem) {
+    const locked = tierFeature ? !hasFeature(tierFeature) : false;
+    return (
+      <NavLink
+        key={to}
+        to={to}
+        end={to === '/'}
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+            isActive
+              ? 'accent-bg-light accent-text'
+              : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary',
+          )
+        }
+      >
+        <Icon size={18} strokeWidth={1.75} />
+        {label}
+        {locked && tierFeature && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-secondary text-text-tertiary ml-auto">
+            {TIER_LABELS[TIER_FEATURES[tierFeature]].toUpperCase()}
+          </span>
+        )}
+      </NavLink>
+    );
+  }
+
   return (
-    <aside className="w-48 glass border-r border-border/50 h-screen flex flex-col shrink-0">
-      <div className="px-4 py-4 flex items-center gap-2">
-        <CreatorLogo size={20} className="text-text-primary" />
-        <span
-          className="text-text-primary uppercase font-sans"
-          style={{ fontWeight: 300, letterSpacing: '0.25em', fontSize: '0.9rem' }}
-        >
+    <aside className="w-52 glass border-r border-border-light h-screen flex flex-col shrink-0">
+      {/* Brand */}
+      <div className="px-4 py-5 flex items-center gap-2.5">
+        <CreatorLogo size={22} className="accent-text" />
+        <span className="font-display text-text-primary text-lg font-semibold tracking-wide">
           Creator
         </span>
       </div>
 
-      <nav className="flex-1 px-2 py-2 space-y-0.5">
-        {navItems.map(({ to, label, icon: Icon, tierFeature }) => {
-          const locked = tierFeature ? !hasFeature(tierFeature) : false;
-          return (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              onClick={onNavigate}
-              className={({ isActive }) =>
-                cn(
-                  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-colors',
-                  isActive
-                    ? 'accent-bg-light accent-text'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary',
-                )
-              }
-            >
-              <Icon size={18} />
-              {label}
-              {locked && tierFeature && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-secondary text-text-tertiary ml-auto">
-                  {TIER_LABELS[TIER_FEATURES[tierFeature]].toUpperCase()}
-                </span>
-              )}
-            </NavLink>
-          );
-        })}
+      {/* Main nav */}
+      <nav className="flex-1 px-3 py-2 space-y-1">
+        {navItems.map(renderNavItem)}
       </nav>
 
-      <div className="px-3 py-2.5 border-t border-border">
-        <p className="text-xs text-text-tertiary">v0.1.0</p>
+      {/* Bottom nav + version */}
+      <div className="px-3 py-2 space-y-1 border-t border-border-light">
+        {bottomItems.map(renderNavItem)}
+        <div className="px-3 py-2">
+          <p className="text-[10px] text-text-tertiary font-medium tracking-wider uppercase">v0.1.0</p>
+        </div>
       </div>
     </aside>
   );

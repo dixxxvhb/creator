@@ -81,7 +81,7 @@ export function AppLayout() {
         toastOptions={{
           style: {
             background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-border)',
+            border: '1px solid var(--color-border-light)',
             color: 'var(--color-text-primary)',
           },
         }}

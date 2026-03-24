@@ -31,8 +31,8 @@ export function BottomTabBar() {
   const hasFeature = useTierStore((s) => s.hasFeature);
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border/50 safe-bottom">
-      <div className="flex items-center justify-around px-2 py-1">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border-light safe-bottom">
+      <div className="flex items-center justify-around px-2 py-1.5">
         {tabs.map(({ to, label, icon: Icon, tierFeature }) => {
           const locked = tierFeature ? !hasFeature(tierFeature) : false;
           return (
@@ -42,15 +42,15 @@ export function BottomTabBar() {
               end={to === '/'}
               className={({ isActive }) =>
                 cn(
-                  'relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-lg min-w-[56px] transition-colors',
+                  'relative flex flex-col items-center gap-0.5 px-3 py-2 rounded-xl min-w-[60px] min-h-[44px] transition-colors',
                   isActive
                     ? 'accent-text'
                     : 'text-text-tertiary',
                 )
               }
             >
-              <Icon size={22} />
-              <span className="text-[10px] font-medium">{label}</span>
+              <Icon size={22} strokeWidth={1.75} />
+              <span className="text-[11px] font-medium">{label}</span>
               {locked && (
                 <Lock
                   size={8}

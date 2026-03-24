@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ─── Dark variant: use html.dark class instead of prefers-color-scheme ─── */
@@ -6,64 +6,73 @@
 
 /* ─── Design Tokens (Tailwind v4 compile-time) ─── */
 @theme {
-  /* Semantic surfaces — light mode defaults */
-  --color-surface: #FFFFFF;
-  --color-surface-secondary: #F4F6FB;
-  --color-surface-elevated: #E8ECF5;
+  /* Semantic surfaces — light mode defaults (warm ivory) */
+  --color-surface: #FDFBF7;
+  --color-surface-secondary: #F5F0E8;
+  --color-surface-elevated: #FFFFFF;
 
-  /* Text hierarchy */
-  --color-text-primary: #0F1117;
-  --color-text-secondary: #64748B;
-  --color-text-tertiary: #94A3B8;
+  /* Text hierarchy (warm charcoal, not cold slate) */
+  --color-text-primary: #1C1917;
+  --color-text-secondary: #78716C;
+  --color-text-tertiary: #A8A29E;
 
-  /* Borders */
-  --color-border: #CBD5E1;
-  --color-border-light: #E8ECF5;
+  /* Borders (warm stone tones) */
+  --color-border: #D6D3D1;
+  --color-border-light: #E7E5E4;
 
   /* Status colors */
   --color-success-50: #f0fdf4;
-  --color-success-500: #34C759;
-  --color-success-600: #30B350;
+  --color-success-500: #22C55E;
+  --color-success-600: #16A34A;
   --color-danger-50: #fef2f2;
-  --color-danger-500: #FF3B30;
-  --color-danger-600: #E0352B;
+  --color-danger-500: #EF4444;
+  --color-danger-600: #DC2626;
   --color-warning-50: #fffbeb;
-  --color-warning-500: #FF9500;
-  --color-warning-600: #E08600;
+  --color-warning-500: #F59E0B;
+  --color-warning-600: #D97706;
 
   /* Fonts */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-brand: 'Plus Jakarta Sans', sans-serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-display: 'Cormorant Garamond', 'Georgia', serif;
   --font-mono: 'SF Mono', 'Fira Code', monospace;
 }
 
 /* ─── Accent Color System (runtime-changeable) ─── */
 :root {
-  --color-accent: #3B82F6;
-  --color-accent-hover: #2563EB;
-  --color-accent-light: rgba(59, 130, 246, 0.1);
+  --color-accent: #B4838D;
+  --color-accent-hover: #9C6B75;
+  --color-accent-light: rgba(180, 131, 141, 0.12);
+  --accent-rgb: 180, 131, 141;
 }
 
 /* ─── Base Styles ─── */
 body {
   @apply bg-surface text-text-primary font-sans antialiased;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ─── Dark Mode ─── */
+/* ─── Dark Mode (rich charcoal, not pure black) ─── */
 html.dark {
-  --color-surface: #0F1117;
-  --color-surface-secondary: #1A1D27;
-  --color-surface-elevated: #22263A;
-  --color-text-primary: #F1F5F9;
-  --color-text-secondary: #94A3B8;
-  --color-text-tertiary: #475569;
-  --color-border: #334155;
-  --color-border-light: #1E293B;
+  --color-surface: #171412;
+  --color-surface-secondary: #201C19;
+  --color-surface-elevated: #2A2521;
+  --color-text-primary: #F5F0E8;
+  --color-text-secondary: #A8A29E;
+  --color-text-tertiary: #78716C;
+  --color-border: #3D3530;
+  --color-border-light: #2A2521;
   --color-success-50: #0a1f0d;
   --color-danger-50: #1f0a0a;
   --color-warning-50: #1f160a;
+}
+
+/* ─── Display Typography ─── */
+.font-display {
+  font-family: var(--font-display);
+  font-feature-settings: 'liga' 1, 'kern' 1;
 }
 
 /* ─── Accent Utilities (use var so they respond to runtime changes) ─── */
@@ -141,11 +150,11 @@ html.dark {
 
 /* ─── Card hover lift ─── */
 .card-interactive {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .card-interactive:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 .card-interactive:active {
   transform: scale(0.98);
@@ -179,21 +188,31 @@ html.dark {
 
 /* ─── Glass surface ─── */
 .glass {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(253, 251, 247, 0.80);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 html.dark .glass {
-  background: rgba(15, 17, 23, 0.72);
+  background: rgba(23, 20, 18, 0.80);
 }
 
 /* ─── Accent glow (dark mode only) ─── */
 html.dark .accent-glow {
-  box-shadow: 0 0 20px rgba(var(--accent-rgb, 59, 130, 246), 0.35),
-              0 0 6px rgba(var(--accent-rgb, 59, 130, 246), 0.2);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb, 180, 131, 141), 0.25),
+              0 0 6px rgba(var(--accent-rgb, 180, 131, 141), 0.15);
 }
 html.dark .accent-glow:hover {
-  box-shadow: 0 0 28px rgba(var(--accent-rgb, 59, 130, 246), 0.45),
-              0 0 8px rgba(var(--accent-rgb, 59, 130, 246), 0.3);
+  box-shadow: 0 0 28px rgba(var(--accent-rgb, 180, 131, 141), 0.35),
+              0 0 8px rgba(var(--accent-rgb, 180, 131, 141), 0.2);
 }
 
+/* ─── Smooth transitions for theme switching ─── */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ─── Selection color ─── */
+::selection {
+  background-color: var(--color-accent-light);
+  color: var(--color-text-primary);
+}
