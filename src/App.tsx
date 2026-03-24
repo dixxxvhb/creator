@@ -11,6 +11,7 @@ import { SeasonsPage } from '@/pages/SeasonsPage';
 import { SeasonDetailPage } from '@/pages/SeasonDetailPage';
 import { CostumesPage } from '@/pages/CostumesPage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import { RehearsalPage } from '@/pages/RehearsalPage';
 import { useAuthStore } from '@/stores/authStore';
 
 export function App() {
@@ -29,6 +30,7 @@ export function App() {
             <Route path="pieces" element={<PiecesPage />} />
             <Route path="pieces/new" element={<PieceSetupPage />} />
             <Route path="pieces/:id" element={<PieceDetailPage />} />
+            <Route path="pieces/:id/rehearse" element={<RehearsalPage />} />
             <Route path="roster" element={<RosterPage />} />
             <Route path="seasons" element={<SeasonsPage />} />
             <Route path="seasons/:id" element={<SeasonDetailPage />} />
