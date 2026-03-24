@@ -293,12 +293,33 @@ export interface Costume {
   image_url: string | null;
   cost: number | null;
   notes: string;
+  vendor_url: string | null;
+  order_status: string;
   created_at: string;
   updated_at: string;
 }
 
 export type CostumeInsert = Omit<Costume, 'id' | 'created_at' | 'updated_at'>;
 export type CostumeUpdate = Partial<Omit<CostumeInsert, 'piece_id'>>;
+
+// ─── Costume Accessory ───
+export const ACCESSORY_TYPES = ['hairpiece', 'tights', 'shoes', 'jewelry', 'other'] as const;
+export type AccessoryType = (typeof ACCESSORY_TYPES)[number];
+
+export const COSTUME_ORDER_STATUSES = ['not_ordered', 'ordered', 'arrived', 'needs_alteration', 'ready'] as const;
+export type CostumeOrderStatus = (typeof COSTUME_ORDER_STATUSES)[number];
+
+export interface CostumeAccessory {
+  id: string;
+  costume_id: string;
+  accessory_type: AccessoryType;
+  description: string;
+  color: string;
+  link: string | null;
+  created_at: string;
+}
+
+export type CostumeAccessoryInsert = Omit<CostumeAccessory, 'id' | 'created_at'>;
 
 // ─── Costume Assignment ───
 export const COSTUME_STATUSES = ['needed', 'ordered', 'received', 'altered', 'ready'] as const;

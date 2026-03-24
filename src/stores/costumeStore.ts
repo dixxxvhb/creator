@@ -2,15 +2,18 @@ import { create } from 'zustand';
 import type {
   Costume, CostumeInsert, CostumeUpdate,
   CostumeAssignment, CostumeAssignmentInsert, CostumeAssignmentUpdate,
+  CostumeAccessory, CostumeAccessoryInsert,
   Prop, PropInsert, PropUpdate,
 } from '@/types';
 import * as costumesService from '@/services/costumes';
+import * as accessoriesService from '@/services/costumeAccessories';
 import * as propsService from '@/services/props';
 import { toast } from '@/stores/toastStore';
 
 interface CostumeState {
   costumes: Costume[];
   assignments: CostumeAssignment[];
+  accessories: CostumeAccessory[];
   props: Prop[];
   isLoading: boolean;
 
@@ -26,6 +29,10 @@ interface CostumeState {
   updateAssignment: (id: string, updates: CostumeAssignmentUpdate) => Promise<void>;
   removeAssignment: (id: string) => Promise<void>;
 
+  // Accessories
+  addAccessory: (data: CostumeAccessoryInsert) => Promise<void>;
+  removeAccessory: (id: string) => Promise<void>;
+
   // Props
   addProp: (prop: PropInsert) => Promise<Prop | null>;
   updateProp: (id: string, updates: PropUpdate) => Promise<void>;
@@ -35,18 +42,20 @@ interface CostumeState {
 export const useCostumeStore = create<CostumeState>((set) => ({
   costumes: [],
   assignments: [],
+  accessories: [],
   props: [],
   isLoading: false,
 
   load: async () => {
     set({ isLoading: true });
     try {
-      const [costumes, assignments, props] = await Promise.all([
+      const [costumes, assignments, accessories, props] = await Promise.all([
         costumesService.fetchCostumes(),
         costumesService.fetchAssignments(),
+        accessoriesService.fetchAccessories(),
         propsService.fetchProps(),
       ]);
-      set({ costumes, assignments, props, isLoading: false });
+      set({ costumes, assignments, accessories, props, isLoading: false });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load costumes');
       set({ isLoading: false });
@@ -115,6 +124,26 @@ export const useCostumeStore = create<CostumeState>((set) => ({
       set((s) => ({ assignments: s.assignments.filter((a) => a.id !== id) }));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to remove assignment');
+    }
+  },
+
+  // ─── Accessories ───
+
+  addAccessory: async (data) => {
+    try {
+      const created = await accessoriesService.createAccessory(data);
+      set((s) => ({ accessories: [...s.accessories, created] }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to add accessory');
+    }
+  },
+
+  removeAccessory: async (id) => {
+    try {
+      await accessoriesService.deleteAccessory(id);
+      set((s) => ({ accessories: s.accessories.filter((a) => a.id !== id) }));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove accessory');
     }
   },
 

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   Plus, Shirt, Pencil, Trash2, Users, ChevronDown, ChevronUp,
-  Package, DollarSign,
+  Package, DollarSign, FileDown,
 } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
@@ -15,10 +15,15 @@ import { AssignDancersModal } from '@/components/costumes/AssignDancersModal';
 import { useCostumeStore } from '@/stores/costumeStore';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useRosterStore } from '@/stores/rosterStore';
-import type { Costume, CostumeInsert, CostumeUpdate, PropInsert, Prop as PropType, CostumeStatus } from '@/types';
+import type {
+  Costume, CostumeInsert, CostumeUpdate, PropInsert, Prop as PropType, CostumeStatus,
+  CostumeAccessoryInsert,
+} from '@/types';
 import { COSTUME_STATUSES } from '@/types';
 import { cn } from '@/lib/utils';
 import { TierGate } from '@/components/ui/TierGate';
+import { exportAllCostumesPdf } from '@/lib/exportCostumePdf';
+import type { CostumePdfData } from '@/lib/exportCostumePdf';
 
 type ViewMode = 'by-piece' | 'by-dancer';
 
@@ -30,9 +35,26 @@ const STATUS_COLORS: Record<string, string> = {
   ready: 'text-green-500',
 };
 
+const ORDER_STATUS_BADGE: Record<string, string> = {
+  not_ordered: 'text-text-tertiary',
+  ordered: 'text-yellow-500',
+  arrived: 'text-blue-400',
+  needs_alteration: 'text-purple-400',
+  ready: 'text-green-500',
+};
+
+const ORDER_STATUS_LABELS: Record<string, string> = {
+  not_ordered: 'Not Ordered',
+  ordered: 'Ordered',
+  arrived: 'Arrived',
+  needs_alteration: 'Needs Alteration',
+  ready: 'Ready',
+};
+
 export function CostumesPage() {
   const costumes = useCostumeStore((s) => s.costumes);
   const assignments = useCostumeStore((s) => s.assignments);
+  const accessories = useCostumeStore((s) => s.accessories);
   const props = useCostumeStore((s) => s.props);
   const isLoading = useCostumeStore((s) => s.isLoading);
   const loadCostumes = useCostumeStore((s) => s.load);
@@ -42,6 +64,8 @@ export function CostumesPage() {
   const addAssignment = useCostumeStore((s) => s.addAssignment);
   const updateAssignment = useCostumeStore((s) => s.updateAssignment);
   const removeAssignment = useCostumeStore((s) => s.removeAssignment);
+  const addAccessory = useCostumeStore((s) => s.addAccessory);
+  const removeAccessory = useCostumeStore((s) => s.removeAccessory);
   const addProp = useCostumeStore((s) => s.addProp);
   const removeProp = useCostumeStore((s) => s.removeProp);
 
@@ -120,11 +144,30 @@ export function CostumesPage() {
     return `$${cost.toFixed(2)}`;
   }
 
+  function handleExportPdf() {
+    const pdfData: CostumePdfData[] = dancers.map((dancer) => {
+      const dancerAssignments = assignments.filter((a) => a.dancer_id === dancer.id);
+      return {
+        dancer,
+        costumes: dancerAssignments.map((assignment) => {
+          const costume = costumes.find((c) => c.id === assignment.costume_id)!;
+          const piece = pieces.find((p) => p.id === costume?.piece_id)!;
+          const costumeAccessories = accessories.filter((a) => a.costume_id === costume?.id);
+          return { costume, piece, assignment, accessories: costumeAccessories };
+        }).filter((c) => c.costume && c.piece),
+      };
+    }).filter((d) => d.costumes.length > 0);
+
+    exportAllCostumesPdf(pdfData);
+  }
+
   const totalCostumeCost = costumes.reduce((sum, c) => sum + (c.cost ?? 0), 0);
   const totalPropCost = props.reduce((sum, p) => sum + (p.cost ?? 0) * p.quantity, 0);
   const totalBudget = totalCostumeCost + totalPropCost;
 
   const assignModalCostume = assignModalCostumeId ? costumes.find((c) => c.id === assignModalCostumeId) : null;
+
+  const editCostumeAccessories = editCostume ? accessories.filter((a) => a.costume_id === editCostume.id) : [];
 
   return (
     <PageContainer title="Costumes & Props">
@@ -156,6 +199,11 @@ export function CostumesPage() {
               <DollarSign size={10} className="mr-0.5" />
               {totalBudget.toFixed(2)} total
             </Badge>
+          )}
+          {(costumes.length > 0 || assignments.length > 0) && (
+            <Button size="sm" variant="secondary" onClick={handleExportPdf}>
+              <FileDown size={14} /> Export PDF
+            </Button>
           )}
           <Button size="sm" variant="secondary" onClick={() => { setEditProp(null); setShowPropForm(true); }}>
             <Package size={14} /> Add Prop
@@ -204,15 +252,26 @@ export function CostumesPage() {
                   <div className="mt-4 space-y-3">
                     {pieceCostumes.map((costume) => {
                       const costumeAssignments = assignments.filter((a) => a.costume_id === costume.id);
+                      const costumeAccCount = accessories.filter((a) => a.costume_id === costume.id).length;
                       return (
                         <div key={costume.id} className="p-3 rounded-xl bg-surface-secondary/50 space-y-2">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               {costume.color && (
                                 <span className="w-4 h-4 rounded-full shrink-0 border border-border" style={{ backgroundColor: costume.color }} />
                               )}
                               <span className="text-sm font-medium text-text-primary">{costume.name}</span>
                               {costume.cost != null && <span className="text-xs text-text-tertiary">{formatCost(costume.cost)}</span>}
+                              {costume.order_status && costume.order_status !== 'not_ordered' && (
+                                <span className={cn('text-xs font-medium', ORDER_STATUS_BADGE[costume.order_status])}>
+                                  {ORDER_STATUS_LABELS[costume.order_status]}
+                                </span>
+                              )}
+                              {costumeAccCount > 0 && (
+                                <span className="text-xs text-text-tertiary">
+                                  {costumeAccCount} accessory{costumeAccCount !== 1 ? 's' : ''}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-1">
                               <button onClick={() => setAssignModalCostumeId(costume.id)} className="p-1 text-text-tertiary hover:text-text-secondary transition-colors" title="Assign dancers">
@@ -330,6 +389,9 @@ export function CostumesPage() {
         onSubmit={handleCostumeSubmit}
         pieces={pieces}
         costume={editCostume}
+        accessories={editCostumeAccessories}
+        onAddAccessory={async (data: CostumeAccessoryInsert) => { await addAccessory(data); }}
+        onRemoveAccessory={async (id: string) => { await removeAccessory(id); }}
       />
       <PropFormModal
         open={showPropForm}
