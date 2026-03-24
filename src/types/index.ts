@@ -209,11 +209,35 @@ export interface Competition {
   location: string;
   date: string | null;
   notes: string;
+  company_id: string | null;
+  company_name: string | null;
+  entry_deadline: string | null;
+  registration_url: string | null;
+  scoring_system: string;
+  configured_divisions: { name: string; minAge: number; maxAge: number }[];
+  configured_categories: string[];
+  configured_levels: string[];
+  configured_styles: string[];
   created_at: string;
   updated_at: string;
 }
 
-export type CompetitionInsert = Omit<Competition, 'id' | 'created_at' | 'updated_at'>;
+export type CompetitionInsert = {
+  season_id: string;
+  name: string;
+  location?: string;
+  date?: string | null;
+  notes?: string;
+  company_id?: string | null;
+  company_name?: string | null;
+  entry_deadline?: string | null;
+  registration_url?: string | null;
+  scoring_system?: string;
+  configured_divisions?: { name: string; minAge: number; maxAge: number }[];
+  configured_categories?: string[];
+  configured_levels?: string[];
+  configured_styles?: string[];
+};
 export type CompetitionUpdate = Partial<Omit<CompetitionInsert, 'season_id'>>;
 
 // ─── Competition Entry ───
@@ -226,11 +250,37 @@ export interface CompetitionEntry {
   score: number | null;
   special_awards: string | null;
   notes: string;
+  age_division: string | null;
+  competitive_level: string | null;
+  style: string | null;
+  award_tier: string | null;
+  choreographer: string | null;
+  song_title: string | null;
+  song_artist: string | null;
+  time_limit_seconds: number | null;
+  dancer_names: string[];
   created_at: string;
   updated_at: string;
 }
 
-export type CompetitionEntryInsert = Omit<CompetitionEntry, 'id' | 'created_at' | 'updated_at'>;
+export type CompetitionEntryInsert = {
+  competition_id: string;
+  piece_id: string;
+  category?: string;
+  placement?: string | null;
+  score?: number | null;
+  special_awards?: string | null;
+  notes?: string;
+  age_division?: string | null;
+  competitive_level?: string | null;
+  style?: string | null;
+  award_tier?: string | null;
+  choreographer?: string | null;
+  song_title?: string | null;
+  song_artist?: string | null;
+  time_limit_seconds?: number | null;
+  dancer_names?: string[];
+};
 export type CompetitionEntryUpdate = Partial<Omit<CompetitionEntryInsert, 'competition_id'>>;
 
 // ─── Costume ───
