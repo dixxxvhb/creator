@@ -280,3 +280,29 @@ export interface Prop {
 
 export type PropInsert = Omit<Prop, 'id' | 'created_at' | 'updated_at'>;
 export type PropUpdate = Partial<Omit<PropInsert, 'piece_id'>>;
+
+// ─── Tier System ───
+export type Tier = 'free' | 'mid' | 'studio';
+
+export const TIER_LABELS: Record<Tier, string> = {
+  free: 'Free',
+  mid: 'Choreographer',
+  studio: 'Studio',
+};
+
+export const TIER_FEATURES = {
+  // Navigation sections
+  home_dashboard: 'studio',
+  seasons: 'studio',
+  roster: 'studio',
+  costumes: 'studio',
+  // Canvas features
+  transition_animations: 'mid',
+  drawn_pathways: 'mid',
+  // Piece limits
+  unlimited_pieces: 'mid',
+} as const satisfies Record<string, Tier>;
+
+export type TierFeature = keyof typeof TIER_FEATURES;
+
+export const FREE_PIECE_LIMIT = 2;

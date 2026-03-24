@@ -9,6 +9,7 @@ import { SeasonFormModal } from '@/components/seasons/SeasonFormModal';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { usePieceStore } from '@/stores/pieceStore';
 import type { SeasonInsert } from '@/types';
+import { TierGate } from '@/components/ui/TierGate';
 
 export function SeasonsPage() {
   const seasons = useSeasonStore((s) => s.seasons);
@@ -47,6 +48,7 @@ export function SeasonsPage() {
 
   return (
     <PageContainer title="Seasons">
+      <TierGate feature="seasons">
       <div className="flex items-center justify-between mb-6">
         <p className="text-sm text-text-secondary">
           Organize competitions, track awards, and plan your season.
@@ -145,6 +147,7 @@ export function SeasonsPage() {
         onClose={() => setShowForm(false)}
         onSubmit={handleCreate}
       />
+      </TierGate>
     </PageContainer>
   );
 }

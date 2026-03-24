@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal';
 import { DancerFormModal, DancerCard } from '@/components/roster';
 import { useRosterStore } from '@/stores/rosterStore';
 import { DANCER_COLORS } from '@/types';
+import { TierGate } from '@/components/ui/TierGate';
 import { staggerContainer, staggerItem } from '@/lib/motion';
 import type { Dancer, DancerInsert } from '@/types';
 
@@ -67,6 +68,7 @@ export function RosterPage() {
         </Button>
       }
     >
+      <TierGate feature="roster">
       {isLoading ? (
         <div className="flex justify-center py-16">
           <Spinner size="lg" />
@@ -129,6 +131,7 @@ export function RosterPage() {
           </Button>
         </div>
       </Modal>
+      </TierGate>
     </PageContainer>
   );
 }

@@ -18,6 +18,7 @@ import { useRosterStore } from '@/stores/rosterStore';
 import type { Costume, CostumeInsert, CostumeUpdate, PropInsert, Prop as PropType, CostumeStatus } from '@/types';
 import { COSTUME_STATUSES } from '@/types';
 import { cn } from '@/lib/utils';
+import { TierGate } from '@/components/ui/TierGate';
 
 type ViewMode = 'by-piece' | 'by-dancer';
 
@@ -127,6 +128,7 @@ export function CostumesPage() {
 
   return (
     <PageContainer title="Costumes & Props">
+      <TierGate feature="costumes">
       <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <div className="flex items-center gap-2">
           <button
@@ -345,6 +347,7 @@ export function CostumesPage() {
           onToggle={(dancerId, assigned) => handleDancerToggle(assignModalCostume.id, dancerId, assigned)}
         />
       )}
+      </TierGate>
     </PageContainer>
   );
 }

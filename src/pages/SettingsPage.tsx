@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Check, Sun, Moon, Monitor } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useProfileStore } from '@/stores/profileStore';
-import { ACCENT_PRESETS } from '@/types';
+import { useTierStore } from '@/stores/tierStore';
+import { ACCENT_PRESETS, TIER_LABELS } from '@/types';
+import type { Tier } from '@/types';
 import { cn } from '@/lib/utils';
 
 type ThemePref = 'light' | 'dark' | 'system';
@@ -29,12 +32,35 @@ export function SettingsPage() {
     setTheme,
   } = useProfileStore();
 
+  const tier = useTierStore((s) => s.tier);
+  const setTier = useTierStore((s) => s.setTier);
+
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const isCustomColor = !ACCENT_PRESETS.some((p) => p.value === accentColor);
 
   return (
     <PageContainer title="Settings">
       <div className="space-y-8 max-w-2xl">
+        {/* Subscription Section (Dev Only) */}
+        <section>
+          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">
+            Subscription (Dev Only)
+          </h2>
+          <Card>
+            <div className="flex gap-2">
+              {(['free', 'mid', 'studio'] as const).map((t) => (
+                <Button
+                  key={t}
+                  variant={tier === t ? 'primary' : 'secondary'}
+                  onClick={() => setTier(t as Tier)}
+                >
+                  {TIER_LABELS[t]}
+                </Button>
+              ))}
+            </div>
+          </Card>
+        </section>
+
         {/* Studio Section */}
         <section>
           <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">

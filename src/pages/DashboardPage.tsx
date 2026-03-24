@@ -12,6 +12,7 @@ import { useRosterStore } from '@/stores/rosterStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { staggerContainer, staggerItem } from '@/lib/motion';
+import { TierGate } from '@/components/ui/TierGate';
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', {
@@ -98,32 +99,36 @@ export function DashboardPage() {
 
         {/* ── Stat: Seasons ── */}
         <motion.div variants={staggerItem}>
-          <Link to="/seasons">
-            <Card className="h-full hover:border-border transition-colors cursor-pointer">
-              <div className="flex flex-col items-center gap-2 py-3">
-                <div className="flex items-center justify-center w-11 h-11 rounded-2xl accent-bg-light">
-                  <Trophy size={22} className="accent-text" />
+          <TierGate feature="home_dashboard" overlay>
+            <Link to="/seasons">
+              <Card className="h-full hover:border-border transition-colors cursor-pointer">
+                <div className="flex flex-col items-center gap-2 py-3">
+                  <div className="flex items-center justify-center w-11 h-11 rounded-2xl accent-bg-light">
+                    <Trophy size={22} className="accent-text" />
+                  </div>
+                  <p className="text-3xl font-bold text-text-primary tracking-tight">{seasons.length}</p>
+                  <p className="text-xs font-medium text-text-secondary">Seasons</p>
                 </div>
-                <p className="text-3xl font-bold text-text-primary tracking-tight">{seasons.length}</p>
-                <p className="text-xs font-medium text-text-secondary">Seasons</p>
-              </div>
-            </Card>
-          </Link>
+              </Card>
+            </Link>
+          </TierGate>
         </motion.div>
 
         {/* ── Stat: Dancers ── */}
         <motion.div variants={staggerItem}>
-          <Link to="/roster">
-            <Card className="h-full hover:border-border transition-colors cursor-pointer">
-              <div className="flex flex-col items-center gap-2 py-3">
-                <div className="flex items-center justify-center w-11 h-11 rounded-2xl accent-bg-light">
-                  <Users size={22} className="accent-text" />
+          <TierGate feature="home_dashboard" overlay>
+            <Link to="/roster">
+              <Card className="h-full hover:border-border transition-colors cursor-pointer">
+                <div className="flex flex-col items-center gap-2 py-3">
+                  <div className="flex items-center justify-center w-11 h-11 rounded-2xl accent-bg-light">
+                    <Users size={22} className="accent-text" />
+                  </div>
+                  <p className="text-3xl font-bold text-text-primary tracking-tight">{dancers.length}</p>
+                  <p className="text-xs font-medium text-text-secondary">Dancers</p>
                 </div>
-                <p className="text-3xl font-bold text-text-primary tracking-tight">{dancers.length}</p>
-                <p className="text-xs font-medium text-text-secondary">Dancers</p>
-              </div>
-            </Card>
-          </Link>
+              </Card>
+            </Link>
+          </TierGate>
         </motion.div>
 
         {/* ── Quick Action ── */}
