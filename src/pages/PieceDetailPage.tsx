@@ -9,6 +9,9 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Spinner } from '@/components/ui/Spinner';
 import { FormationCanvas, ThumbnailStrip, CanvasToolbar, PlaybackControls, TemplatePickerModal } from '@/components/canvas';
+import { PieceTabs, PieceNotesPanel, SongSectionsPanel, PieceRosterPanel } from '@/components/pieces';
+import type { PieceTab } from '@/components/pieces';
+import { useSongSectionStore } from '@/stores/songSectionStore';
 import type { FormationCanvasHandle } from '@/components/canvas';
 import { usePlayback } from '@/hooks/usePlayback';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
@@ -155,6 +158,7 @@ export function PieceDetailPage() {
 
   const setAudioUrl = useAudioStore((s) => s.setAudioUrl);
 
+  const [activeTab, setActiveTab] = useState<PieceTab>('canvas');
   const [transitionOpen, setTransitionOpen] = useState(true);
   const [audioOpen, setAudioOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -168,6 +172,9 @@ export function PieceDetailPage() {
   const [printData, setPrintData] = useState<{ stageImages: (string | null)[] } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isDirty = useFormationStore((s) => s.isDirty);
+
+  const loadSongSections = useSongSectionStore((s) => s.load);
+  const resetSongSections = useSongSectionStore((s) => s.reset);
 
   const piece = pieces.find((p) => p.id === id);
   const activeFormation = formations.find((f) => f.id === activeFormationId);
@@ -184,6 +191,11 @@ export function PieceDetailPage() {
       usePathStore.getState().reset();
     };
   }, [id, loadFormations]);
+
+  useEffect(() => {
+    if (id) loadSongSections(id);
+    return () => resetSongSections();
+  }, [id, loadSongSections, resetSongSections]);
 
   // Load paths when formations are available
   useEffect(() => {
@@ -602,6 +614,13 @@ export function PieceDetailPage() {
         )}
       </div>
 
+      {/* Tab bar */}
+      <div className="mb-3">
+        <PieceTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+
+      {/* Canvas tab */}
+      <div style={{ display: activeTab === 'canvas' ? 'block' : 'none' }}>
       {/* Main workspace area */}
       <div className="flex flex-col gap-4 min-w-0">
         {/* Canvas area */}
@@ -963,6 +982,38 @@ export function PieceDetailPage() {
 
           </div>
         )}
+      </div>
+      </div>{/* end canvas tab */}
+
+      {/* Notes tab */}
+      <div style={{ display: activeTab === 'notes' ? 'block' : 'none' }}>
+        <PieceNotesPanel
+          piece={piece}
+          formations={formations}
+          onUpdatePiece={(updates) => updatePiece(piece.id, updates)}
+          onNavigateFormation={(formationId) => {
+            setActiveFormation(formationId);
+            setActiveTab('canvas');
+          }}
+        />
+      </div>
+
+      {/* Song Sections tab */}
+      <div style={{ display: activeTab === 'sections' ? 'block' : 'none' }}>
+        <SongSectionsPanel piece={piece} formations={formations} />
+      </div>
+
+      {/* Roster tab */}
+      <div style={{ display: activeTab === 'roster' ? 'block' : 'none' }}>
+        <PieceRosterPanel
+          positions={activePositions}
+          rosterDancers={rosterDancers}
+          dancerCount={piece.dancer_count}
+          activeFormationId={activeFormationId}
+          onAssign={updateLocalPositionDancer}
+          onAddDancer={() => setAddDancerModalOpen(true)}
+          onRemoveDancer={handleRemoveDancer}
+        />
       </div>
 
       <AddDancerModal

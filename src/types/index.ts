@@ -281,6 +281,29 @@ export interface Prop {
 export type PropInsert = Omit<Prop, 'id' | 'created_at' | 'updated_at'>;
 export type PropUpdate = Partial<Omit<PropInsert, 'piece_id'>>;
 
+// ─── Song Section ───
+export const SECTION_TYPES = [
+  'Intro', 'Verse', 'Pre-Chorus', 'Chorus', 'Bridge', 'Outro', 'Break', 'Custom',
+] as const;
+
+export type SectionType = (typeof SECTION_TYPES)[number];
+
+export interface SongSection {
+  id: string;
+  piece_id: string;
+  label: string;
+  section_type: SectionType;
+  start_seconds: number;
+  end_seconds: number;
+  formation_id: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SongSectionInsert = Omit<SongSection, 'id' | 'created_at' | 'updated_at'>;
+export type SongSectionUpdate = Partial<Omit<SongSectionInsert, 'piece_id'>>;
+
 // ─── Tier System ───
 export type Tier = 'free' | 'mid' | 'studio';
 
