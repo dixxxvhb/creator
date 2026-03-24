@@ -304,6 +304,38 @@ export interface SongSection {
 export type SongSectionInsert = Omit<SongSection, 'id' | 'created_at' | 'updated_at'>;
 export type SongSectionUpdate = Partial<Omit<SongSectionInsert, 'piece_id'>>;
 
+// ─── Competition Companies & Config ───
+export interface CompetitionCompany {
+  id: string;
+  name: string;
+  shortName: string;
+  website: string;
+  type: 'competition' | 'convention' | 'both';
+  scoringSystem: 'tiered' | 'ranked' | 'both';
+  defaultDivisions: { name: string; minAge: number; maxAge: number }[];
+  defaultCategories: string[];
+  defaultLevels: string[];
+  defaultStyles: string[];
+}
+
+export const AWARD_TIERS = [
+  'Platinum', 'High Gold', 'Gold', 'High Silver', 'Silver', 'Bronze',
+] as const;
+
+export type AwardTier = (typeof AWARD_TIERS)[number];
+
+export const ENTRY_CATEGORIES = [
+  'Solo', 'Duo', 'Trio', 'Small Group', 'Large Group', 'Line', 'Production', 'Super Group',
+] as const;
+
+export type EntryCategory = (typeof ENTRY_CATEGORIES)[number];
+
+export const COMPETITIVE_LEVELS = [
+  'Recreational', 'Intermediate', 'Competitive', 'Elite',
+] as const;
+
+export type CompetitiveLevel = (typeof COMPETITIVE_LEVELS)[number];
+
 // ─── Tier System ───
 export type Tier = 'free' | 'mid' | 'studio';
 

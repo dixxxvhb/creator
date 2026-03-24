@@ -1,0 +1,281 @@
+import type { CompetitionCompany } from '@/types';
+
+const COMMON_STYLES = [
+  'Jazz', 'Lyrical', 'Contemporary', 'Tap', 'Ballet', 'Hip Hop',
+  'Musical Theatre', 'Acro', 'Modern', 'Open',
+];
+
+const STANDARD_CATEGORIES = ['Solo', 'Duo', 'Trio', 'Small Group', 'Large Group', 'Line', 'Production'];
+
+export const CUSTOM_COMPANY_ID = 'custom';
+
+export const COMPETITION_COMPANIES: CompetitionCompany[] = [
+  {
+    id: 'starquest',
+    name: 'StarQuest Dance Competition',
+    shortName: 'StarQuest',
+    website: 'starquestdance.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Petite', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'showstopper',
+    name: 'Showstopper Dance Competition',
+    shortName: 'Showstopper',
+    website: 'goshowstopper.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 7 },
+      { name: 'Petite', minAge: 8, maxAge: 10 },
+      { name: 'Junior', minAge: 11, maxAge: 13 },
+      { name: 'Teen', minAge: 14, maxAge: 16 },
+      { name: 'Senior', minAge: 17, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Intermediate', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'nuvo',
+    name: 'NUVO Dance Convention & Competition',
+    shortName: 'NUVO',
+    website: 'nuvodanceconvention.com',
+    type: 'both',
+    scoringSystem: 'both',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 18 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Competitive', 'Elite'],
+    defaultStyles: [...COMMON_STYLES, 'Commercial'],
+  },
+  {
+    id: 'radix',
+    name: 'Radix Dance Convention & Competition',
+    shortName: 'Radix',
+    website: 'radixdance.com',
+    type: 'both',
+    scoringSystem: 'ranked',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 18 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Competitive'],
+    defaultStyles: [...COMMON_STYLES, 'Commercial'],
+  },
+  {
+    id: 'tda',
+    name: 'The Dance Awards',
+    shortName: 'TDA',
+    website: 'thedanceawards.com',
+    type: 'competition',
+    scoringSystem: 'ranked',
+    defaultDivisions: [
+      { name: 'Junior', minAge: 0, maxAge: 12 },
+      { name: 'Teen', minAge: 13, maxAge: 15 },
+      { name: 'Senior', minAge: 16, maxAge: 19 },
+    ],
+    defaultCategories: ['Solo'],
+    defaultLevels: ['Elite'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'jump',
+    name: 'JUMP Dance Convention & Competition',
+    shortName: 'JUMP',
+    website: 'jumpdance.com',
+    type: 'both',
+    scoringSystem: 'both',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 18 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'nycda',
+    name: 'New York City Dance Alliance',
+    shortName: 'NYCDA',
+    website: 'nycda.com',
+    type: 'both',
+    scoringSystem: 'ranked',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 12 },
+      { name: 'Teen', minAge: 13, maxAge: 15 },
+      { name: 'Senior', minAge: 16, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Competitive', 'Elite'],
+    defaultStyles: [...COMMON_STYLES, 'Pointe'],
+  },
+  {
+    id: '24seven',
+    name: '24 Seven Dance Convention',
+    shortName: '24 Seven',
+    website: '24sevendance.com',
+    type: 'both',
+    scoringSystem: 'ranked',
+    defaultDivisions: [
+      { name: 'Junior', minAge: 0, maxAge: 12 },
+      { name: 'Teen', minAge: 13, maxAge: 15 },
+      { name: 'Senior', minAge: 16, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Competitive'],
+    defaultStyles: [...COMMON_STYLES, 'Commercial'],
+  },
+  {
+    id: 'halloffame',
+    name: 'Hall of Fame Dance Challenge',
+    shortName: 'Hall of Fame',
+    website: 'halloffamedance.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Petite', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'tremaine',
+    name: 'Tremaine Dance Convention & Competition',
+    shortName: 'Tremaine',
+    website: 'tremainedance.com',
+    type: 'both',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 7 },
+      { name: 'Junior', minAge: 8, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 15 },
+      { name: 'Senior', minAge: 16, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'kar',
+    name: 'Kids Artistic Revue',
+    shortName: 'KAR',
+    website: 'kardance.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 4, maxAge: 7 },
+      { name: 'Junior', minAge: 8, maxAge: 10 },
+      { name: 'Teen', minAge: 11, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Intermediate', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'starpower',
+    name: 'Starpower Talent Competition',
+    shortName: 'Starpower',
+    website: 'starpowertalent.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Petite', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive', 'Elite'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'groove',
+    name: 'Groove Dance Competition',
+    shortName: 'Groove',
+    website: 'groovedance.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 7 },
+      { name: 'Junior', minAge: 8, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'headliners',
+    name: 'Headliners Dance Competition',
+    shortName: 'Headliners',
+    website: 'headlinersdance.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Petite', minAge: 0, maxAge: 8 },
+      { name: 'Junior', minAge: 9, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+  {
+    id: 'energy',
+    name: 'Energy Dance Competition',
+    shortName: 'Energy',
+    website: 'energydancecomp.com',
+    type: 'competition',
+    scoringSystem: 'tiered',
+    defaultDivisions: [
+      { name: 'Mini', minAge: 0, maxAge: 7 },
+      { name: 'Junior', minAge: 8, maxAge: 11 },
+      { name: 'Teen', minAge: 12, maxAge: 14 },
+      { name: 'Senior', minAge: 15, maxAge: 19 },
+    ],
+    defaultCategories: STANDARD_CATEGORIES,
+    defaultLevels: ['Recreational', 'Competitive'],
+    defaultStyles: COMMON_STYLES,
+  },
+];
+
+/** Search companies by name (case-insensitive partial match) */
+export function searchCompanies(query: string): CompetitionCompany[] {
+  if (!query.trim()) return COMPETITION_COMPANIES;
+  const lower = query.toLowerCase();
+  return COMPETITION_COMPANIES.filter(
+    (c) => c.name.toLowerCase().includes(lower) || c.shortName.toLowerCase().includes(lower)
+  );
+}
+
+/** Get a company by ID */
+export function getCompanyById(id: string): CompetitionCompany | undefined {
+  return COMPETITION_COMPANIES.find((c) => c.id === id);
+}
