@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useProfileStore } from '@/stores/profileStore';
 import { useTierStore } from '@/stores/tierStore';
+import { useAuthStore } from '@/stores/authStore';
 import { ACCENT_PRESETS, TIER_LABELS } from '@/types';
 import type { Tier } from '@/types';
 import { cn } from '@/lib/utils';
@@ -38,6 +39,9 @@ export function SettingsPage() {
 
   const tier = useTierStore((s) => s.tier);
   const setTier = useTierStore((s) => s.setTier);
+
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
 
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const isCustomColor = !ACCENT_PRESETS.some((p) => p.value === accentColor);
@@ -260,6 +264,23 @@ export function SettingsPage() {
             <p className="text-xs text-text-tertiary mt-3">
               Stage size applied to new pieces.
             </p>
+          </Card>
+        </section>
+        {/* Account Section */}
+        <section>
+          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">
+            Account
+          </h2>
+          <Card>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-text-primary">{user?.email}</p>
+                <p className="text-xs text-text-tertiary">Signed in</p>
+              </div>
+              <Button variant="secondary" onClick={signOut}>
+                Sign Out
+              </Button>
+            </div>
           </Card>
         </section>
       </div>
