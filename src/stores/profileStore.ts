@@ -12,6 +12,8 @@ const DEFAULT_PROFILE: UserProfile = {
   customGreeting: '',
   studioLogoUrl: null,
   avatarUrl: null,
+  defaultStageWidth: 800,
+  defaultStageDepth: 600,
 };
 
 function loadProfile(): UserProfile {
@@ -84,6 +86,8 @@ interface ProfileState extends UserProfile {
   setStudioName: (name: string) => void;
   setDisplayName: (name: string) => void;
   setCustomGreeting: (greeting: string) => void;
+  setDefaultStageWidth: (w: number) => void;
+  setDefaultStageDepth: (d: number) => void;
   initProfile: () => void;
 }
 
@@ -118,6 +122,16 @@ export const useProfileStore = create<ProfileState>((set, get) => {
     setCustomGreeting: (greeting: string) => {
       set({ customGreeting: greeting });
       saveProfile({ ...get(), customGreeting: greeting });
+    },
+
+    setDefaultStageWidth: (w: number) => {
+      set({ defaultStageWidth: w });
+      saveProfile({ ...get(), defaultStageWidth: w });
+    },
+
+    setDefaultStageDepth: (d: number) => {
+      set({ defaultStageDepth: d });
+      saveProfile({ ...get(), defaultStageDepth: d });
     },
 
     initProfile: () => {

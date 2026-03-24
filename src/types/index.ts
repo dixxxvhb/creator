@@ -162,6 +162,8 @@ export interface UserProfile {
   customGreeting: string;
   studioLogoUrl: string | null;
   avatarUrl: string | null;
+  defaultStageWidth: number;
+  defaultStageDepth: number;
 }
 
 export const ACCENT_PRESETS = [

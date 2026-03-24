@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 import { useRosterStore } from '@/stores/rosterStore';
+import { useProfileStore } from '@/stores/profileStore';
 import type { PieceInsert, DancerInsert } from '@/types';
 import { DANCE_STYLES, GROUP_SIZES, DANCER_COLORS } from '@/types';
 
@@ -38,6 +39,9 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
   const rosterDancers = useRosterStore((s) => s.dancers);
   const loadRoster = useRosterStore((s) => s.load);
   const addRosterDancer = useRosterStore((s) => s.add);
+
+  const defaultStageWidth = useProfileStore((s) => s.defaultStageWidth);
+  const defaultStageDepth = useProfileStore((s) => s.defaultStageDepth);
 
   useEffect(() => {
     if (rosterDancers.length === 0) loadRoster();
@@ -103,8 +107,8 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
       bpm: bpm ? parseInt(bpm) : null,
       duration_seconds: durationSeconds > 0 ? durationSeconds : null,
       audio_url: null,
-      stage_width: 40,
-      stage_depth: 30,
+      stage_width: defaultStageWidth,
+      stage_depth: defaultStageDepth,
       notes: notes.trim(),
       sort_order: 0,
     };

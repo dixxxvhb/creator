@@ -5,6 +5,7 @@ import { PageContainer } from '@/components/layout';
 import { PieceSetupForm } from '@/components/pieces';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useFormationStore } from '@/stores/formationStore';
+import { useProfileStore } from '@/stores/profileStore';
 import type { PieceInsert, DancerPositionInsert } from '@/types';
 import { DANCER_COLORS } from '@/types';
 import { generateLabel } from '@/lib/formationTemplates';
@@ -93,6 +94,8 @@ export function PieceSetupPage() {
   const addPiece = usePieceStore((s) => s.add);
   const addFormation = useFormationStore((s) => s.addFormation);
   const savePositions = useFormationStore((s) => s.savePositions);
+  const defaultStageWidth = useProfileStore((s) => s.defaultStageWidth);
+  const defaultStageDepth = useProfileStore((s) => s.defaultStageDepth);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [mode, setMode] = useState<'choose' | 'full'>('choose');
 
@@ -109,8 +112,8 @@ export function PieceSetupPage() {
         bpm: null,
         duration_seconds: null,
         audio_url: null,
-        stage_width: 40,
-        stage_depth: 30,
+        stage_width: defaultStageWidth,
+        stage_depth: defaultStageDepth,
         notes: '',
         sort_order: 0,
       };

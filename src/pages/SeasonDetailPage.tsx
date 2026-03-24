@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, Plus, Pencil, Trophy, Calendar, MapPin, Music,
-  Trash2, Award, ChevronDown, ChevronUp,
+  Trash2, Award, ChevronDown, ChevronUp, LayoutList, GitBranch,
 } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
@@ -13,6 +13,7 @@ import { SeasonFormModal } from '@/components/seasons/SeasonFormModal';
 import { CompetitionFormModal } from '@/components/seasons/CompetitionFormModal';
 import { EntryFormModal } from '@/components/seasons/EntryFormModal';
 import { PiecePickerModal } from '@/components/seasons/PiecePickerModal';
+import { SeasonTimeline } from '@/components/seasons/SeasonTimeline';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { usePieceStore } from '@/stores/pieceStore';
 import { AWARD_TIERS } from '@/types';
@@ -70,6 +71,8 @@ export function SeasonDetailPage() {
   const [expandedComps, setExpandedComps] = useState<Set<string>>(new Set());
   const [deleteConfirmComp, setDeleteConfirmComp] = useState<string | null>(null);
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
+  const compCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const season = seasons.find((s) => s.id === id);
   const assignedPieceIds = pieceSeasons.filter((ps) => ps.season_id === id).map((ps) => ps.piece_id);
@@ -132,6 +135,23 @@ export function SeasonDetailPage() {
     } else {
       assignPiece(pieceId, id);
     }
+  }
+
+  function handleSelectFromTimeline(compId: string) {
+    // Expand if collapsed
+    setExpandedComps((prev) => {
+      const next = new Set(prev);
+      next.add(compId);
+      return next;
+    });
+    // Switch to list view if in timeline mode, then scroll
+    setViewMode('list');
+    setTimeout(() => {
+      const el = compCardRefs.current[compId];
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
   }
 
   function getEntriesForComp(compId: string) {
@@ -336,12 +356,53 @@ export function SeasonDetailPage() {
 
         {/* Right: Competitions */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
             <h3 className="text-sm font-semibold text-text-primary">Competitions</h3>
-            <Button size="sm" onClick={() => setShowCompForm(true)}>
-              <Plus size={14} /> Add Competition
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* View toggle */}
+              <div className="flex items-center rounded-lg border border-border overflow-hidden">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-accent-500 text-white'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary'
+                  }`}
+                  title="List view"
+                >
+                  <LayoutList size={12} />
+                  <span>List</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('timeline')}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 text-xs transition-colors ${
+                    viewMode === 'timeline'
+                      ? 'bg-accent-500 text-white'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-surface-secondary'
+                  }`}
+                  title="Timeline view"
+                >
+                  <GitBranch size={12} />
+                  <span>Timeline</span>
+                </button>
+              </div>
+              <Button size="sm" onClick={() => setShowCompForm(true)}>
+                <Plus size={14} /> Add Competition
+              </Button>
+            </div>
           </div>
+
+          {/* Timeline — shown above list when active */}
+          {viewMode === 'timeline' && competitions.length > 0 && (
+            <Card>
+              <SeasonTimeline
+                competitions={competitions}
+                seasonStart={season.start_date}
+                seasonEnd={season.end_date}
+                onSelectCompetition={handleSelectFromTimeline}
+              />
+            </Card>
+          )}
 
           {competitions.length === 0 ? (
             <Card className="text-center py-8">
@@ -368,7 +429,11 @@ export function SeasonDetailPage() {
                 const deadlineVariant = urgencyVariant(deadlineDays);
 
                 return (
-                  <Card key={comp.id}>
+                  <div
+                    key={comp.id}
+                    ref={(el) => { compCardRefs.current[comp.id] = el; }}
+                  >
+                  <Card>
                     {/* Competition header */}
                     <div className="flex items-start justify-between gap-2">
                       <button
@@ -542,6 +607,7 @@ export function SeasonDetailPage() {
                       </div>
                     )}
                   </Card>
+                  </div>
                 );
               })}
             </div>

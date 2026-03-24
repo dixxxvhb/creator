@@ -25,11 +25,15 @@ export function SettingsPage() {
     customGreeting,
     accentColor,
     themePreference,
+    defaultStageWidth,
+    defaultStageDepth,
     setDisplayName,
     setStudioName,
     setCustomGreeting,
     setAccentColor,
     setTheme,
+    setDefaultStageWidth,
+    setDefaultStageDepth,
   } = useProfileStore();
 
   const tier = useTierStore((s) => s.tier);
@@ -239,18 +243,22 @@ export function SettingsPage() {
               <Input
                 label="Width (px)"
                 type="number"
-                placeholder="800"
-                disabled
+                value={defaultStageWidth}
+                onChange={(e) => setDefaultStageWidth(parseInt(e.target.value) || 800)}
+                min={400}
+                max={1600}
               />
               <Input
                 label="Depth (px)"
                 type="number"
-                placeholder="600"
-                disabled
+                value={defaultStageDepth}
+                onChange={(e) => setDefaultStageDepth(parseInt(e.target.value) || 600)}
+                min={300}
+                max={1200}
               />
             </div>
             <p className="text-xs text-text-tertiary mt-3">
-              Stage size defaults will apply to new pieces. Coming soon.
+              Stage size applied to new pieces.
             </p>
           </Card>
         </section>
