@@ -322,6 +322,10 @@ export function PieceDetailPage() {
         birthday: null,
         color,
         is_active: true,
+        height: null, weight: null, bust: null, waist: null, hips: null, inseam: null,
+        shoe_size: null, tights_size: null, headpiece_size: null,
+        parent_name: null, parent_email: null, parent_phone: null,
+        notes: '',
       });
       if (!newDancer) return;
       dancerId = newDancer.id;

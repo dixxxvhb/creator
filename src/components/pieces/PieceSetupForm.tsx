@@ -71,6 +71,10 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
       birthday: null,
       color,
       is_active: true,
+      height: null, weight: null, bust: null, waist: null, hips: null, inseam: null,
+      shoe_size: null, tights_size: null, headpiece_size: null,
+      parent_name: null, parent_email: null, parent_phone: null,
+      notes: '',
     };
     const created = await addRosterDancer(insert);
     if (created) {

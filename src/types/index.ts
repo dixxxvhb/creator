@@ -99,6 +99,21 @@ export interface Dancer {
   birthday: string | null;
   color: string;
   is_active: boolean;
+  // Measurements
+  height: string | null;
+  weight: string | null;
+  bust: string | null;
+  waist: string | null;
+  hips: string | null;
+  inseam: string | null;
+  shoe_size: string | null;
+  tights_size: string | null;
+  headpiece_size: string | null;
+  // Contact
+  parent_name: string | null;
+  parent_email: string | null;
+  parent_phone: string | null;
+  notes: string;
   created_at: string;
   updated_at: string;
 }
