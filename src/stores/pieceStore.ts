@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Piece, PieceInsert, PieceUpdate } from '@/types';
 import * as piecesService from '@/services/pieces';
+import * as formationsService from '@/services/formations';
+import * as positionsService from '@/services/dancerPositions';
 import { toast } from '@/stores/toastStore';
 
 interface PieceState {
@@ -11,6 +13,7 @@ interface PieceState {
   add: (piece: PieceInsert) => Promise<Piece | null>;
   update: (id: string, updates: PieceUpdate) => Promise<void>;
   remove: (id: string) => Promise<void>;
+  duplicate: (id: string) => Promise<Piece | null>;
   getById: (id: string) => Piece | undefined;
 }
 
@@ -66,6 +69,63 @@ export const usePieceStore = create<PieceState>((set, get) => ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete piece';
       toast.error(message);
+    }
+  },
+
+  duplicate: async (id) => {
+    try {
+      const original = get().pieces.find((p) => p.id === id);
+      if (!original) throw new Error('Piece not found');
+
+      // Create the new piece
+      const { id: _id, user_id: _uid, created_at: _c, updated_at: _u, ...fields } = original;
+      const newPiece = await piecesService.createPiece({
+        ...fields,
+        title: `${original.title} (Copy)`,
+        sort_order: get().pieces.length,
+        audio_url: null, // don't copy audio reference
+      });
+
+      // Copy formations + positions
+      const formations = await formationsService.fetchFormations(id);
+      const formationIds = formations.map((f) => f.id);
+      const allPositions = await positionsService.fetchPositionsBatch(formationIds);
+
+      for (const formation of formations) {
+        const newFormation = await formationsService.createFormation({
+          piece_id: newPiece.id,
+          index: formation.index,
+          label: formation.label,
+          timestamp_seconds: formation.timestamp_seconds,
+          choreo_notes: formation.choreo_notes,
+          counts_notes: formation.counts_notes,
+          transition_duration_ms: formation.transition_duration_ms,
+          transition_easing: formation.transition_easing,
+        });
+
+        const positions = allPositions[formation.id] ?? [];
+        if (positions.length > 0) {
+          await positionsService.upsertPositions(
+            newFormation.id,
+            positions.map((p) => ({
+              formation_id: newFormation.id,
+              x: p.x,
+              y: p.y,
+              color: p.color,
+              dancer_label: p.dancer_label,
+              dancer_id: p.dancer_id,
+            })),
+          );
+        }
+      }
+
+      set((state) => ({ pieces: [...state.pieces, newPiece] }));
+      toast.success(`Duplicated "${original.title}"`);
+      return newPiece;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to duplicate piece';
+      toast.error(message);
+      return null;
     }
   },
 
