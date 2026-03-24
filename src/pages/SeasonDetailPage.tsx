@@ -427,6 +427,10 @@ export function SeasonDetailPage() {
           competitionId={showEntryForm}
           pieces={assignedPieces.length > 0 ? assignedPieces : pieces}
           entry={editEntry}
+          divisions={competitions.find((c) => c.id === showEntryForm)?.configured_divisions}
+          categories={competitions.find((c) => c.id === showEntryForm)?.configured_categories}
+          levels={competitions.find((c) => c.id === showEntryForm)?.configured_levels}
+          styles={competitions.find((c) => c.id === showEntryForm)?.configured_styles}
         />
       )}
       <PiecePickerModal
