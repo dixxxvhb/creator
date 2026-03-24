@@ -36,8 +36,8 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       <div className="px-4 py-4 flex items-center gap-2">
         <CreatorLogo size={20} className="text-text-primary" />
         <span
-          className="text-text-primary uppercase font-brand"
-          style={{ fontWeight: 200, letterSpacing: '0.25em', fontSize: '0.9rem' }}
+          className="text-text-primary uppercase font-sans"
+          style={{ fontWeight: 300, letterSpacing: '0.25em', fontSize: '0.9rem' }}
         >
           Creator
         </span>

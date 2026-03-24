@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Raleway:wght@200;300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ─── Dark variant: use html.dark class instead of prefers-color-scheme ─── */
@@ -8,17 +8,17 @@
 @theme {
   /* Semantic surfaces — light mode defaults */
   --color-surface: #FFFFFF;
-  --color-surface-secondary: #F2F2F7;
-  --color-surface-elevated: #FFFFFF;
+  --color-surface-secondary: #F4F6FB;
+  --color-surface-elevated: #E8ECF5;
 
   /* Text hierarchy */
-  --color-text-primary: #1C1C1E;
-  --color-text-secondary: #8E8E93;
-  --color-text-tertiary: #C7C7CC;
+  --color-text-primary: #0F1117;
+  --color-text-secondary: #64748B;
+  --color-text-tertiary: #94A3B8;
 
   /* Borders */
-  --color-border: #E5E5EA;
-  --color-border-light: #F2F2F7;
+  --color-border: #CBD5E1;
+  --color-border-light: #E8ECF5;
 
   /* Status colors */
   --color-success-50: #f0fdf4;
@@ -33,15 +33,15 @@
 
   /* Fonts */
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-brand: 'Raleway', sans-serif;
+  --font-brand: 'Plus Jakarta Sans', sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', monospace;
 }
 
 /* ─── Accent Color System (runtime-changeable) ─── */
 :root {
-  --color-accent: #007AFF;
-  --color-accent-hover: #0066D6;
-  --color-accent-light: rgba(0, 122, 255, 0.1);
+  --color-accent: #3B82F6;
+  --color-accent-hover: #2563EB;
+  --color-accent-light: rgba(59, 130, 246, 0.1);
 }
 
 /* ─── Base Styles ─── */
@@ -53,14 +53,14 @@ body {
 
 /* ─── Dark Mode ─── */
 html.dark {
-  --color-surface: #1C1C1E;
-  --color-surface-secondary: #2C2C2E;
-  --color-surface-elevated: #3A3A3C;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #8E8E93;
-  --color-text-tertiary: #48484A;
-  --color-border: #38383A;
-  --color-border-light: #2C2C2E;
+  --color-surface: #0F1117;
+  --color-surface-secondary: #1A1D27;
+  --color-surface-elevated: #22263A;
+  --color-text-primary: #F1F5F9;
+  --color-text-secondary: #94A3B8;
+  --color-text-tertiary: #475569;
+  --color-border: #334155;
+  --color-border-light: #1E293B;
   --color-success-50: #0a1f0d;
   --color-danger-50: #1f0a0a;
   --color-warning-50: #1f160a;
@@ -184,7 +184,7 @@ html.dark {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
 }
 html.dark .glass {
-  background: rgba(28, 28, 30, 0.72);
+  background: rgba(15, 17, 23, 0.72);
 }
 
 /* ─── Accent glow (dark mode only) ─── */

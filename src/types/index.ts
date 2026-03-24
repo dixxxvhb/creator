@@ -150,7 +150,7 @@ export interface UserProfile {
 }
 
 export const ACCENT_PRESETS = [
-  { value: '#007AFF', label: 'Blue' },
+  { value: '#3B82F6', label: 'Electric Blue' },
   { value: '#FF2D55', label: 'Coral' },
   { value: '#AF52DE', label: 'Purple' },
   { value: '#34C759', label: 'Green' },
