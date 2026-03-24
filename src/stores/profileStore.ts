@@ -7,7 +7,7 @@ const THEME_KEY = 'creator-theme'; // legacy key, migrate from it
 const DEFAULT_PROFILE: UserProfile = {
   displayName: '',
   studioName: '',
-  accentColor: '#3B82F6',
+  accentColor: '#B4838D',
   themePreference: 'dark',
   customGreeting: '',
   studioLogoUrl: null,
