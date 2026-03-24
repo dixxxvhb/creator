@@ -15,7 +15,26 @@ import { EntryFormModal } from '@/components/seasons/EntryFormModal';
 import { PiecePickerModal } from '@/components/seasons/PiecePickerModal';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { usePieceStore } from '@/stores/pieceStore';
+import { AWARD_TIERS } from '@/types';
 import type { Competition, CompetitionEntry, CompetitionInsert, CompetitionEntryInsert, SeasonInsert } from '@/types';
+
+// ── helpers ────────────────────────────────────────────────────────────────────
+
+function daysUntil(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const target = new Date(dateStr);
+  const now = new Date();
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function urgencyVariant(days: number | null): 'danger' | 'warning' | 'info' | 'default' {
+  if (days == null || days < 0) return 'default';
+  if (days <= 3) return 'danger';
+  if (days <= 14) return 'warning';
+  return 'info';
+}
+
+// ── component ──────────────────────────────────────────────────────────────────
 
 export function SeasonDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -149,12 +168,36 @@ export function SeasonDetailPage() {
     );
   }
 
-  // Stats
+  // ── season-level stats ────────────────────────────────────────────────────
   const totalEntries = entries.length;
   const placedEntries = entries.filter((e) => e.placement).length;
   const avgScore = entries.filter((e) => e.score).length > 0
     ? entries.reduce((sum, e) => sum + (e.score ?? 0), 0) / entries.filter((e) => e.score).length
     : null;
+
+  // ── season results banner calculations ───────────────────────────────────
+  const allEntries = competitions.flatMap((comp) =>
+    entries.filter((e) => e.competition_id === comp.id)
+  );
+  const entriesWithScores = allEntries.filter((e) => e.score != null);
+  const bannerAvgScore = entriesWithScores.length > 0
+    ? entriesWithScores.reduce((sum, e) => sum + (e.score ?? 0), 0) / entriesWithScores.length
+    : null;
+  const awardCounts: Record<string, number> = {};
+  for (const e of allEntries) {
+    if (e.award_tier) awardCounts[e.award_tier] = (awardCounts[e.award_tier] ?? 0) + 1;
+  }
+  const bestPlacement = allEntries
+    .map((e) => e.placement)
+    .filter(Boolean)
+    .sort()[0] ?? null;
+  const hasResults =
+    entriesWithScores.length > 0 ||
+    bestPlacement != null ||
+    Object.keys(awardCounts).length > 0;
+
+  // Award tiers in canonical order (only tiers that exist in awardCounts)
+  const orderedAwardTiers = AWARD_TIERS.filter((t) => awardCounts[t] != null);
 
   return (
     <PageContainer fullWidth>
@@ -207,6 +250,46 @@ export function SeasonDetailPage() {
           <p className="text-xs text-text-secondary">Avg Score</p>
         </Card>
       </div>
+
+      {/* Season Results Banner */}
+      {hasResults && (
+        <Card className="mb-6">
+          <div className="flex items-center gap-1.5 mb-3">
+            <Trophy size={14} className="accent-text" />
+            <span className="text-sm font-semibold text-text-primary">Season Results</span>
+          </div>
+          <div className="flex flex-wrap items-start gap-6">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-text-tertiary uppercase tracking-wide">Total Entries</span>
+              <span className="text-lg font-bold text-text-primary">{allEntries.length}</span>
+            </div>
+            {bannerAvgScore != null && (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-text-tertiary uppercase tracking-wide">Avg Score</span>
+                <span className="text-lg font-bold text-text-primary">{bannerAvgScore.toFixed(2)}</span>
+              </div>
+            )}
+            {bestPlacement && (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-text-tertiary uppercase tracking-wide">Best Placement</span>
+                <span className="text-lg font-bold text-text-primary">{bestPlacement}</span>
+              </div>
+            )}
+            {orderedAwardTiers.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-text-tertiary uppercase tracking-wide">Award Tiers</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {orderedAwardTiers.map((tier) => (
+                    <Badge key={tier} variant="success" className="text-[10px]">
+                      {awardCounts[tier]} {tier}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Pieces */}
@@ -270,6 +353,20 @@ export function SeasonDetailPage() {
               {competitions.map((comp) => {
                 const compEntries = getEntriesForComp(comp.id);
                 const isExpanded = expandedComps.has(comp.id);
+
+                // Per-comp award tier counts
+                const compAwardCounts: Record<string, number> = {};
+                for (const e of compEntries) {
+                  if (e.award_tier) compAwardCounts[e.award_tier] = (compAwardCounts[e.award_tier] ?? 0) + 1;
+                }
+                const compOrderedTiers = AWARD_TIERS.filter((t) => compAwardCounts[t] != null);
+
+                // Urgency
+                const dateDays = daysUntil(comp.date);
+                const deadlineDays = daysUntil(comp.entry_deadline);
+                const dateVariant = urgencyVariant(dateDays);
+                const deadlineVariant = urgencyVariant(deadlineDays);
+
                 return (
                   <Card key={comp.id}>
                     {/* Competition header */}
@@ -282,11 +379,25 @@ export function SeasonDetailPage() {
                           <Trophy size={16} className="accent-text" />
                         </div>
                         <div className="flex-1 min-w-0">
+                          {/* Company badge */}
+                          {comp.company_name && (
+                            <div className="mb-1">
+                              <Badge variant="default" className="text-[10px]">
+                                {comp.company_name}
+                              </Badge>
+                            </div>
+                          )}
                           <h4 className="text-sm font-semibold text-text-primary">{comp.name}</h4>
-                          <div className="flex items-center gap-2 text-xs text-text-secondary mt-0.5">
+                          <div className="flex items-center gap-2 text-xs text-text-secondary mt-0.5 flex-wrap">
                             {comp.date && (
                               <span className="flex items-center gap-1">
-                                <Calendar size={10} /> {formatDate(comp.date)}
+                                <Calendar size={10} />
+                                {formatDate(comp.date)}
+                                {dateVariant !== 'default' && dateDays != null && dateDays >= 0 && (
+                                  <Badge variant={dateVariant} className="text-[10px] ml-0.5">
+                                    {dateDays}d
+                                  </Badge>
+                                )}
                               </span>
                             )}
                             {comp.location && (
@@ -295,12 +406,40 @@ export function SeasonDetailPage() {
                               </span>
                             )}
                           </div>
+                          {/* Entry deadline urgency */}
+                          {comp.entry_deadline && deadlineDays != null && deadlineDays >= 0 && deadlineVariant !== 'default' && (
+                            <div className="mt-1">
+                              <Badge variant={deadlineVariant} className="text-[10px]">
+                                Deadline in {deadlineDays}d
+                              </Badge>
+                            </div>
+                          )}
+                          {/* Scoring system */}
+                          {comp.scoring_system && (
+                            <div className="mt-1">
+                              <Badge variant="info" className="text-[10px]">
+                                {comp.scoring_system === 'tiered' ? 'Tiered' : comp.scoring_system === 'ranked' ? 'Ranked' : comp.scoring_system}
+                              </Badge>
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1 shrink-0 mt-1">
-                          <Badge variant="info" className="text-[10px]">
-                            {compEntries.length} entr{compEntries.length !== 1 ? 'ies' : 'y'}
-                          </Badge>
-                          {isExpanded ? <ChevronUp size={14} className="text-text-tertiary" /> : <ChevronDown size={14} className="text-text-tertiary" />}
+                        <div className="flex items-center gap-1 shrink-0 mt-1 flex-col items-end">
+                          <div className="flex items-center gap-1">
+                            <Badge variant="info" className="text-[10px]">
+                              {compEntries.length} entr{compEntries.length !== 1 ? 'ies' : 'y'}
+                            </Badge>
+                            {isExpanded ? <ChevronUp size={14} className="text-text-tertiary" /> : <ChevronDown size={14} className="text-text-tertiary" />}
+                          </div>
+                          {/* Per-comp award tier pills */}
+                          {compOrderedTiers.length > 0 && (
+                            <div className="flex flex-wrap gap-1 justify-end mt-1">
+                              {compOrderedTiers.map((tier) => (
+                                <Badge key={tier} variant="success" className="text-[10px]">
+                                  {compAwardCounts[tier]} {tier}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </button>
 
@@ -351,6 +490,11 @@ export function SeasonDetailPage() {
                                 <div className="flex items-center gap-2 shrink-0">
                                   {entry.score != null && (
                                     <span className="text-xs font-mono text-text-secondary">{entry.score}</span>
+                                  )}
+                                  {entry.award_tier && (
+                                    <Badge variant="success" className="text-[10px]">
+                                      {entry.award_tier}
+                                    </Badge>
                                   )}
                                   {entry.placement && (
                                     <Badge variant="success" className="text-[10px]">
