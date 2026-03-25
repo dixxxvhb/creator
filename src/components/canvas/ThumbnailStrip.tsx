@@ -108,6 +108,7 @@ function TransitionIndicator({
   onDeleteAll,
   onEditPath,
   onPlayPath,
+  transitionDurationMs,
 }: {
   formationId: string;
   formationPaths: DancerPath[];
@@ -117,6 +118,7 @@ function TransitionIndicator({
   onDeleteAll?: (formationId: string) => void;
   onEditPath?: (formationId: string, dancerLabel: string) => void;
   onPlayPath?: (formationId: string, dancerLabel: string) => void;
+  transitionDurationMs: number;
 }) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -156,6 +158,9 @@ function TransitionIndicator({
         <ArrowRight size={10} />
         {count > 0 && <span>{count}</span>}
       </button>
+      <span className="text-[9px] text-text-tertiary mt-0.5">
+        {(transitionDurationMs / 1000).toFixed(1)}s
+      </span>
 
       {/* Portal dropdown — escapes overflow:auto parent */}
       {open && count > 0 && pos && createPortal(
@@ -275,6 +280,7 @@ export function ThumbnailStrip({
               onDeleteAll={onDeleteAllPaths}
               onEditPath={onEditPath}
               onPlayPath={onPlayPath}
+              transitionDurationMs={formations[i + 1]?.transition_duration_ms ?? 2000}
             />
           )}
         </div>
