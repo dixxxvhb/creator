@@ -13,7 +13,8 @@ interface CompetitionFormModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: CompetitionInsert) => Promise<void>;
-  seasonId: string;
+  seasonId?: string;
+  seasons?: { id: string; name: string }[];
   competition?: Competition | null;
 }
 
@@ -24,7 +25,10 @@ const DANCE_STYLES = [
 
 type Division = { name: string; minAge: number; maxAge: number };
 
-export function CompetitionFormModal({ open, onClose, onSubmit, seasonId, competition }: CompetitionFormModalProps) {
+export function CompetitionFormModal({ open, onClose, onSubmit, seasonId, seasons, competition }: CompetitionFormModalProps) {
+  // Season selector (when seasonId not provided)
+  const [internalSeasonId, setInternalSeasonId] = useState(seasonId ?? seasons?.[0]?.id ?? '');
+
   // Company selector
   const [companySearch, setCompanySearch] = useState('');
   const [companyId, setCompanyId] = useState<string | null>(null);
@@ -83,8 +87,9 @@ export function CompetitionFormModal({ open, onClose, onSubmit, seasonId, compet
       setLevelsOpen(false);
       setStylesOpen(false);
       setCustomStyle('');
+      setInternalSeasonId(seasonId ?? seasons?.[0]?.id ?? '');
     }
-  }, [open, competition]);
+  }, [open, competition, seasonId, seasons]);
 
   const dropdownResults = searchCompanies(companySearch);
 
@@ -147,7 +152,7 @@ export function CompetitionFormModal({ open, onClose, onSubmit, seasonId, compet
     if (!name.trim()) return;
     setIsSubmitting(true);
     await onSubmit({
-      season_id: seasonId,
+      season_id: seasonId ?? internalSeasonId,
       name: name.trim(),
       location: location.trim(),
       date: date || null,
@@ -168,6 +173,23 @@ export function CompetitionFormModal({ open, onClose, onSubmit, seasonId, compet
   return (
     <Modal open={open} onClose={onClose} title={competition ? 'Edit Competition' : 'Add Competition'}>
       <form onSubmit={handleSubmit} className="space-y-4">
+
+        {/* Season Selector (when seasonId not provided) */}
+        {!seasonId && seasons && seasons.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-text-secondary">Season</label>
+            <select
+              value={internalSeasonId}
+              onChange={(e) => setInternalSeasonId(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface-secondary px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-colors"
+              required
+            >
+              {seasons.map(s => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Company Selector */}
         <div className="flex flex-col gap-1.5" ref={searchRef}>

@@ -137,7 +137,7 @@ export function CompetitionsPage() {
             await addCompetition(data);
             setShowForm(false);
           }}
-          seasonId={seasons[0].id}
+          seasons={seasons.map(s => ({ id: s.id, name: s.name }))}
         />
       )}
     </PageContainer>
