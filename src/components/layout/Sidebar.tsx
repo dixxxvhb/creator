@@ -4,6 +4,7 @@ import {
   Music,
   Users,
   Trophy,
+  Award,
   Shirt,
   Settings,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { to: '/pieces', label: 'Pieces', icon: Music },
   { to: '/roster', label: 'Roster', icon: Users, tierFeature: 'roster' },
   { to: '/seasons', label: 'Seasons', icon: Trophy, tierFeature: 'seasons' },
+  { to: '/competitions', label: 'Competitions', icon: Award, tierFeature: 'seasons' },
   { to: '/costumes', label: 'Costumes', icon: Shirt, tierFeature: 'costumes' },
 ];
 

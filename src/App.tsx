@@ -9,6 +9,7 @@ import { PieceDetailPage } from '@/pages/PieceDetailPage';
 import { RosterPage } from '@/pages/RosterPage';
 import { SeasonsPage } from '@/pages/SeasonsPage';
 import { SeasonDetailPage } from '@/pages/SeasonDetailPage';
+import { CompetitionsPage } from '@/pages/CompetitionsPage';
 import { CostumesPage } from '@/pages/CostumesPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { RehearsalPage } from '@/pages/RehearsalPage';
@@ -34,6 +35,7 @@ export function App() {
             <Route path="roster" element={<RosterPage />} />
             <Route path="seasons" element={<SeasonsPage />} />
             <Route path="seasons/:id" element={<SeasonDetailPage />} />
+            <Route path="competitions" element={<CompetitionsPage />} />
             <Route path="costumes" element={<CostumesPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>

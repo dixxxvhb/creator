@@ -6,6 +6,15 @@ import type {
 
 // ─── Competitions ───
 
+export async function fetchAllCompetitions(): Promise<Competition[]> {
+  const { data, error } = await supabase
+    .from('competitions')
+    .select('*')
+    .order('date', { ascending: true });
+  if (error) throw new Error(`Failed to fetch competitions: ${error.message}`);
+  return data;
+}
+
 export async function fetchCompetitions(seasonId: string): Promise<Competition[]> {
   const { data, error } = await supabase
     .from('competitions')

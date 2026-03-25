@@ -29,6 +29,7 @@ interface SeasonState {
   getPiecesForSeason: (seasonId: string) => string[];
 
   // Competitions
+  loadAllCompetitions: () => Promise<void>;
   loadCompetitions: (seasonId: string) => Promise<void>;
   addCompetition: (comp: CompetitionInsert) => Promise<Competition | null>;
   updateCompetition: (id: string, updates: CompetitionUpdate) => Promise<void>;
@@ -136,6 +137,15 @@ export const useSeasonStore = create<SeasonState>((set, get) => ({
   },
 
   // ─── Competitions ───
+
+  loadAllCompetitions: async () => {
+    try {
+      const competitions = await competitionsService.fetchAllCompetitions();
+      set({ competitions });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to load competitions');
+    }
+  },
 
   loadCompetitions: async (seasonId) => {
     try {
