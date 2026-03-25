@@ -27,12 +27,6 @@ export function DancerCard({ dancer, pieces, onEdit, onDelete }: DancerCardProps
               <p className="text-sm font-semibold text-text-primary truncate">
                 {dancer.full_name}
               </p>
-              {dancer.notes && (
-                <span
-                  className="w-1.5 h-1.5 rounded-full bg-text-tertiary shrink-0"
-                  title="Has notes"
-                />
-              )}
             </div>
             <p className="text-xs text-text-secondary truncate">
               {dancer.short_name}
@@ -62,9 +56,6 @@ export function DancerCard({ dancer, pieces, onEdit, onDelete }: DancerCardProps
           <span>Age {age}{dancer.birthday ? ` (${dancer.birthday})` : ''}</span>
         ) : (
           <span className="text-text-tertiary">No birthday</span>
-        )}
-        {dancer.parent_name && (
-          <p className="text-xs text-text-tertiary">Parent: {dancer.parent_name}</p>
         )}
       </div>
 
