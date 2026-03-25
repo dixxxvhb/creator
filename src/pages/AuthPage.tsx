@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
-import { BETA_ENABLED, ACCESS_CODE } from '@/lib/beta';
+import { BETA_ENABLED, ACCESS_CODE, TESTER_EMAIL, TESTER_PASSWORD } from '@/lib/beta';
 
 export function AuthPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -16,10 +16,40 @@ export function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [accessCode, setAccessCode] = useState('');
-  const [codeVerified, setCodeVerified] = useState(false);
+  const [showDirectLogin, setShowDirectLogin] = useState(false);
 
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
+
+  async function handleAccessCode() {
+    if (accessCode.toUpperCase().trim() !== ACCESS_CODE) {
+      setError('Invalid access code');
+      return;
+    }
+
+    setError(null);
+    setIsSubmitting(true);
+
+    // Try signing in to shared tester account
+    let { error: signInError } = await signIn(TESTER_EMAIL, TESTER_PASSWORD);
+
+    if (signInError) {
+      // Account doesn't exist yet — create it, then sign in
+      const { error: signUpError } = await signUp(TESTER_EMAIL, TESTER_PASSWORD);
+      if (signUpError) {
+        // If signup also fails, try sign-in one more time (race condition / already exists)
+        const retry = await signIn(TESTER_EMAIL, TESTER_PASSWORD);
+        if (retry.error) {
+          setError('Unable to sign in. Try again.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
+    setIsSubmitting(false);
+    // Auth state listener in authStore handles the redirect
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -45,8 +75,6 @@ export function AuthPage() {
       if (error) {
         setError(error);
       }
-      // If signup + auto-sign-in worked, auth state listener will redirect automatically
-      // Only show "check email" if there's a specific confirmation error
     }
 
     setIsSubmitting(false);
@@ -65,7 +93,47 @@ export function AuthPage() {
           <p className="text-sm text-text-secondary">Choreography, visualized.</p>
         </div>
 
-        {signupSuccess ? (
+        {BETA_ENABLED && !showDirectLogin ? (
+          /* Beta mode: access code only */
+          <Card>
+            <div className="space-y-4">
+              <div className="text-center mb-2">
+                <p className="text-sm text-text-secondary">
+                  Enter your access code to start testing
+                </p>
+              </div>
+              <Input
+                label="Access Code"
+                type="text"
+                value={accessCode}
+                onChange={(e) => { setAccessCode(e.target.value); setError(null); }}
+                placeholder="Enter your beta access code"
+                required
+                autoFocus
+              />
+              {error && (
+                <p className="text-sm text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
+                  {error}
+                </p>
+              )}
+              <Button
+                type="button"
+                loading={isSubmitting}
+                className="w-full"
+                onClick={handleAccessCode}
+              >
+                Enter
+              </Button>
+              <button
+                type="button"
+                onClick={() => setShowDirectLogin(true)}
+                className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors pt-1"
+              >
+                Sign in with email instead
+              </button>
+            </div>
+          </Card>
+        ) : signupSuccess ? (
           <Card>
             <div className="text-center py-4">
               <p className="text-sm text-text-primary font-medium mb-2">Check your email</p>
@@ -83,10 +151,11 @@ export function AuthPage() {
             </div>
           </Card>
         ) : (
+          /* Standard login/signup (public launch or direct login) */
           <Card>
             <div className="flex gap-1 bg-surface-secondary rounded-lg p-1 mb-4">
               <button
-                onClick={() => { setMode('login'); setError(null); setCodeVerified(false); setAccessCode(''); }}
+                onClick={() => { setMode('login'); setError(null); }}
                 className={cn(
                   'flex-1 text-sm py-2 rounded-md transition-colors font-medium',
                   mode === 'login'
@@ -97,7 +166,7 @@ export function AuthPage() {
                 Log In
               </button>
               <button
-                onClick={() => { setMode('signup'); setError(null); setCodeVerified(false); setAccessCode(''); }}
+                onClick={() => { setMode('signup'); setError(null); }}
                 className={cn(
                   'flex-1 text-sm py-2 rounded-md transition-colors font-medium',
                   mode === 'signup'
@@ -110,79 +179,52 @@ export function AuthPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {mode === 'signup' && BETA_ENABLED && !codeVerified && (
-                <div className="space-y-4">
-                  <Input
-                    label="Access Code"
-                    type="text"
-                    value={accessCode}
-                    onChange={(e) => { setAccessCode(e.target.value); setError(null); }}
-                    placeholder="Enter your beta access code"
-                    required
-                    autoFocus
-                  />
-                  {error && (
-                    <p className="text-sm text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
-                      {error}
-                    </p>
-                  )}
-                  <Button
-                    type="button"
-                    className="w-full"
-                    onClick={() => {
-                      if (accessCode.toUpperCase().trim() === ACCESS_CODE) {
-                        setCodeVerified(true);
-                        setError(null);
-                      } else {
-                        setError('Invalid access code');
-                      }
-                    }}
-                  >
-                    Continue
-                  </Button>
-                </div>
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                autoFocus
+              />
+              <Input
+                label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 6 characters"
+                required
+              />
+              {mode === 'signup' && (
+                <Input
+                  label="Confirm Password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm password"
+                  required
+                />
               )}
 
-              {(mode === 'login' || !BETA_ENABLED || codeVerified) && (
-                <>
-                  <Input
-                    label="Email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    autoFocus
-                  />
-                  <Input
-                    label="Password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="At least 6 characters"
-                    required
-                  />
-                  {mode === 'signup' && (
-                    <Input
-                      label="Confirm Password"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder="Confirm password"
-                      required
-                    />
-                  )}
+              {error && (
+                <p className="text-sm text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
+                  {error}
+                </p>
+              )}
 
-                  {error && (
-                    <p className="text-sm text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
-                      {error}
-                    </p>
-                  )}
+              <Button type="submit" loading={isSubmitting} className="w-full">
+                {mode === 'login' ? 'Log In' : 'Create Account'}
+              </Button>
 
-                  <Button type="submit" loading={isSubmitting} className="w-full">
-                    {mode === 'login' ? 'Log In' : 'Create Account'}
-                  </Button>
-                </>
+              {BETA_ENABLED && (
+                <button
+                  type="button"
+                  onClick={() => { setShowDirectLogin(false); setError(null); }}
+                  className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors pt-1"
+                >
+                  Use access code instead
+                </button>
               )}
             </form>
           </Card>
