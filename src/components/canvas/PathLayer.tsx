@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react';
 import { Group, Line, Circle, Text } from 'react-konva';
-import type { DancerPath, DancerPosition, PathPoint, CanvasMode } from '@/types';
+import Konva from 'konva';
+import type { DancerPosition, DancerPath, PathPoint, CanvasMode } from '@/types';
 
 interface PathLayerProps {
   paths: DancerPath[];
@@ -17,6 +19,102 @@ interface PathLayerProps {
 const CONTROL_POINT_RADIUS = 6;
 const PATH_STROKE_WIDTH = 3.5;
 const GHOST_DOT_RADIUS = 15;
+
+function GhostDot({
+  nextPos,
+  currentPos,
+  isTarget,
+}: {
+  nextPos: DancerPosition;
+  currentPos: DancerPosition;
+  isTarget: boolean;
+}) {
+  const ringRef = useRef<Konva.Circle>(null);
+
+  useEffect(() => {
+    if (!isTarget || !ringRef.current) return;
+    const anim = new Konva.Tween({
+      node: ringRef.current,
+      scaleX: 1.4,
+      scaleY: 1.4,
+      opacity: 0.2,
+      duration: 0.8,
+      easing: Konva.Easings.EaseInOut,
+      yoyo: true,
+      onFinish: function (this: Konva.Tween) {
+        this.reset();
+        this.play();
+      },
+    });
+    anim.play();
+    return () => anim.destroy();
+  }, [isTarget]);
+
+  return (
+    <Group>
+      {/* Filled landing zone */}
+      <Circle
+        x={nextPos.x}
+        y={nextPos.y}
+        radius={isTarget ? 20 : GHOST_DOT_RADIUS}
+        fill={nextPos.color}
+        opacity={isTarget ? 0.15 : 0.08}
+        listening={false}
+      />
+      {/* Ghost dot outline */}
+      <Circle
+        x={nextPos.x}
+        y={nextPos.y}
+        radius={isTarget ? 20 : GHOST_DOT_RADIUS}
+        stroke={nextPos.color}
+        strokeWidth={isTarget ? 2.5 : 2}
+        opacity={isTarget ? 0.9 : 0.4}
+        dash={[4, 2.5]}
+        listening={false}
+      />
+      {/* Pulsing ring (target only) */}
+      {isTarget && (
+        <Circle
+          ref={ringRef}
+          x={nextPos.x}
+          y={nextPos.y}
+          radius={24}
+          stroke={nextPos.color}
+          strokeWidth={2}
+          opacity={0.6}
+          listening={false}
+        />
+      )}
+      {/* Ghost label */}
+      <Text
+        x={nextPos.x}
+        y={nextPos.y}
+        text={nextPos.dancer_label}
+        fontSize={12}
+        fill={nextPos.color}
+        fontStyle="bold"
+        fontFamily="Inter, system-ui, sans-serif"
+        align="center"
+        verticalAlign="middle"
+        width={GHOST_DOT_RADIUS * 2}
+        height={GHOST_DOT_RADIUS * 2}
+        offsetX={GHOST_DOT_RADIUS}
+        offsetY={GHOST_DOT_RADIUS}
+        opacity={isTarget ? 0.7 : 0.35}
+        listening={false}
+      />
+      {/* Connector line from current position to destination */}
+      <Line
+        points={[currentPos.x, currentPos.y, nextPos.x, nextPos.y]}
+        stroke={nextPos.color}
+        strokeWidth={1.5}
+        dash={[6, 4]}
+        opacity={isTarget ? 0.5 : 0.2}
+        listening={false}
+      />
+    </Group>
+  );
+}
 
 function getFullPoints(
   path: DancerPath,
@@ -55,46 +153,19 @@ export function PathLayer({
       {isDrawMode && nextPositions.map((nextPos) => {
         const currentPos = positions.find((p) => p.dancer_label === nextPos.dancer_label);
         if (!currentPos) return null;
-        // Only show ghost if position actually changes
         const dx = nextPos.x - currentPos.x;
         const dy = nextPos.y - currentPos.y;
         if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return null;
 
-        // Highlight the active drawing target's ghost more
         const isTarget = isDrawing && drawingDancerLabel === nextPos.dancer_label;
 
         return (
-          <Group key={`ghost-${nextPos.dancer_label}`}>
-            {/* Ghost dot outline */}
-            <Circle
-              x={nextPos.x}
-              y={nextPos.y}
-              radius={GHOST_DOT_RADIUS}
-              stroke={nextPos.color}
-              strokeWidth={2}
-              opacity={isTarget ? 0.7 : 0.25}
-              dash={[4, 2.5]}
-              listening={false}
-            />
-            {/* Ghost label */}
-            <Text
-              x={nextPos.x}
-              y={nextPos.y}
-              text={nextPos.dancer_label}
-              fontSize={12}
-              fill={nextPos.color}
-              fontStyle="bold"
-              fontFamily="Inter, system-ui, sans-serif"
-              align="center"
-              verticalAlign="middle"
-              width={GHOST_DOT_RADIUS * 2}
-              height={GHOST_DOT_RADIUS * 2}
-              offsetX={GHOST_DOT_RADIUS}
-              offsetY={GHOST_DOT_RADIUS}
-              opacity={isTarget ? 0.6 : 0.2}
-              listening={false}
-            />
-          </Group>
+          <GhostDot
+            key={`ghost-${nextPos.dancer_label}`}
+            nextPos={nextPos}
+            currentPos={currentPos}
+            isTarget={isTarget}
+          />
         );
       })}
 
