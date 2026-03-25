@@ -415,6 +415,7 @@ export const TIER_FEATURES = {
   drawn_pathways: 'mid',
   // Piece limits
   unlimited_pieces: 'mid',
+  shows: 'studio',
 } as const satisfies Record<string, Tier>;
 
 export type TierFeature = keyof typeof TIER_FEATURES;
@@ -450,3 +451,32 @@ export type BugReportInsert = Pick<BugReport, 'description' | 'severity'> & {
   user_agent?: string | null;
   app_version?: string | null;
 };
+
+// ─── Show ───
+export interface Show {
+  id: string;
+  season_id: string;
+  user_id: string;
+  name: string;
+  date: string | null;
+  venue: string;
+  notes: string;
+  buffer_acts: number;
+  created_at: string;
+  updated_at: string;
+}
+export type ShowInsert = Omit<Show, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
+export type ShowUpdate = Partial<Omit<ShowInsert, 'season_id'>>;
+
+// ─── ShowAct ───
+export interface ShowAct {
+  id: string;
+  show_id: string;
+  piece_id: string;
+  act_number: number;
+  intermission_before: boolean;
+  notes: string;
+  created_at: string;
+}
+export type ShowActInsert = Omit<ShowAct, 'id' | 'created_at'>;
+export type ShowActUpdate = Partial<Omit<ShowActInsert, 'show_id'>>;
