@@ -246,6 +246,12 @@ export function CompetitionFormModal({ open, onClose, onSubmit, seasonId, season
           </div>
         </div>
 
+        {companyId && (
+          <div className="px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200/80">
+            Pre-filled with {companyName} defaults. Verify divisions, levels, and styles for your specific event.
+          </div>
+        )}
+
         {/* Core fields */}
         <Input
           label="Competition Name"
