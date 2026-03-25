@@ -6,6 +6,7 @@ import {
   Trophy,
   Award,
   Shirt,
+  Clapperboard,
   Settings,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -32,6 +33,7 @@ const manageItems: NavItem[] = [
   { to: '/seasons', label: 'Seasons', icon: Trophy, tierFeature: 'seasons' },
   { to: '/competitions', label: 'Competitions', icon: Award, tierFeature: 'seasons' },
   { to: '/costumes', label: 'Costumes', icon: Shirt, tierFeature: 'costumes' },
+  { to: '/shows', label: 'Shows', icon: Clapperboard, tierFeature: 'shows' },
 ];
 
 const bottomItems: NavItem[] = [

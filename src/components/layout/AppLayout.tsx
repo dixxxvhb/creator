@@ -16,6 +16,7 @@ const routeTitles: Record<string, string> = {
   '/seasons': 'Seasons',
   '/competitions': 'Competitions',
   '/costumes': 'Costumes',
+  '/shows': 'Shows',
   '/settings': 'Settings',
 };
 

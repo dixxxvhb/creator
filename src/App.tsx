@@ -11,6 +11,7 @@ import { SeasonsPage } from '@/pages/SeasonsPage';
 import { SeasonDetailPage } from '@/pages/SeasonDetailPage';
 import { CompetitionsPage } from '@/pages/CompetitionsPage';
 import { CostumesPage } from '@/pages/CostumesPage';
+import { ShowsPage } from '@/pages/ShowsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { RehearsalPage } from '@/pages/RehearsalPage';
 import { useAuthStore } from '@/stores/authStore';
@@ -37,6 +38,7 @@ export function App() {
             <Route path="seasons/:id" element={<SeasonDetailPage />} />
             <Route path="competitions" element={<CompetitionsPage />} />
             <Route path="costumes" element={<CostumesPage />} />
+            <Route path="shows" element={<ShowsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
