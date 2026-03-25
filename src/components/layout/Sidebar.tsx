@@ -22,10 +22,13 @@ interface NavItem {
   tierFeature?: TierFeature;
 }
 
-const navItems: NavItem[] = [
+const createItems: NavItem[] = [
   { to: '/', label: 'Home', icon: LayoutDashboard, tierFeature: 'home_dashboard' },
-  { to: '/pieces', label: 'Pieces', icon: Music },
   { to: '/roster', label: 'Roster', icon: Users, tierFeature: 'roster' },
+  { to: '/pieces', label: 'Pieces', icon: Music },
+];
+
+const manageItems: NavItem[] = [
   { to: '/seasons', label: 'Seasons', icon: Trophy, tierFeature: 'seasons' },
   { to: '/competitions', label: 'Competitions', icon: Award, tierFeature: 'seasons' },
   { to: '/costumes', label: 'Costumes', icon: Shirt, tierFeature: 'costumes' },
@@ -82,7 +85,9 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
       {/* Main nav */}
       <nav className="flex-1 px-3 py-2 space-y-1">
-        {navItems.map(renderNavItem)}
+        {createItems.map(renderNavItem)}
+        <div className="border-t border-border-light my-2 mx-1" />
+        {manageItems.map(renderNavItem)}
       </nav>
 
       {/* Bottom nav + version */}
