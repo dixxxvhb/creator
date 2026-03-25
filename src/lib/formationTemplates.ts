@@ -629,6 +629,7 @@ export function applyTemplate(
   options?: {
     roleAssignments?: RoleAssignment[];
     existingPositions?: { dancer_label: string; dancer_id: string | null; color: string }[];
+    focalDancerId?: string | null;
   },
 ): DancerPositionInsert[] {
   const template = TEMPLATES.find((t) => t.id === templateId);
@@ -680,6 +681,23 @@ export function applyTemplate(
       result[i].dancer_label = existing[i].dancer_label;
       result[i].dancer_id = existing[i].dancer_id;
       result[i].color = existing[i].color;
+    }
+  }
+
+  // If focal dancer is set and no explicit role assignments, move focal dancer to index 0 (center-front)
+  if (options?.focalDancerId && !options?.roleAssignments?.length && existing.length > 0) {
+    const focalIdx = result.findIndex((r) => r.dancer_id === options.focalDancerId);
+    if (focalIdx > 0) {
+      // Swap dancer identity between index 0 and focalIdx
+      const tempLabel = result[0].dancer_label;
+      const tempId = result[0].dancer_id;
+      const tempColor = result[0].color;
+      result[0].dancer_label = result[focalIdx].dancer_label;
+      result[0].dancer_id = result[focalIdx].dancer_id;
+      result[0].color = result[focalIdx].color;
+      result[focalIdx].dancer_label = tempLabel;
+      result[focalIdx].dancer_id = tempId;
+      result[focalIdx].color = tempColor;
     }
   }
 

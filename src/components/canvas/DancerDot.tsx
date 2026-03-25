@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Group, Circle, Text, Line } from 'react-konva';
+import { Group, Circle, Text, Line, Star as KonvaStar } from 'react-konva';
 import type Konva from 'konva';
 import type { DancerPosition, CanvasMode } from '@/types';
 import { usePathStore } from '@/stores/pathStore';
@@ -24,6 +24,8 @@ interface DancerDotProps {
   /** Stage dimensions for offstage detection */
   stageWidth?: number;
   stageDepth?: number;
+  /** Whether this dancer is the focal/lead dancer */
+  isFocal?: boolean;
   /** Active formation ID for saving drawn paths */
   activeFormationId?: string;
   onDragMove: (id: string, x: number, y: number) => void;
@@ -51,6 +53,7 @@ export function DancerDot({
   isDrawingTarget = false,
   isDrawing = false,
   hasNextFormation = false,
+  isFocal = false,
   stageWidth,
   stageDepth,
   activeFormationId,
@@ -249,6 +252,20 @@ export function DancerDot({
         offsetY={DOT_RADIUS}
         listening={false}
       />
+      {/* Focal dancer star */}
+      {isFocal && (
+        <KonvaStar
+          x={0}
+          y={-DOT_RADIUS - 10}
+          numPoints={5}
+          innerRadius={3}
+          outerRadius={7}
+          fill="#F59E0B"
+          stroke="#F59E0B"
+          strokeWidth={0.5}
+          listening={false}
+        />
+      )}
       {/* Direction arrow for offstage dancers */}
       {offstageDir && ARROW_POINTS[offstageDir] && (
         <Line

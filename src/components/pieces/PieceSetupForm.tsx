@@ -107,6 +107,7 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
       stage_depth: defaultStageDepth,
       notes: notes.trim(),
       sort_order: 0,
+      focal_dancer_id: null,
     };
 
     onSubmit(data, groupSize, selectedDancerIds);

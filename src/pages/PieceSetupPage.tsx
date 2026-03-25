@@ -116,6 +116,7 @@ export function PieceSetupPage() {
         stage_depth: defaultStageDepth,
         notes: '',
         sort_order: 0,
+        focal_dancer_id: null,
       };
 
       const piece = await addPiece(data);

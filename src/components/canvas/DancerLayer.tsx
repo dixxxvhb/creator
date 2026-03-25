@@ -18,6 +18,8 @@ interface DancerLayerProps {
   /** Stage dimensions for offstage detection */
   stageWidth?: number;
   stageDepth?: number;
+  /** Focal (lead) dancer ID */
+  focalDancerId?: string | null;
   /** Active formation ID for saving drawn paths */
   activeFormationId?: string;
   onDragMove: (id: string, x: number, y: number) => void;
@@ -33,6 +35,7 @@ export function DancerLayer({
   drawingDancerLabel = null,
   isDrawing = false,
   hasNextFormation = false,
+  focalDancerId = null,
   stageWidth,
   stageDepth,
   activeFormationId,
@@ -55,6 +58,7 @@ export function DancerLayer({
           displayName={pos.dancer_id ? dancerNameMap.get(pos.dancer_id) ?? null : null}
           isDrawingTarget={drawingDancerLabel === pos.dancer_label}
           isDrawing={isDrawing}
+          isFocal={pos.dancer_id != null && pos.dancer_id === focalDancerId}
           hasNextFormation={hasNextFormation}
           stageWidth={stageWidth}
           stageDepth={stageDepth}

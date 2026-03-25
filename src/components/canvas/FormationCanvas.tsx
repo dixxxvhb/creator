@@ -396,6 +396,7 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
             drawingDancerLabel={drawingDancerLabel}
             isDrawing={isDrawing}
             hasNextFormation={nextPositions.length > 0}
+            focalDancerId={piece.focal_dancer_id}
             stageWidth={piece.stage_width}
             stageDepth={piece.stage_depth}
             activeFormationId={activeFormationId ?? undefined}

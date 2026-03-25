@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Music, Users, Pencil, ChevronDown, ChevronUp, Trash2, Volume2, Download, UserPlus, UserMinus } from 'lucide-react';
+import { ArrowLeft, Save, Music, Users, Pencil, ChevronDown, ChevronUp, Trash2, Volume2, Download, UserPlus, UserMinus, Star } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -47,12 +47,16 @@ const PositionRow = memo(function PositionRow({
   pos,
   rosterDancers,
   activeFormationId,
+  isFocal,
+  onToggleFocal,
   onAssign,
   onQuickAdd,
 }: {
   pos: DancerPosition;
   rosterDancers: Dancer[];
   activeFormationId: string;
+  isFocal: boolean;
+  onToggleFocal: (dancerId: string | null) => void;
   onAssign: (formationId: string, positionId: string, dancerId: string | null, color?: string) => void;
   onQuickAdd: (name: string, positionId: string) => void;
 }) {
@@ -66,6 +70,14 @@ const PositionRow = memo(function PositionRow({
       <div className="flex items-center gap-2 text-sm text-text-primary">
         <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: pos.color }} />
         <span className="text-xs font-medium truncate flex-1">{assignedDancer.short_name}</span>
+        <button
+          type="button"
+          onClick={() => onToggleFocal(isFocal ? null : pos.dancer_id)}
+          className={`p-0.5 transition-colors ${isFocal ? 'text-amber-400' : 'text-text-tertiary hover:text-amber-400'}`}
+          title={isFocal ? 'Remove lead dancer' : 'Set as lead dancer'}
+        >
+          <Star size={12} fill={isFocal ? 'currentColor' : 'none'} />
+        </button>
         <button
           type="button"
           onClick={() => onAssign(activeFormationId, pos.id, null)}
@@ -572,6 +584,7 @@ export function PieceDetailPage() {
           dancer_id: p.dancer_id,
           color: p.color,
         })),
+        focalDancerId: piece.focal_dancer_id,
       },
     );
     if (newPositions.length > 0) {
@@ -987,6 +1000,8 @@ export function PieceDetailPage() {
                         pos={pos}
                         rosterDancers={rosterDancers}
                         activeFormationId={activeFormationId!}
+                        isFocal={piece.focal_dancer_id === pos.dancer_id && pos.dancer_id !== null}
+                        onToggleFocal={(dancerId) => updatePiece(piece.id, { focal_dancer_id: dancerId })}
                         onAssign={updateLocalPositionDancer}
                         onQuickAdd={handleQuickAddDancer}
                       />
