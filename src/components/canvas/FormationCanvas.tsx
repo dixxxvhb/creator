@@ -15,10 +15,16 @@ import type { Piece, PlaybackPosition, DancerPath } from '@/types';
 interface FormationCanvasProps {
   piece: Piece;
   playbackPositions?: PlaybackPosition[] | null;
+  onZoomChange?: (zoom: number) => void;
 }
 
 export interface FormationCanvasHandle {
   toDataURL: (pixelRatio?: number) => string | null;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  zoomReset: () => void;
+  getZoom: () => number;
+  setZoom: (z: number) => void;
 }
 
 const MIN_ZOOM = 0.5;
@@ -30,7 +36,7 @@ const STAGE_BG = '#141824';
 const STAGE_BORDER = '#334155';
 const LABEL_COLOR = '#64748b';
 
-export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvasProps>(function FormationCanvas({ piece, playbackPositions }, ref) {
+export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvasProps>(function FormationCanvas({ piece, playbackPositions, onZoomChange }, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
 
@@ -38,6 +44,25 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     toDataURL: (pixelRatio = 2) => {
       if (!stageRef.current) return null;
       return stageRef.current.toDataURL({ pixelRatio });
+    },
+    zoomIn: () => setZoom((z) => {
+      const next = Math.min(MAX_ZOOM, z + ZOOM_STEP);
+      onZoomChange?.(next);
+      return next;
+    }),
+    zoomOut: () => setZoom((z) => {
+      const next = Math.max(MIN_ZOOM, z - ZOOM_STEP);
+      onZoomChange?.(next);
+      return next;
+    }),
+    zoomReset: () => {
+      setZoom(1);
+      onZoomChange?.(1);
+    },
+    getZoom: () => zoom,
+    setZoom: (z: number) => {
+      setZoom(z);
+      onZoomChange?.(z);
     },
   }));
 
@@ -117,9 +142,13 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
       if (!e.evt.ctrlKey && !e.evt.metaKey) return; // let page scroll normally
       e.evt.preventDefault();
       const delta = e.evt.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-      setZoom((z) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta)));
+      setZoom((z) => {
+        const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta));
+        onZoomChange?.(next);
+        return next;
+      });
     },
-    []
+    [onZoomChange]
   );
 
   // Drag callbacks

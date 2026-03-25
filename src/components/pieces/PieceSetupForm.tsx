@@ -88,6 +88,7 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) return;
+    if (bpm && parseInt(bpm) < 0) return;
 
     const mins = parseInt(minutes) || 0;
     const secs = parseInt(seconds) || 0;
@@ -248,6 +249,7 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
         <Input
           label="BPM"
           type="number"
+          min="0"
           value={bpm}
           onChange={(e) => setBpm(e.target.value)}
           placeholder="120"

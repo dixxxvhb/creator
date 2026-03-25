@@ -14,10 +14,14 @@ export const TESTER_PASSWORD = 'BetaTest2026!creator';
 // Tables to clear when resetting test data (order matters — children before parents)
 export const RESET_TABLES = [
   'bug_reports',
+  'show_acts',
+  'shows',
+  'song_sections',
   'dancer_paths',
   'dancer_positions',
   'formations',
   'pieces',
+  'costume_accessories',
   'costume_assignments',
   'props',
   'costumes',

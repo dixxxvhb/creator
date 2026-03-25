@@ -96,7 +96,7 @@ export function AuthPage() {
         {BETA_ENABLED && !showDirectLogin ? (
           /* Beta mode: access code only */
           <Card>
-            <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleAccessCode(); }} className="space-y-4">
               <div className="text-center mb-2">
                 <p className="text-sm text-text-secondary">
                   Enter your access code to start testing
@@ -117,10 +117,9 @@ export function AuthPage() {
                 </p>
               )}
               <Button
-                type="button"
+                type="submit"
                 loading={isSubmitting}
                 className="w-full"
-                onClick={handleAccessCode}
               >
                 Enter
               </Button>
@@ -131,7 +130,7 @@ export function AuthPage() {
               >
                 Sign in with email instead
               </button>
-            </div>
+            </form>
           </Card>
         ) : signupSuccess ? (
           <Card>

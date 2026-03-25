@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ShowFormModal } from '@/components/shows/ShowFormModal';
 import { useShowStore } from '@/stores/showStore';
 import { useSeasonStore } from '@/stores/seasonStore';
+import { TierGate } from '@/components/ui/TierGate';
 import type { ShowInsert } from '@/types';
 
 export function ShowsPage() {
@@ -42,6 +43,7 @@ export function ShowsPage() {
 
   return (
     <PageContainer>
+      <TierGate feature="shows">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold text-text-primary">Shows</h1>
@@ -100,6 +102,7 @@ export function ShowsPage() {
           seasons={seasons.map(s => ({ id: s.id, name: s.name }))}
         />
       )}
+      </TierGate>
     </PageContainer>
   );
 }

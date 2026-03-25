@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Button } from '@/components/ui/Button';
+import { QuickAddPieceModal } from '@/components/pieces';
 import type {
   Costume, CostumeInsert, Piece,
   CostumeAccessory, CostumeAccessoryInsert, AccessoryType,
@@ -51,6 +52,7 @@ export function CostumeFormModal({
   const [vendorUrl, setVendorUrl] = useState('');
   const [orderStatus, setOrderStatus] = useState('not_ordered');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   // Accessory form state
   const [accType, setAccType] = useState<AccessoryType>('hairpiece');
@@ -81,6 +83,7 @@ export function CostumeFormModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !pieceId) return;
+    if (cost && parseFloat(cost) < 0) return;
     setIsSubmitting(true);
     await onSubmit({
       piece_id: pieceId,
@@ -132,7 +135,16 @@ export function CostumeFormModal({
   return (
     <Modal open={open} onClose={onClose} title={costume ? 'Edit Costume' : 'Add Costume'}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Select label="Piece" options={pieceOptions} value={pieceId} onChange={(e) => setPieceId(e.target.value)} />
+        <div>
+          <Select label="Piece" options={pieceOptions} value={pieceId} onChange={(e) => setPieceId(e.target.value)} />
+          <button
+            type="button"
+            onClick={() => setShowQuickAdd(true)}
+            className="text-xs text-[var(--color-accent)] hover:underline flex items-center gap-1 mt-1"
+          >
+            <Plus size={12} /> New Piece
+          </button>
+        </div>
         <Input
           label="Costume Name"
           value={name}
@@ -169,6 +181,7 @@ export function CostumeFormModal({
             label="Cost ($)"
             type="number"
             step="0.01"
+            min="0"
             value={cost}
             onChange={(e) => setCost(e.target.value)}
             placeholder="0.00"
@@ -297,6 +310,14 @@ export function CostumeFormModal({
           </Button>
         </div>
       </form>
+
+      <QuickAddPieceModal
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onCreated={(piece) => {
+          setPieceId(piece.id);
+        }}
+      />
     </Modal>
   );
 }

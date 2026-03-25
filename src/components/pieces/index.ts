@@ -5,3 +5,4 @@ export type { PieceTab } from './PieceTabs';
 export { PieceNotesPanel } from './PieceNotesPanel';
 export { PieceRosterPanel } from './PieceRosterPanel';
 export { SongSectionsPanel } from './SongSectionsPanel';
+export { QuickAddPieceModal } from './QuickAddPieceModal';

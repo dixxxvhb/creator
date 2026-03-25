@@ -1,9 +1,10 @@
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useAudioStore } from '@/stores/audioStore';
 
 export function useAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const rafRef = useRef<number>(0);
+  const [audioError, setAudioError] = useState<string | null>(null);
 
   const audioUrl = useAudioStore((s) => s.audioUrl);
   const isAudioPlaying = useAudioStore((s) => s.isAudioPlaying);
@@ -20,11 +21,13 @@ export function useAudioPlayer() {
         audioRef.current.pause();
         audioRef.current = null;
       }
+      setAudioError(null);
       return;
     }
 
     const audio = new Audio(audioUrl);
     audioRef.current = audio;
+    setAudioError(null);
 
     audio.addEventListener('loadedmetadata', () => {
       setDuration(audio.duration);
@@ -33,6 +36,19 @@ export function useAudioPlayer() {
     audio.addEventListener('ended', () => {
       setPlaying(false);
       cancelAnimationFrame(rafRef.current);
+    });
+
+    audio.addEventListener('error', () => {
+      setPlaying(false);
+      cancelAnimationFrame(rafRef.current);
+      const code = audio.error?.code;
+      const messages: Record<number, string> = {
+        1: 'Audio loading aborted',
+        2: 'Network error loading audio',
+        3: 'Audio decoding failed',
+        4: 'Audio format not supported',
+      };
+      setAudioError(messages[code ?? 0] ?? 'Failed to load audio');
     });
 
     return () => {
@@ -92,5 +108,6 @@ export function useAudioPlayer() {
     seek,
     toggle,
     hasAudio: audioUrl !== null,
+    audioError,
   };
 }

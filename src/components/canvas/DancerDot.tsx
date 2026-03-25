@@ -130,7 +130,7 @@ export function DancerDot({
       let x = node.x();
       let y = node.y();
       if (snapToGrid && stageWidth != null && stageDepth != null && !isOffstage(x, y, stageWidth, stageDepth)) {
-        const SNAP_UNIT = 31.25;
+        const SNAP_UNIT = 25;
         x = Math.round(x / SNAP_UNIT) * SNAP_UNIT;
         y = Math.round(y / SNAP_UNIT) * SNAP_UNIT;
         node.position({ x, y });

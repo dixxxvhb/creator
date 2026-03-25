@@ -17,6 +17,7 @@ import { SeasonTimeline } from '@/components/seasons/SeasonTimeline';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { usePieceStore } from '@/stores/pieceStore';
 import { AWARD_TIERS } from '@/types';
+import { TierGate } from '@/components/ui/TierGate';
 import type { Competition, CompetitionEntry, CompetitionInsert, CompetitionEntryInsert, SeasonInsert } from '@/types';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
@@ -221,6 +222,7 @@ export function SeasonDetailPage() {
 
   return (
     <PageContainer fullWidth>
+      <TierGate feature="seasons">
       {/* Header */}
       <div className="flex items-start justify-between gap-4 mb-6">
         <div className="flex-1 min-w-0">
@@ -650,6 +652,7 @@ export function SeasonDetailPage() {
         assignedPieceIds={assignedPieceIds}
         onToggle={handlePieceToggle}
       />
+      </TierGate>
     </PageContainer>
   );
 }

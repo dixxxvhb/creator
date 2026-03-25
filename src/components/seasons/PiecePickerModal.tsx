@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { Music, Check } from 'lucide-react';
+import { QuickAddPieceModal } from '@/components/pieces';
+import { Music, Check, Plus } from 'lucide-react';
 import type { Piece } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -13,6 +15,8 @@ interface PiecePickerModalProps {
 }
 
 export function PiecePickerModal({ open, onClose, pieces, assignedPieceIds, onToggle }: PiecePickerModalProps) {
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+
   return (
     <Modal open={open} onClose={onClose} title="Assign Pieces">
       <div className="space-y-4">
@@ -55,10 +59,26 @@ export function PiecePickerModal({ open, onClose, pieces, assignedPieceIds, onTo
             })}
           </div>
         )}
+        <button
+          type="button"
+          onClick={() => setShowQuickAdd(true)}
+          className="flex items-center gap-1.5 text-sm text-[var(--color-accent)] hover:underline"
+        >
+          <Plus size={14} /> New Piece
+        </button>
+
         <div className="flex justify-end pt-2">
           <Button variant="secondary" onClick={onClose}>Done</Button>
         </div>
       </div>
+
+      <QuickAddPieceModal
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onCreated={(piece) => {
+          onToggle(piece.id, false);
+        }}
+      />
     </Modal>
   );
 }

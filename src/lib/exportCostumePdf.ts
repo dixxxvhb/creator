@@ -45,8 +45,10 @@ export function exportDancerCostumePdf(data: CostumePdfData) {
     // Details
     doc.setFontSize(9);
     doc.setTextColor(80);
+    const maxTextWidth = 178; // page width (210) minus left margin (18) minus right margin (14)
     if (costume.description) {
-      doc.text(`Description: ${costume.description}`, 18, y); y += 5;
+      const descLines = doc.splitTextToSize(`Description: ${costume.description}`, maxTextWidth);
+      doc.text(descLines, 18, y); y += descLines.length * 5;
     }
     if (costume.color) {
       doc.text(`Color: ${costume.color}`, 18, y); y += 5;
@@ -55,12 +57,14 @@ export function exportDancerCostumePdf(data: CostumePdfData) {
       doc.text(`Size: ${assignment.size}`, 18, y); y += 5;
     }
     if (assignment.alteration_notes) {
-      doc.text(`Alterations: ${assignment.alteration_notes}`, 18, y); y += 5;
+      const altLines = doc.splitTextToSize(`Alterations: ${assignment.alteration_notes}`, maxTextWidth);
+      doc.text(altLines, 18, y); y += altLines.length * 5;
     }
     doc.text(`Status: ${assignment.status}`, 18, y); y += 5;
 
     if (costume.vendor_url) {
-      doc.text(`Vendor: ${costume.vendor_url}`, 18, y); y += 5;
+      const vendorLines = doc.splitTextToSize(`Vendor: ${costume.vendor_url}`, maxTextWidth);
+      doc.text(vendorLines, 18, y); y += vendorLines.length * 5;
     }
 
     // Accessories
@@ -129,7 +133,8 @@ export function exportAllCostumesPdf(allData: CostumePdfData[]) {
       doc.text(details.join('  |  '), 22, y); y += 5;
 
       if (assignment.alteration_notes) {
-        doc.text(`Alterations: ${assignment.alteration_notes}`, 22, y); y += 5;
+        const altLines = doc.splitTextToSize(`Alterations: ${assignment.alteration_notes}`, 174);
+        doc.text(altLines, 22, y); y += altLines.length * 5;
       }
 
       for (const acc of accessories) {

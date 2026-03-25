@@ -36,6 +36,7 @@ export function PropFormModal({ open, onClose, onSubmit, pieces, prop, defaultPi
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !pieceId) return;
+    if (cost && parseFloat(cost) < 0) return;
     setIsSubmitting(true);
     await onSubmit({
       piece_id: pieceId,
@@ -71,12 +72,13 @@ export function PropFormModal({ open, onClose, onSubmit, pieces, prop, defaultPi
             type="number"
             min={1}
             value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
           />
           <Input
             label="Cost ($)"
             type="number"
             step="0.01"
+            min="0"
             value={cost}
             onChange={(e) => setCost(e.target.value)}
             placeholder="0.00"

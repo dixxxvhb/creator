@@ -99,6 +99,11 @@ export const useSeasonStore = create<SeasonState>((set, get) => ({
         seasons: s.seasons.filter((x) => x.id !== id),
         pieceSeasons: s.pieceSeasons.filter((ps) => ps.season_id !== id),
         competitions: s.competitions.filter((c) => c.season_id !== id),
+        // Also clear entries whose competition belonged to this season
+        entries: s.entries.filter((e) => {
+          const compIds = s.competitions.filter((c) => c.season_id === id).map((c) => c.id);
+          return !compIds.includes(e.competition_id);
+        }),
       }));
       toast.success('Season deleted');
     } catch (err) {

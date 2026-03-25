@@ -14,8 +14,10 @@ import {
   ArrowUpFromLine,
   ArrowDownFromLine,
   Hash,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTierStore } from '@/stores/tierStore';
 import type { CanvasMode } from '@/types';
 import type { AudiencePosition } from '@/stores/uiStore';
 
@@ -110,6 +112,8 @@ export function CanvasToolbar({
   onRemoveDancer,
   onToggleAudiencePosition,
 }: CanvasToolbarProps) {
+  const hasDrawnPathways = useTierStore((s) => s.hasFeature('drawn_pathways'));
+
   return (
     <div className="flex items-center gap-0.5 bg-surface-elevated/80 backdrop-blur-sm border border-border rounded-xl px-2 py-1 flex-wrap">
       {/* Formation navigation */}
@@ -126,8 +130,9 @@ export function CanvasToolbar({
       <ToolButton onClick={() => onSetCanvasMode('select')} active={canvasMode === 'select'} title="Select & move dancers" label="Select">
         <MousePointer2 size={14} />
       </ToolButton>
-      <ToolButton onClick={() => onSetCanvasMode('draw-freehand')} active={canvasMode === 'draw-freehand' || canvasMode === 'draw-geometric'} title="Draw a path by dragging a dancer" label="Draw">
+      <ToolButton onClick={() => onSetCanvasMode('draw-freehand')} active={canvasMode === 'draw-freehand' || canvasMode === 'draw-geometric'} disabled={!hasDrawnPathways} title={hasDrawnPathways ? "Draw a path by dragging a dancer" : "Upgrade to Choreographer to draw paths"} label="Draw">
         <Pen size={14} />
+        {!hasDrawnPathways && <Lock size={10} className="text-text-tertiary" />}
       </ToolButton>
 
       {hasSelectedPath && (

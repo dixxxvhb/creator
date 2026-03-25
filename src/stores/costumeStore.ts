@@ -91,6 +91,7 @@ export const useCostumeStore = create<CostumeState>((set) => ({
       set((s) => ({
         costumes: s.costumes.filter((c) => c.id !== id),
         assignments: s.assignments.filter((a) => a.costume_id !== id),
+        accessories: s.accessories.filter((a) => a.costume_id !== id),
       }));
       toast.success('Costume deleted');
     } catch (err) {

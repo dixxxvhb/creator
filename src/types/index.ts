@@ -100,11 +100,20 @@ export interface Dancer {
   birthday: string | null;
   color: string;
   is_active: boolean;
+  notes: string | null;
+  parent_name: string | null;
+  parent_email: string | null;
+  parent_phone: string | null;
+  shoe_size: string | null;
+  tights_size: string | null;
+  height: string | null;
   created_at: string;
   updated_at: string;
 }
 
-export type DancerInsert = Omit<Dancer, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
+type _DancerBase = Omit<Dancer, 'id' | 'created_at' | 'updated_at' | 'user_id'>;
+type _DancerOptional = 'notes' | 'parent_name' | 'parent_email' | 'parent_phone' | 'shoe_size' | 'tights_size' | 'height';
+export type DancerInsert = Omit<_DancerBase, _DancerOptional> & Partial<Pick<_DancerBase, _DancerOptional>>;
 export type DancerUpdate = Partial<DancerInsert>;
 
 // ─── Dance Styles ───

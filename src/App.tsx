@@ -12,8 +12,10 @@ import { SeasonDetailPage } from '@/pages/SeasonDetailPage';
 import { CompetitionsPage } from '@/pages/CompetitionsPage';
 import { CostumesPage } from '@/pages/CostumesPage';
 import { ShowsPage } from '@/pages/ShowsPage';
+import { ShowDetailPage } from '@/pages/ShowDetailPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { RehearsalPage } from '@/pages/RehearsalPage';
+import { BackstagePage } from '@/pages/BackstagePage';
 import { useAuthStore } from '@/stores/authStore';
 
 export function App() {
@@ -25,8 +27,9 @@ export function App() {
 
   return (
     <AuthGuard>
-      <BrowserRouter>
+      <BrowserRouter basename="/creator">
         <Routes>
+          <Route path="shows/:id/backstage" element={<BackstagePage />} />
           <Route element={<AppLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="pieces" element={<PiecesPage />} />
@@ -39,6 +42,7 @@ export function App() {
             <Route path="competitions" element={<CompetitionsPage />} />
             <Route path="costumes" element={<CostumesPage />} />
             <Route path="shows" element={<ShowsPage />} />
+            <Route path="shows/:id" element={<ShowDetailPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

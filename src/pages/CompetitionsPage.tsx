@@ -8,6 +8,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { CompetitionFormModal } from '@/components/seasons/CompetitionFormModal';
 import { useSeasonStore } from '@/stores/seasonStore';
+import { TierGate } from '@/components/ui/TierGate';
 import type { CompetitionInsert } from '@/types';
 
 export function CompetitionsPage() {
@@ -50,6 +51,7 @@ export function CompetitionsPage() {
 
   return (
     <PageContainer>
+      <TierGate feature="seasons">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-lg font-semibold text-text-primary">Competitions</h1>
@@ -140,6 +142,7 @@ export function CompetitionsPage() {
           seasons={seasons.map(s => ({ id: s.id, name: s.name }))}
         />
       )}
+      </TierGate>
     </PageContainer>
   );
 }

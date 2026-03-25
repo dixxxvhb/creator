@@ -13,6 +13,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { useTierStore } from '@/stores/tierStore';
+import { toast } from '@/stores/toastStore';
 import { TIER_LABELS, TIER_FEATURES } from '@/types';
 import type { TierFeature } from '@/types';
 
@@ -49,6 +50,26 @@ export function Sidebar({ onNavigate }: SidebarProps) {
 
   function renderNavItem({ to, label, icon: Icon, tierFeature }: NavItem) {
     const locked = tierFeature ? !hasFeature(tierFeature) : false;
+
+    if (locked && tierFeature) {
+      return (
+        <button
+          key={to}
+          onClick={() => toast.info(`Upgrade to ${TIER_LABELS[TIER_FEATURES[tierFeature]]} to access ${label}`)}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 w-full',
+            'text-text-tertiary hover:bg-surface-secondary cursor-not-allowed',
+          )}
+        >
+          <Icon size={18} strokeWidth={1.75} />
+          {label}
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-secondary text-text-tertiary ml-auto">
+            {TIER_LABELS[TIER_FEATURES[tierFeature]].toUpperCase()}
+          </span>
+        </button>
+      );
+    }
+
     return (
       <NavLink
         key={to}
@@ -66,11 +87,6 @@ export function Sidebar({ onNavigate }: SidebarProps) {
       >
         <Icon size={18} strokeWidth={1.75} />
         {label}
-        {locked && tierFeature && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-secondary text-text-tertiary ml-auto">
-            {TIER_LABELS[TIER_FEATURES[tierFeature]].toUpperCase()}
-          </span>
-        )}
       </NavLink>
     );
   }

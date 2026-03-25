@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { toast } from '@/stores/toastStore';
 import type { DancerPosition, DancerPositionInsert, DancerPositionUpdate } from '@/types';
 
 export async function fetchPositions(formationId: string): Promise<DancerPosition[]> {
@@ -45,12 +46,23 @@ export async function upsertPositions(
   // Insert the new batch
   if (positions.length === 0) return [];
 
-  const { data, error: insertError } = await supabase
-    .from('dancer_positions')
-    .insert(positions)
-    .select();
-  if (insertError) throw new Error(`Failed to save positions: ${insertError.message}`);
-  return data;
+  try {
+    const { data, error: insertError } = await supabase
+      .from('dancer_positions')
+      .insert(positions)
+      .select();
+    if (insertError) {
+      toast.error(`Positions were cleared but failed to save new ones: ${insertError.message}. Try saving again.`);
+      throw new Error(`Failed to save positions after delete: ${insertError.message}`);
+    }
+    return data;
+  } catch (err) {
+    // Re-throw if already our error, otherwise wrap
+    if (err instanceof Error && err.message.startsWith('Failed to save positions after delete:')) throw err;
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    toast.error(`Positions were cleared but failed to save new ones: ${msg}. Try saving again.`);
+    throw new Error(`Failed to save positions after delete: ${msg}`);
+  }
 }
 
 export async function updatePosition(

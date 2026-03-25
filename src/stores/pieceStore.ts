@@ -1,9 +1,14 @@
 import { create } from 'zustand';
 import type { Piece, PieceInsert, PieceUpdate } from '@/types';
+import { FREE_PIECE_LIMIT } from '@/types';
 import * as piecesService from '@/services/pieces';
 import * as formationsService from '@/services/formations';
 import * as positionsService from '@/services/dancerPositions';
 import { toast } from '@/stores/toastStore';
+import { useTierStore } from '@/stores/tierStore';
+import { useFormationStore } from '@/stores/formationStore';
+import { usePathStore } from '@/stores/pathStore';
+import { useSongSectionStore } from '@/stores/songSectionStore';
 
 interface PieceState {
   pieces: Piece[];
@@ -36,6 +41,14 @@ export const usePieceStore = create<PieceState>((set, get) => ({
 
   add: async (piece) => {
     try {
+      const tierStore = useTierStore.getState();
+      if (!tierStore.hasFeature('unlimited_pieces')) {
+        const currentCount = get().pieces.length;
+        if (currentCount >= FREE_PIECE_LIMIT) {
+          toast.error(`Free tier limited to ${FREE_PIECE_LIMIT} pieces. Upgrade for unlimited.`);
+          return null;
+        }
+      }
       const created = await piecesService.createPiece(piece);
       set((state) => ({ pieces: [...state.pieces, created] }));
       toast.success('Piece created');
@@ -65,6 +78,11 @@ export const usePieceStore = create<PieceState>((set, get) => ({
       set((state) => ({
         pieces: state.pieces.filter((p) => p.id !== id),
       }));
+      // DB cascades handle related rows, but clear stale in-memory data
+      // from stores that were loaded for this piece
+      useFormationStore.getState().reset();
+      usePathStore.getState().reset();
+      useSongSectionStore.getState().reset();
       toast.success('Piece deleted');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete piece';
@@ -74,6 +92,14 @@ export const usePieceStore = create<PieceState>((set, get) => ({
 
   duplicate: async (id) => {
     try {
+      const tierStore = useTierStore.getState();
+      if (!tierStore.hasFeature('unlimited_pieces')) {
+        const currentCount = get().pieces.length;
+        if (currentCount >= FREE_PIECE_LIMIT) {
+          toast.error(`Free tier limited to ${FREE_PIECE_LIMIT} pieces. Upgrade for unlimited.`);
+          return null;
+        }
+      }
       const original = get().pieces.find((p) => p.id === id);
       if (!original) throw new Error('Piece not found');
 

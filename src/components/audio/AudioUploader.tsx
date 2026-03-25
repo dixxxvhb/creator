@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { toast } from '@/stores/toastStore';
 
 interface AudioUploaderProps {
   onUpload: (file: File) => Promise<void>;
@@ -19,14 +20,14 @@ export function AudioUploader({ onUpload, hasAudio, onRemove }: AudioUploaderPro
 
   async function handleFile(file: File) {
     if (file.size > MAX_SIZE_MB * 1024 * 1024) {
-      alert(`File must be under ${MAX_SIZE_MB}MB`);
+      toast.error(`File must be under ${MAX_SIZE_MB}MB`);
       return;
     }
     setIsUploading(true);
     try {
       await onUpload(file);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Upload failed');
+      toast.error(err instanceof Error ? err.message : 'Upload failed');
     } finally {
       setIsUploading(false);
     }

@@ -25,7 +25,8 @@ export function exportPdf({ piece, formations, positions, stageImages }: ExportP
 
   // Title page
   doc.setFontSize(24);
-  doc.text(piece.title, PAGE_W / 2, 120, { align: 'center' });
+  const titleLines = doc.splitTextToSize(piece.title, CONTENT_W);
+  doc.text(titleLines, PAGE_W / 2, 120, { align: 'center' });
 
   doc.setFontSize(12);
   doc.setTextColor(120);

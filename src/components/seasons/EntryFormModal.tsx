@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { Plus } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
+import { QuickAddPieceModal } from '@/components/pieces';
 import { ENTRY_CATEGORIES, AWARD_TIERS } from '@/types';
 import type { CompetitionEntry, CompetitionEntryInsert, Piece } from '@/types';
 
@@ -69,6 +71,7 @@ export function EntryFormModal({
   const [specialAwards, setSpecialAwards] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   const selectedPiece = pieces.find((p) => p.id === pieceId) ?? null;
 
@@ -133,6 +136,7 @@ export function EntryFormModal({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!pieceId) return;
+    if (score && parseFloat(score) < 0) return;
     setIsSubmitting(true);
     await onSubmit({
       competition_id: competitionId,
@@ -170,6 +174,13 @@ export function EntryFormModal({
               Song: {selectedPiece.song_title}{selectedPiece.song_artist ? ` — ${selectedPiece.song_artist}` : ''}
             </p>
           )}
+          <button
+            type="button"
+            onClick={() => setShowQuickAdd(true)}
+            className="text-xs text-[var(--color-accent)] hover:underline flex items-center gap-1 mt-1"
+          >
+            <Plus size={12} /> New Piece
+          </button>
         </div>
 
         {/* Category */}
@@ -248,6 +259,7 @@ export function EntryFormModal({
           label="Score"
           type="number"
           step="0.01"
+          min="0"
           value={score}
           onChange={(e) => setScore(e.target.value)}
           placeholder="e.g. 285.50"
@@ -275,6 +287,14 @@ export function EntryFormModal({
           </Button>
         </div>
       </form>
+
+      <QuickAddPieceModal
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        onCreated={(piece) => {
+          setPieceId(piece.id);
+        }}
+      />
     </Modal>
   );
 }

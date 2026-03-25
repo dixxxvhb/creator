@@ -98,7 +98,7 @@ export function RosterPage() {
           />
         ) : (
           <>
-            {dancers.length > 5 && (
+            {dancers.length > 0 && (
               <div className="mb-6">
                 <SearchInput
                   value={search}

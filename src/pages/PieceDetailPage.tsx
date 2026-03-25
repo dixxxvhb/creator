@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Music, Users, Pencil, ChevronDown, ChevronUp, Trash2, Volume2, Download, UserPlus, UserMinus, Star } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
@@ -157,6 +157,7 @@ export function PieceDetailPage() {
   const navigate = useNavigate();
   const canvasRef = useRef<FormationCanvasHandle>(null);
   const templateHintShown = useRef(false);
+  const quickPopulateRef = useRef<HTMLInputElement>(null);
 
   const pieces = usePieceStore((s) => s.pieces);
   const loadPieces = usePieceStore((s) => s.load);
@@ -230,6 +231,7 @@ export function PieceDetailPage() {
   const [audioOpen, setAudioOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const handleZoomChange = (z: number) => setZoom(z);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [addDancerModalOpen, setAddDancerModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -239,6 +241,38 @@ export function PieceDetailPage() {
   const [printData, setPrintData] = useState<{ stageImages: (string | null)[] } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isDirty = useFormationStore((s) => s.isDirty);
+
+  // Local state for notes textareas — debounce API calls (BUG-012)
+  const [localChoreoNotes, setLocalChoreoNotes] = useState('');
+  const [localCountsNotes, setLocalCountsNotes] = useState('');
+  const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync local notes from formation data when active formation changes
+  useEffect(() => {
+    if (activeFormation) {
+      setLocalChoreoNotes(activeFormation.choreo_notes ?? '');
+      setLocalCountsNotes(activeFormation.counts_notes ?? '');
+    }
+  }, [activeFormationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const debouncedUpdateNotes = useCallback(
+    (field: 'choreo_notes' | 'counts_notes', value: string) => {
+      if (notesTimerRef.current) clearTimeout(notesTimerRef.current);
+      notesTimerRef.current = setTimeout(() => {
+        if (activeFormationId) {
+          updateFormation(activeFormationId, { [field]: value });
+        }
+      }, 500);
+    },
+    [activeFormationId, updateFormation]
+  );
+
+  // Cleanup notes timer
+  useEffect(() => {
+    return () => {
+      if (notesTimerRef.current) clearTimeout(notesTimerRef.current);
+    };
+  }, []);
 
   const loadSongSections = useSongSectionStore((s) => s.load);
   const resetSongSections = useSongSectionStore((s) => s.reset);
@@ -278,11 +312,45 @@ export function PieceDetailPage() {
 
   // Auto-save positions when dirty (debounced 1.5s)
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Flush pending auto-save immediately (called on formation switch)
+  const flushAutoSave = useCallback(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    const dirtyFlag = useFormationStore.getState().isDirty;
+    if (!dirtyFlag) return;
+    const allPositions = useFormationStore.getState().positions;
+    const formationIds = Object.keys(allPositions);
+    formationIds.forEach((fId) => {
+      const positionsForFormation = allPositions[fId];
+      if (!positionsForFormation || positionsForFormation.length === 0) return;
+      const inserts: DancerPositionInsert[] = positionsForFormation.map((pos) => ({
+        formation_id: fId,
+        dancer_id: pos.dancer_id,
+        dancer_label: pos.dancer_label,
+        x: pos.x,
+        y: pos.y,
+        color: pos.color,
+      }));
+      savePositions(fId, inserts, true);
+    });
+  }, [savePositions]);
+
+  // Flush on formation switch so pending saves aren't lost
+  const prevFormationId = useRef(activeFormationId);
+  useEffect(() => {
+    if (prevFormationId.current && prevFormationId.current !== activeFormationId) {
+      flushAutoSave();
+    }
+    prevFormationId.current = activeFormationId;
+  }, [activeFormationId, flushAutoSave]);
+
   useEffect(() => {
     if (!isDirty || !activeFormationId) return;
     if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     autoSaveTimerRef.current = setTimeout(() => {
-      // Save ALL formations that have positions (handles cross-formation dancer assignment)
       const allPositions = useFormationStore.getState().positions;
       const formationIds = Object.keys(allPositions);
       Promise.all(
@@ -323,26 +391,42 @@ export function PieceDetailPage() {
 
   async function handleDeletePiece() {
     if (!piece) return;
-    await removePiece(piece.id);
-    navigate('/pieces');
+    try {
+      await removePiece(piece.id);
+      navigate('/pieces');
+    } catch {
+      toast.error('Failed to delete piece');
+    }
   }
 
   async function handleDeleteFormation() {
     if (!activeFormationId || formations.length <= 1) return;
-    const removeFormation = useFormationStore.getState().removeFormation;
-    await removeFormation(activeFormationId);
+    try {
+      const removeFormation = useFormationStore.getState().removeFormation;
+      await removeFormation(activeFormationId);
+    } catch {
+      toast.error('Failed to delete formation');
+    }
   }
 
   async function handleAudioUpload(file: File) {
     if (!piece) return;
-    const url = await uploadAudio(piece.id, file);
-    await updatePiece(piece.id, { audio_url: url });
+    try {
+      const url = await uploadAudio(piece.id, file);
+      await updatePiece(piece.id, { audio_url: url });
+    } catch {
+      toast.error('Failed to upload audio');
+    }
   }
 
   async function handleAudioRemove() {
     if (!piece?.audio_url) return;
-    await deleteAudio(piece.audio_url);
-    await updatePiece(piece.id, { audio_url: null });
+    try {
+      await deleteAudio(piece.audio_url);
+      await updatePiece(piece.id, { audio_url: null });
+    } catch {
+      toast.error('Failed to remove audio');
+    }
   }
 
   async function handleUpdateTimestamp(formationId: string, timestamp: number) {
@@ -352,6 +436,13 @@ export function PieceDetailPage() {
   async function handleExport(format: ExportFormat) {
     if (!piece) return;
     setIsExporting(true);
+
+    // Reset zoom to 1.0 so exports capture the full stage, not the current zoom level
+    const savedZoom = canvasRef.current?.getZoom() ?? 1;
+    if (canvasRef.current && savedZoom !== 1) {
+      canvasRef.current.setZoom(1);
+      await new Promise((r) => setTimeout(r, 100));
+    }
 
     try {
       if (format === 'png') {
@@ -380,6 +471,10 @@ export function PieceDetailPage() {
         }
       }
     } finally {
+      // Restore original zoom
+      if (canvasRef.current && savedZoom !== 1) {
+        canvasRef.current.setZoom(savedZoom);
+      }
       setIsExporting(false);
       setExportModalOpen(false);
     }
@@ -526,31 +621,35 @@ export function PieceDetailPage() {
 
   async function handleAddFormation() {
     if (!id) return;
-    const label = `Formation ${formations.length + 1}`;
-    // Capture current positions before adding (addFormation switches activeFormationId)
-    const currentPositions = activeFormationId ? positions[activeFormationId] ?? [] : [];
-    const newFormation = await addFormation({
-      piece_id: id,
-      index: formations.length,
-      label,
-      timestamp_seconds: null,
-      choreo_notes: '',
-      counts_notes: '',
-      transition_duration_ms: 2000,
-      transition_easing: 'ease-in-out',
-    });
-    // Copy dancer positions from the previous formation into the new one
-    if (newFormation && currentPositions.length > 0) {
-      const copiedPositions: DancerPositionInsert[] = currentPositions.map((p) => ({
-        formation_id: newFormation.id,
-        dancer_id: p.dancer_id,
-        dancer_label: p.dancer_label,
-        x: p.x,
-        y: p.y,
-        color: p.color,
-      }));
-      await savePositions(newFormation.id, copiedPositions);
-      toast.info('Positions copied — tap a dancer to draw their transition path.');
+    try {
+      const label = `Formation ${formations.length + 1}`;
+      // Capture current positions before adding (addFormation switches activeFormationId)
+      const currentPositions = activeFormationId ? positions[activeFormationId] ?? [] : [];
+      const newFormation = await addFormation({
+        piece_id: id,
+        index: formations.length,
+        label,
+        timestamp_seconds: null,
+        choreo_notes: '',
+        counts_notes: '',
+        transition_duration_ms: 2000,
+        transition_easing: 'ease-in-out',
+      });
+      // Copy dancer positions from the previous formation into the new one
+      if (newFormation && currentPositions.length > 0) {
+        const copiedPositions: DancerPositionInsert[] = currentPositions.map((p) => ({
+          formation_id: newFormation.id,
+          dancer_id: p.dancer_id,
+          dancer_label: p.dancer_label,
+          x: p.x,
+          y: p.y,
+          color: p.color,
+        }));
+        await savePositions(newFormation.id, copiedPositions);
+        toast.info('Positions copied — tap a dancer to draw their transition path.');
+      }
+    } catch {
+      toast.error('Failed to add formation');
     }
   }
 
@@ -743,9 +842,9 @@ export function PieceDetailPage() {
                 }
               }}
               onToggleStageNumbers={toggleStageNumbers}
-              onZoomIn={() => setZoom((z) => Math.min(3, z + 0.1))}
-              onZoomOut={() => setZoom((z) => Math.max(0.5, z - 0.1))}
-              onZoomReset={() => setZoom(1)}
+              onZoomIn={() => canvasRef.current?.zoomIn()}
+              onZoomOut={() => canvasRef.current?.zoomOut()}
+              onZoomReset={() => canvasRef.current?.zoomReset()}
               onPrev={goPrev}
               onNext={goNext}
               onSetCanvasMode={(mode) => {
@@ -779,7 +878,7 @@ export function PieceDetailPage() {
 
           {/* Formation Canvas */}
           <div className="w-full min-h-[300px] h-[65vh] relative">
-            <FormationCanvas ref={canvasRef} piece={piece} playbackPositions={interpolatedPositions} />
+            <FormationCanvas ref={canvasRef} piece={piece} playbackPositions={interpolatedPositions} onZoomChange={handleZoomChange} />
             {/* Playback controls — always pinned top-left of canvas */}
             <div className="absolute top-2 left-2 z-10">
               <PlaybackControls
@@ -822,13 +921,12 @@ export function PieceDetailPage() {
                         min={1}
                         max={30}
                         defaultValue={8}
-                        id="quick-populate-count"
+                        ref={quickPopulateRef}
                         className="flex-1 text-sm bg-surface-secondary border border-border rounded-xl px-3 py-2.5 text-text-primary text-center font-mono"
                       />
                       <button
                         onClick={async () => {
-                          const input = document.getElementById('quick-populate-count') as HTMLInputElement;
-                          const count = Math.max(1, Math.min(30, parseInt(input.value) || 8));
+                          const count = Math.max(1, Math.min(30, parseInt(quickPopulateRef.current?.value ?? '') || 8));
                           await handleQuickPopulate(count);
                         }}
                         className="flex-[2] px-4 py-2.5 rounded-xl accent-bg-light accent-text text-sm font-medium hover:brightness-105 transition-all"
@@ -897,23 +995,21 @@ export function PieceDetailPage() {
               <div className="space-y-4">
                 <Textarea
                   label="Choreography Notes"
-                  value={activeFormation.choreo_notes}
-                  onChange={(e) =>
-                    updateFormation(activeFormation.id, {
-                      choreo_notes: e.target.value,
-                    })
-                  }
+                  value={localChoreoNotes}
+                  onChange={(e) => {
+                    setLocalChoreoNotes(e.target.value);
+                    debouncedUpdateNotes('choreo_notes', e.target.value);
+                  }}
                   placeholder="Movement descriptions, directions, dynamics..."
                   rows={5}
                 />
                 <Textarea
                   label="Counts & Timing"
-                  value={activeFormation.counts_notes}
-                  onChange={(e) =>
-                    updateFormation(activeFormation.id, {
-                      counts_notes: e.target.value,
-                    })
-                  }
+                  value={localCountsNotes}
+                  onChange={(e) => {
+                    setLocalCountsNotes(e.target.value);
+                    debouncedUpdateNotes('counts_notes', e.target.value);
+                  }}
                   placeholder="5-6-7-8, hold 4 counts, transition on 1..."
                   rows={4}
                 />
@@ -1125,6 +1221,16 @@ export function PieceDetailPage() {
           stageImages={printData.stageImages}
           onClose={() => setPrintData(null)}
         />
+      )}
+
+      {/* Export overlay — prevents interaction and hides canvas flickering during PDF capture */}
+      {isExporting && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto">
+          <div className="flex flex-col items-center gap-3">
+            <Spinner size="lg" />
+            <p className="text-sm font-medium text-white">Exporting...</p>
+          </div>
+        </div>
       )}
     </PageContainer>
   );

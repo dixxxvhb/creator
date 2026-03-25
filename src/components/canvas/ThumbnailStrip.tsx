@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, X, Trash2, ArrowRight, Pencil, Play } from 'lucide-react';
+import { Plus, X, Trash2, ArrowRight, Pencil, Play, Lock } from 'lucide-react';
+import { useTierStore } from '@/stores/tierStore';
 import type { Formation, DancerPosition, DancerPath, Piece, Dancer } from '@/types';
 
 interface ThumbnailStripProps {
@@ -130,6 +131,7 @@ function TransitionIndicator({
   bpm?: number | null;
   onUpdateTransition?: (formationId: string, updates: { transition_duration_ms?: number; transition_easing?: string }) => void;
 }) {
+  const hasTransitionAnimations = useTierStore((s) => s.hasFeature('transition_animations'));
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
@@ -180,6 +182,7 @@ function TransitionIndicator({
           onMouseDown={(e) => e.stopPropagation()}
         >
           {/* Transition controls */}
+          {hasTransitionAnimations ? (
           <div className="px-2 py-1.5 space-y-2">
             <div>
               <label className="block text-[10px] font-medium text-text-secondary mb-1">
@@ -214,6 +217,12 @@ function TransitionIndicator({
               </select>
             </div>
           </div>
+          ) : (
+          <div className="px-2 py-1.5 flex items-center gap-1.5 text-[10px] text-text-tertiary">
+            <Lock size={10} />
+            <span>Upgrade to Choreographer for transition controls</span>
+          </div>
+          )}
           {count > 0 && <div className="border-t border-border my-1" />}
           {count > 0 && (<>
           {formationPaths.map((path) => {

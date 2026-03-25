@@ -40,7 +40,7 @@ export function SeasonFormModal({ open, onClose, onSubmit, season }: SeasonFormM
       start_date: startDate || null,
       end_date: endDate || null,
       notes,
-      sort_order: 0,
+      sort_order: season?.sort_order ?? 0, // sort_order not currently used for display ordering; preserves existing value on edit
     });
     setIsSubmitting(false);
     onClose();
