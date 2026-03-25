@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { BottomTabBar } from './BottomTabBar';
+import { BugReportButton } from '@/components/feedback/BugReportButton';
 import { useProfileStore } from '@/stores/profileStore';
 import { pageVariants, pageTransition } from '@/lib/motion';
 
@@ -86,6 +87,7 @@ export function AppLayout() {
           },
         }}
       />
+      <BugReportButton />
     </div>
   );
 }
