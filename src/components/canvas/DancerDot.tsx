@@ -32,7 +32,7 @@ interface DancerDotProps {
   onDragEnd: (id: string, x: number, y: number) => void;
 }
 
-const DOT_RADIUS = 20;
+const DOT_RADIUS = 22;
 const FONT_SIZE = 18;
 
 // Arrow points for each exit direction (relative to dot center)
