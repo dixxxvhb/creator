@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Layers, Trophy, Users, ArrowRight, Music } from 'lucide-react';
+import { Plus, Layers, Trophy, Users, ArrowRight, Music, Trash2 } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -13,6 +13,9 @@ import { useProfileStore } from '@/stores/profileStore';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { staggerContainer, staggerItem } from '@/lib/motion';
 import { TierGate } from '@/components/ui/TierGate';
+import { BETA_ENABLED, RESET_TABLES } from '@/lib/beta';
+import { supabase } from '@/lib/supabase';
+import { toast } from '@/stores/toastStore';
 
 function formatDate(date: Date): string {
   return date.toLocaleDateString('en-US', {
@@ -33,12 +36,35 @@ export function DashboardPage() {
   const displayName = useProfileStore((s) => s.displayName);
   const studioName = useProfileStore((s) => s.studioName);
   const customGreeting = useProfileStore((s) => s.customGreeting);
+  const [isResetting, setIsResetting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => {
     load();
     loadSeasons();
     loadRoster();
   }, [load, loadSeasons, loadRoster]);
+
+  async function handleResetData() {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+    setIsResetting(true);
+    try {
+      for (const table of RESET_TABLES) {
+        const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error) console.warn(`Failed to clear ${table}:`, error.message);
+      }
+      toast.success('All test data cleared');
+      // Reload stores
+      await Promise.all([load(), loadSeasons(), loadRoster()]);
+    } catch {
+      toast.error('Failed to clear data');
+    }
+    setIsResetting(false);
+    setConfirmReset(false);
+  }
 
   const greeting = customGreeting
     || (displayName ? `Welcome back, ${displayName}` : 'Welcome back');
@@ -200,6 +226,19 @@ export function DashboardPage() {
             )}
           </Card>
         </motion.div>
+        {/* Reset Test Data — beta only */}
+        {BETA_ENABLED && (
+          <motion.div variants={staggerItem} className="col-span-2 md:col-span-4">
+            <button
+              onClick={handleResetData}
+              disabled={isResetting}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-border-light text-text-tertiary text-sm font-medium hover:border-danger-500 hover:text-danger-500 transition-colors disabled:opacity-50"
+            >
+              <Trash2 size={14} />
+              {isResetting ? 'Clearing...' : confirmReset ? 'Tap again to confirm' : 'Clear all test data'}
+            </button>
+          </motion.div>
+        )}
       </motion.div>
     </PageContainer>
   );

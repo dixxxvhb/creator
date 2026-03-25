@@ -10,3 +10,20 @@ export const APP_VERSION = '0.1.0';
 // All testers share one session so RLS works without individual signup
 export const TESTER_EMAIL = 'tester@creator.app';
 export const TESTER_PASSWORD = 'BetaTest2026!creator';
+
+// Tables to clear when resetting test data (order matters — children before parents)
+export const RESET_TABLES = [
+  'bug_reports',
+  'dancer_paths',
+  'dancer_positions',
+  'formations',
+  'pieces',
+  'costume_assignments',
+  'props',
+  'costumes',
+  'competition_entries',
+  'piece_seasons',
+  'competitions',
+  'seasons',
+  'dancers',
+] as const;
