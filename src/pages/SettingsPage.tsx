@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Check, Sun, Moon, Monitor } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, Sun, Moon, Monitor, ChevronDown, ChevronUp } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -7,9 +7,12 @@ import { Input } from '@/components/ui/Input';
 import { useProfileStore } from '@/stores/profileStore';
 import { useTierStore } from '@/stores/tierStore';
 import { useAuthStore } from '@/stores/authStore';
+import { useBugReportStore } from '@/stores/bugReportStore';
 import { ACCENT_PRESETS, TIER_LABELS } from '@/types';
-import type { Tier } from '@/types';
+import type { Tier, BugStatus } from '@/types';
 import { cn } from '@/lib/utils';
+import { ADMIN_EMAIL } from '@/lib/beta';
+import { Badge } from '@/components/ui/Badge';
 
 type ThemePref = 'light' | 'dark' | 'system';
 
@@ -42,6 +45,19 @@ export function SettingsPage() {
 
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
+  const { reports, isLoading: reportsLoading, load: loadReports, updateStatus } = useBugReportStore();
+  const [statusFilter, setStatusFilter] = useState<BugStatus | 'all'>('open');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAdmin) loadReports();
+  }, [isAdmin, loadReports]);
+
+  const filteredReports = statusFilter === 'all'
+    ? reports
+    : reports.filter((r) => r.status === statusFilter);
 
   const [showCustomPicker, setShowCustomPicker] = useState(false);
   const isCustomColor = !ACCENT_PRESETS.some((p) => p.value === accentColor);
@@ -266,6 +282,108 @@ export function SettingsPage() {
             </p>
           </Card>
         </section>
+        {isAdmin && (
+          <section>
+            <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">
+              Bug Reports
+            </h2>
+            <Card>
+              {/* Filter tabs */}
+              <div className="flex gap-1 bg-surface-secondary rounded-lg p-1 mb-4">
+                {(['open', 'resolved', 'dismissed', 'all'] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setStatusFilter(filter)}
+                    className={cn(
+                      'flex-1 text-xs py-1.5 rounded-md transition-colors font-medium capitalize',
+                      statusFilter === filter
+                        ? 'bg-surface-elevated text-text-primary shadow-sm'
+                        : 'text-text-secondary hover:text-text-primary',
+                    )}
+                  >
+                    {filter}
+                    {filter !== 'all' && (
+                      <span className="ml-1 text-text-tertiary">
+                        ({reports.filter((r) => r.status === filter).length})
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {reportsLoading ? (
+                <p className="text-sm text-text-tertiary text-center py-4">Loading...</p>
+              ) : filteredReports.length === 0 ? (
+                <p className="text-sm text-text-tertiary text-center py-4">
+                  {statusFilter === 'open' ? 'No open bug reports' : 'No bug reports'}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {filteredReports.map((report) => (
+                    <div
+                      key={report.id}
+                      className="border border-border-light rounded-xl overflow-hidden"
+                    >
+                      <button
+                        onClick={() => setExpandedId(expandedId === report.id ? null : report.id)}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-secondary transition-colors"
+                      >
+                        <Badge
+                          variant={
+                            report.severity === 'blocker' ? 'danger'
+                            : report.severity === 'major' ? 'warning'
+                            : 'default'
+                          }
+                        >
+                          {report.severity}
+                        </Badge>
+                        <p className="flex-1 text-sm text-text-primary truncate">
+                          {report.description}
+                        </p>
+                        <span className="text-xs text-text-tertiary shrink-0">
+                          {new Date(report.created_at).toLocaleDateString()}
+                        </span>
+                        {expandedId === report.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </button>
+
+                      {expandedId === report.id && (
+                        <div className="px-4 pb-4 space-y-3 border-t border-border-light pt-3">
+                          <div>
+                            <p className="text-xs font-medium text-text-secondary mb-1">Description</p>
+                            <p className="text-sm text-text-primary whitespace-pre-wrap">{report.description}</p>
+                          </div>
+                          {report.expected && (
+                            <div>
+                              <p className="text-xs font-medium text-text-secondary mb-1">Expected</p>
+                              <p className="text-sm text-text-primary whitespace-pre-wrap">{report.expected}</p>
+                            </div>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 text-xs text-text-tertiary">
+                            <p>Reporter: {report.user_email}</p>
+                            <p>Page: {report.page_url}</p>
+                            <p>Screen: {report.screen_width}x{report.screen_height}</p>
+                            <p>Version: {report.app_version ?? '—'}</p>
+                          </div>
+                          {report.status === 'open' && (
+                            <div className="flex gap-2 pt-1">
+                              <Button size="sm" variant="secondary" onClick={() => updateStatus(report.id, 'resolved')}>
+                                Mark Resolved
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => updateStatus(report.id, 'dismissed')}>
+                                Dismiss
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </section>
+        )}
+
         {/* Account Section */}
         <section>
           <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">
