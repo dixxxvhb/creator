@@ -434,3 +434,33 @@ export const TIER_FEATURES = {
 export type TierFeature = keyof typeof TIER_FEATURES;
 
 export const FREE_PIECE_LIMIT = 2;
+
+// ─── Bug Reports ───
+export type BugSeverity = 'minor' | 'major' | 'blocker';
+export type BugStatus = 'open' | 'resolved' | 'dismissed';
+
+export interface BugReport {
+  id: string;
+  user_id: string;
+  user_email: string;
+  description: string;
+  expected: string | null;
+  severity: BugSeverity;
+  page_url: string | null;
+  screen_width: number | null;
+  screen_height: number | null;
+  user_agent: string | null;
+  app_version: string | null;
+  status: BugStatus;
+  created_at: string;
+}
+
+export type BugReportInsert = Pick<BugReport, 'description' | 'severity'> & {
+  user_email: string;
+  expected?: string | null;
+  page_url?: string | null;
+  screen_width?: number | null;
+  screen_height?: number | null;
+  user_agent?: string | null;
+  app_version?: string | null;
+};
