@@ -15,14 +15,14 @@ interface OffstageGhostLayerProps {
   onDragOnstage: (dancerLabel: string, x: number, y: number) => void;
 }
 
-const GHOST_RADIUS = 0.6;
+const GHOST_RADIUS = 15;
 
 // Arrow directions
 const ARROW_OFFSETS: Record<string, number[]> = {
-  left:  [-GHOST_RADIUS - 0.2, 0, -GHOST_RADIUS - 0.6, 0],
-  right: [GHOST_RADIUS + 0.2, 0, GHOST_RADIUS + 0.6, 0],
-  back:  [0, -GHOST_RADIUS - 0.2, 0, -GHOST_RADIUS - 0.6],
-  front: [0, GHOST_RADIUS + 0.2, 0, GHOST_RADIUS + 0.6],
+  left:  [-GHOST_RADIUS - 5, 0, -GHOST_RADIUS - 15, 0],
+  right: [GHOST_RADIUS + 5, 0, GHOST_RADIUS + 15, 0],
+  back:  [0, -GHOST_RADIUS - 5, 0, -GHOST_RADIUS - 15],
+  front: [0, GHOST_RADIUS + 5, 0, GHOST_RADIUS + 15],
 };
 
 function GhostDot({
@@ -66,10 +66,10 @@ function GhostDot({
     >
       {/* Dashed ring */}
       <Circle
-        radius={GHOST_RADIUS + 0.1}
+        radius={GHOST_RADIUS + 2.5}
         stroke={position.color}
-        strokeWidth={0.06}
-        dash={[0.15, 0.1]}
+        strokeWidth={1.5}
+        dash={[4, 2.5]}
         listening={false}
       />
       {/* Ghost dot — outline only */}
@@ -77,12 +77,12 @@ function GhostDot({
         radius={GHOST_RADIUS}
         fill="transparent"
         stroke={position.color}
-        strokeWidth={0.08}
+        strokeWidth={2}
       />
       {/* Label */}
       <Text
         text={position.dancer_label || '?'}
-        fontSize={0.5}
+        fontSize={12}
         fill="#ffffff"
         fontStyle="bold"
         fontFamily="Inter, system-ui, sans-serif"
@@ -99,10 +99,10 @@ function GhostDot({
         <Line
           points={ARROW_OFFSETS[direction]}
           stroke={position.color}
-          strokeWidth={0.07}
+          strokeWidth={1.75}
           lineCap="round"
-          pointerLength={0.18}
-          pointerWidth={0.14}
+          pointerLength={4.5}
+          pointerWidth={3.5}
           pointerAtBeginning={false}
           listening={false}
         />
@@ -110,14 +110,14 @@ function GhostDot({
       {/* "OFF" label */}
       <Text
         text="OFF"
-        fontSize={0.3}
+        fontSize={8}
         fill={position.color}
         fontFamily="Inter, system-ui, sans-serif"
         fontStyle="600"
         align="center"
-        width={3}
-        offsetX={1.5}
-        y={GHOST_RADIUS + 0.15}
+        width={75}
+        offsetX={37.5}
+        y={GHOST_RADIUS + 4}
         listening={false}
       />
     </Group>

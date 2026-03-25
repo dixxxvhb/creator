@@ -1,11 +1,14 @@
 import { create } from 'zustand';
 import type { Tier, TierFeature } from '@/types';
 import { TIER_FEATURES } from '@/types';
+import { BETA_ENABLED } from '@/lib/beta';
 
 const STORAGE_KEY = 'creator-tier';
 const TIER_ORDER: Record<Tier, number> = { free: 0, mid: 1, studio: 2 };
 
 function loadTier(): Tier {
+  // Beta testers get full access to all features
+  if (BETA_ENABLED) return 'studio';
   if (typeof window === 'undefined') return 'free';
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored === 'mid' || stored === 'studio') return stored;

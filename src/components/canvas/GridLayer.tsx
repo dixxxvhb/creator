@@ -1,11 +1,11 @@
 import { Group, Line } from 'react-konva';
 
 // Stage number coordinate system:
-// 1 stage number = 2.5 coordinate units
-// Grid shows lines at every 0.5 stage numbers (1.25 units)
-const HALF_STAGE_NUM = 1.25;  // minor grid spacing
-const FULL_STAGE_NUM = 2.5;   // medium grid spacing
-const MAJOR_SPACING = 5;      // major grid spacing (= 2 stage numbers, matches labels 0,2,4,6,8)
+// 1 stage number = 62.5 coordinate units
+// Grid shows lines at every 0.5 stage numbers (31.25 units)
+const HALF_STAGE_NUM = 31.25;  // minor grid spacing
+const FULL_STAGE_NUM = 62.5;   // medium grid spacing
+const MAJOR_SPACING = 125;     // major grid spacing (= 2 stage numbers, matches labels 0,2,4,6,8)
 
 interface GridLayerProps {
   stageWidth: number;
@@ -32,7 +32,7 @@ export function GridLayer({ stageWidth, stageDepth, visible }: GridLayerProps) {
           key={`v-${x.toFixed(2)}`}
           points={[x, 0, x, stageDepth]}
           stroke={isMajor ? 'rgba(148, 163, 184, 0.3)' : isMedium ? 'rgba(148, 163, 184, 0.15)' : 'rgba(148, 163, 184, 0.07)'}
-          strokeWidth={isMajor ? 0.06 : 0.03}
+          strokeWidth={isMajor ? 1.5 : 0.75}
           listening={false}
         />
       );
@@ -51,7 +51,7 @@ export function GridLayer({ stageWidth, stageDepth, visible }: GridLayerProps) {
           key={`h-${y.toFixed(2)}`}
           points={[0, y, stageWidth, y]}
           stroke={isMajor ? 'rgba(148, 163, 184, 0.3)' : isMedium ? 'rgba(148, 163, 184, 0.15)' : 'rgba(148, 163, 184, 0.07)'}
-          strokeWidth={isMajor ? 0.06 : 0.03}
+          strokeWidth={isMajor ? 1.5 : 0.75}
           listening={false}
         />
       );

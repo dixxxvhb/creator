@@ -30,15 +30,15 @@ interface DancerDotProps {
   onDragEnd: (id: string, x: number, y: number) => void;
 }
 
-const DOT_RADIUS = 0.8;
-const FONT_SIZE = 0.7;
+const DOT_RADIUS = 20;
+const FONT_SIZE = 18;
 
 // Arrow points for each exit direction (relative to dot center)
 const ARROW_POINTS: Record<string, number[]> = {
-  left:  [-DOT_RADIUS - 0.3, 0, -DOT_RADIUS - 0.9, 0],
-  right: [DOT_RADIUS + 0.3, 0, DOT_RADIUS + 0.9, 0],
-  back:  [0, -DOT_RADIUS - 0.3, 0, -DOT_RADIUS - 0.9],
-  front: [0, DOT_RADIUS + 0.3, 0, DOT_RADIUS + 0.9],
+  left:  [-DOT_RADIUS - 8, 0, -DOT_RADIUS - 22, 0],
+  right: [DOT_RADIUS + 8, 0, DOT_RADIUS + 22, 0],
+  back:  [0, -DOT_RADIUS - 8, 0, -DOT_RADIUS - 22],
+  front: [0, DOT_RADIUS + 8, 0, DOT_RADIUS + 22],
 };
 
 export function DancerDot({
@@ -113,7 +113,7 @@ export function DancerDot({
       // Save the drawn path
       if (activeFormationId) {
         const pathStore = usePathStore.getState();
-        const simplified = simplifyPath(pathStore.drawingPoints, 0.3);
+        const simplified = simplifyPath(pathStore.drawingPoints, 7.5);
         if (simplified.length >= 2 && pathStore.drawingDancerLabel) {
           pathStore.savePath(activeFormationId, pathStore.drawingDancerLabel, simplified, 'freehand');
         }
@@ -127,7 +127,7 @@ export function DancerDot({
       let x = node.x();
       let y = node.y();
       if (snapToGrid && stageWidth != null && stageDepth != null && !isOffstage(x, y, stageWidth, stageDepth)) {
-        const SNAP_UNIT = 1.25;
+        const SNAP_UNIT = 31.25;
         x = Math.round(x / SNAP_UNIT) * SNAP_UNIT;
         y = Math.round(y / SNAP_UNIT) * SNAP_UNIT;
         node.position({ x, y });
@@ -183,18 +183,18 @@ export function DancerDot({
       {/* Active drawing target — bright glow ring */}
       {showTargetRing && (
         <Circle
-          radius={DOT_RADIUS + 0.35}
+          radius={DOT_RADIUS + 9}
           stroke={position.color}
-          strokeWidth={0.12}
+          strokeWidth={3}
           opacity={0.9}
           listening={false}
         />
       )}
       {showTargetRing && (
         <Circle
-          radius={DOT_RADIUS + 0.5}
+          radius={DOT_RADIUS + 12}
           stroke={position.color}
-          strokeWidth={0.06}
+          strokeWidth={1.5}
           opacity={0.4}
           listening={false}
         />
@@ -202,21 +202,21 @@ export function DancerDot({
       {/* Clickable hint — dashed ring on all dancers before drawing starts */}
       {showClickableRing && (
         <Circle
-          radius={DOT_RADIUS + 0.2}
+          radius={DOT_RADIUS + 5}
           stroke={position.color}
-          strokeWidth={0.08}
+          strokeWidth={2}
           opacity={0.6}
-          dash={[0.15, 0.1]}
+          dash={[4, 2.5]}
           listening={false}
         />
       )}
       {/* Offstage dashed ring */}
       {offstage && (
         <Circle
-          radius={DOT_RADIUS + 0.15}
+          radius={DOT_RADIUS + 4}
           stroke={position.color}
-          strokeWidth={0.08}
-          dash={[0.2, 0.12]}
+          strokeWidth={2}
+          dash={[5, 3]}
           listening={false}
         />
       )}
@@ -224,15 +224,15 @@ export function DancerDot({
       <Circle
         radius={DOT_RADIUS}
         fill="rgba(0,0,0,0.3)"
-        offsetX={-0.05}
-        offsetY={-0.05}
+        offsetX={-1.25}
+        offsetY={-1.25}
       />
       {/* Main dot */}
       <Circle
         radius={DOT_RADIUS}
         fill={offstage ? 'transparent' : position.color}
         stroke={position.color}
-        strokeWidth={offstage ? 0.1 : 0.06}
+        strokeWidth={offstage ? 2.5 : 1.5}
       />
       {/* Label */}
       <Text
@@ -254,12 +254,12 @@ export function DancerDot({
         <Line
           points={ARROW_POINTS[offstageDir]}
           stroke={position.color}
-          strokeWidth={0.1}
+          strokeWidth={2.5}
           lineCap="round"
           lineJoin="round"
           listening={false}
-          pointerLength={0.25}
-          pointerWidth={0.2}
+          pointerLength={6}
+          pointerWidth={5}
           pointerAtBeginning={false}
         />
       )}
@@ -267,13 +267,13 @@ export function DancerDot({
       {displayName && (
         <Text
           text={displayName}
-          fontSize={0.45}
+          fontSize={11}
           fill="#cbd5e1"
           fontFamily="Inter, system-ui, sans-serif"
           align="center"
-          width={6}
-          offsetX={3}
-          y={DOT_RADIUS + 0.2}
+          width={150}
+          offsetX={75}
+          y={DOT_RADIUS + 5}
           listening={false}
         />
       )}

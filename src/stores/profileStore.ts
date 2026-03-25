@@ -12,7 +12,7 @@ const DEFAULT_PROFILE: UserProfile = {
   customGreeting: '',
   studioLogoUrl: null,
   avatarUrl: null,
-  defaultStageWidth: 800,
+  defaultStageWidth: 1000,
   defaultStageDepth: 600,
 };
 

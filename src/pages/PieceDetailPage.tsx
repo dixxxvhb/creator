@@ -694,7 +694,7 @@ export function PieceDetailPage() {
           </div>
 
           {/* Formation Canvas */}
-          <div className="w-full min-h-[250px] h-[50vh] relative">
+          <div className="w-full min-h-[300px] h-[65vh] relative">
             <FormationCanvas ref={canvasRef} piece={piece} playbackPositions={interpolatedPositions} />
             {/* Playback controls — always pinned top-left of canvas */}
             <div className="absolute top-2 left-2 z-10">

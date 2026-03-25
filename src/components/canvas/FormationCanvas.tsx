@@ -291,37 +291,38 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
             height={piece.stage_depth}
             fill="#1a1f2e"
             stroke={STAGE_BORDER}
-            strokeWidth={0.1}
-            cornerRadius={0.3}
+            strokeWidth={2.5}
+            cornerRadius={8}
             listening={false}
           />
 
           {/* Audience label */}
           <Text
             x={piece.stage_width / 2}
-            y={audiencePosition === 'top' ? -1.8 : piece.stage_depth + 1.2}
+            y={audiencePosition === 'top' ? -55 : piece.stage_depth + 35}
             text="AUDIENCE"
-            fontSize={0.6}
+            fontSize={12}
             fill={LABEL_COLOR}
             fontFamily="Inter, system-ui, sans-serif"
             fontStyle="600"
-            letterSpacing={0.15}
+            letterSpacing={4}
             align="center"
-            offsetX={2}
+            width={200}
+            offsetX={100}
             listening={false}
           />
 
           {/* Center mark */}
           <Line
-            points={[piece.stage_width / 2 - 0.3, piece.stage_depth / 2, piece.stage_width / 2 + 0.3, piece.stage_depth / 2]}
+            points={[piece.stage_width / 2 - 8, piece.stage_depth / 2, piece.stage_width / 2 + 8, piece.stage_depth / 2]}
             stroke="rgba(148, 163, 184, 0.15)"
-            strokeWidth={0.04}
+            strokeWidth={1}
             listening={false}
           />
           <Line
-            points={[piece.stage_width / 2, piece.stage_depth / 2 - 0.3, piece.stage_width / 2, piece.stage_depth / 2 + 0.3]}
+            points={[piece.stage_width / 2, piece.stage_depth / 2 - 8, piece.stage_width / 2, piece.stage_depth / 2 + 8]}
             stroke="rgba(148, 163, 184, 0.15)"
-            strokeWidth={0.04}
+            strokeWidth={1}
             listening={false}
           />
 
@@ -329,10 +330,10 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
           {showStageNumbers && (() => {
             const cx = piece.stage_width / 2;
             const tickY1 = audiencePosition === 'top' ? 0 : piece.stage_depth;
-            const tickY2 = audiencePosition === 'top' ? -0.7 : piece.stage_depth + 0.7;
-            const labelY = audiencePosition === 'top' ? -1.3 : piece.stage_depth + 0.7;
-            // Each mark is 5 stage units apart, labeled 0, 2, 4, 6, 8...
-            const spacing = 5;
+            const tickY2 = audiencePosition === 'top' ? -18 : piece.stage_depth + 18;
+            const labelY = audiencePosition === 'top' ? -32 : piece.stage_depth + 18;
+            // Each mark is 125 stage units apart, labeled 0, 2, 4, 6, 8...
+            const spacing = 125;
             const maxMarks = Math.floor((piece.stage_width / 2) / spacing);
             const markers: { x: number; label: string }[] = [{ x: cx, label: '0' }];
             for (let i = 1; i <= maxMarks; i++) {
@@ -345,19 +346,19 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
                 <Line
                   points={[m.x, tickY1, m.x, tickY2]}
                   stroke="rgba(148, 163, 184, 0.35)"
-                  strokeWidth={0.06}
+                  strokeWidth={1.5}
                   listening={false}
                 />
                 <Text
                   x={m.x}
                   y={labelY}
                   text={m.label}
-                  fontSize={0.8}
+                  fontSize={20}
                   fill="rgba(148, 163, 184, 0.6)"
                   fontFamily="Inter, system-ui, sans-serif"
                   fontStyle="bold"
                   align="center"
-                  offsetX={m.label.length * 0.2}
+                  offsetX={m.label.length * 5}
                   listening={false}
                 />
               </React.Fragment>
@@ -408,31 +409,31 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
                 const current = storedPositions.find((p) => p.dancer_label === np.dancer_label);
                 if (!current) return null;
                 // Skip if dancer hasn't moved
-                if (Math.abs(current.x - np.x) < 0.3 && Math.abs(current.y - np.y) < 0.3) return null;
+                if (Math.abs(current.x - np.x) < 8 && Math.abs(current.y - np.y) < 8) return null;
                 const isTarget = drawingDancerLabel === np.dancer_label;
                 return (
                   <Group key={np.id} x={np.x} y={np.y} opacity={isTarget ? 0.9 : 0.35}>
                     {/* Pulsing target ring */}
                     <Circle
-                      radius={1.2}
+                      radius={30}
                       stroke={np.color}
-                      strokeWidth={isTarget ? 0.12 : 0.08}
-                      dash={[0.2, 0.15]}
+                      strokeWidth={isTarget ? 3 : 2}
+                      dash={[5, 4]}
                     />
                     {/* Crosshair lines */}
-                    <Line points={[-0.5, 0, 0.5, 0]} stroke={np.color} strokeWidth={0.06} />
-                    <Line points={[0, -0.5, 0, 0.5]} stroke={np.color} strokeWidth={0.06} />
+                    <Line points={[-12, 0, 12, 0]} stroke={np.color} strokeWidth={1.5} />
+                    <Line points={[0, -12, 0, 12]} stroke={np.color} strokeWidth={1.5} />
                     {/* Label */}
                     <Text
                       text={np.dancer_label}
-                      fontSize={0.5}
+                      fontSize={12}
                       fill={np.color}
                       fontStyle="bold"
                       fontFamily="Inter, system-ui, sans-serif"
                       align="center"
-                      width={3}
-                      offsetX={1.5}
-                      y={1.4}
+                      width={75}
+                      offsetX={37.5}
+                      y={35}
                     />
                   </Group>
                 );

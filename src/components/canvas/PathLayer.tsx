@@ -14,9 +14,9 @@ interface PathLayerProps {
   onPathClick: (dancerLabel: string) => void;
 }
 
-const CONTROL_POINT_RADIUS = 0.25;
-const PATH_STROKE_WIDTH = 0.15;
-const GHOST_DOT_RADIUS = 0.6;
+const CONTROL_POINT_RADIUS = 6;
+const PATH_STROKE_WIDTH = 3.5;
+const GHOST_DOT_RADIUS = 15;
 
 function getFullPoints(
   path: DancerPath,
@@ -58,7 +58,7 @@ export function PathLayer({
         // Only show ghost if position actually changes
         const dx = nextPos.x - currentPos.x;
         const dy = nextPos.y - currentPos.y;
-        if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return null;
+        if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return null;
 
         // Highlight the active drawing target's ghost more
         const isTarget = isDrawing && drawingDancerLabel === nextPos.dancer_label;
@@ -71,9 +71,9 @@ export function PathLayer({
               y={nextPos.y}
               radius={GHOST_DOT_RADIUS}
               stroke={nextPos.color}
-              strokeWidth={0.08}
+              strokeWidth={2}
               opacity={isTarget ? 0.7 : 0.25}
-              dash={[0.15, 0.1]}
+              dash={[4, 2.5]}
               listening={false}
             />
             {/* Ghost label */}
@@ -81,7 +81,7 @@ export function PathLayer({
               x={nextPos.x}
               y={nextPos.y}
               text={nextPos.dancer_label}
-              fontSize={0.5}
+              fontSize={12}
               fill={nextPos.color}
               fontStyle="bold"
               fontFamily="Inter, system-ui, sans-serif"
@@ -120,8 +120,8 @@ export function PathLayer({
               tension={tension}
               lineCap="round"
               lineJoin="round"
-              dash={path.path_type === 'geometric' ? [0.3, 0.2] : undefined}
-              hitStrokeWidth={0.6}
+              dash={path.path_type === 'geometric' ? [8, 5] : undefined}
+              hitStrokeWidth={15}
               listening={canvasMode === 'select'}
               onClick={() => onPathClick(path.dancer_label)}
               onTap={() => onPathClick(path.dancer_label)}
@@ -137,7 +137,7 @@ export function PathLayer({
                   radius={CONTROL_POINT_RADIUS}
                   fill={color}
                   stroke="#ffffff"
-                  strokeWidth={0.06}
+                  strokeWidth={1.5}
                   draggable
                   onDragMove={(e) => {
                     const node = e.target;
@@ -166,12 +166,12 @@ export function PathLayer({
             <Line
               points={points}
               stroke={dancer.color}
-              strokeWidth={0.2}
+              strokeWidth={5}
               opacity={0.9}
               tension={isGeometric ? 0 : 0.3}
               lineCap="round"
               lineJoin="round"
-              dash={[0.2, 0.15]}
+              dash={[5, 4]}
               listening={false}
             />
             {/* Waypoint markers for geometric mode */}
@@ -180,10 +180,10 @@ export function PathLayer({
                 key={idx}
                 x={pt.x}
                 y={pt.y}
-                radius={0.18}
+                radius={4.5}
                 fill={dancer.color}
                 stroke="#ffffff"
-                strokeWidth={0.05}
+                strokeWidth={1.25}
                 opacity={0.9}
                 listening={false}
               />
