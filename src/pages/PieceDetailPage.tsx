@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Music, Users, Pencil, Clock, ChevronDown, ChevronUp, Trash2, Volume2, Download, UserPlus, UserMinus } from 'lucide-react';
+import { ArrowLeft, Save, Music, Users, Pencil, ChevronDown, ChevronUp, Trash2, Volume2, Download, UserPlus, UserMinus } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Textarea } from '@/components/ui/Textarea';
-import { Select } from '@/components/ui/Select';
+
 import { Spinner } from '@/components/ui/Spinner';
 import { FormationCanvas, ThumbnailStrip, CanvasToolbar, PlaybackControls, TemplatePickerModal } from '@/components/canvas';
 import { PieceTabs, PieceNotesPanel, SongSectionsPanel, PieceRosterPanel } from '@/components/pieces';
@@ -15,7 +15,6 @@ import { useSongSectionStore } from '@/stores/songSectionStore';
 import type { FormationCanvasHandle } from '@/components/canvas';
 import { usePlayback } from '@/hooks/usePlayback';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { EASING_OPTIONS } from '@/types';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useFormationStore } from '@/stores/formationStore';
 import { useUIStore } from '@/stores/uiStore';
@@ -42,7 +41,7 @@ import type { ExportFormat } from '@/components/export/ExportModal';
 import { PrintView } from '@/components/export/PrintView';
 import { exportPng } from '@/lib/exportImage';
 import { exportPdf } from '@/lib/exportPdf';
-import type { DancerPosition, DancerPositionInsert, EasingType, Dancer } from '@/types';
+import type { DancerPosition, DancerPositionInsert, Dancer } from '@/types';
 
 const PositionRow = memo(function PositionRow({
   pos,
@@ -216,7 +215,6 @@ export function PieceDetailPage() {
   const setAudioUrl = useAudioStore((s) => s.setAudioUrl);
 
   const [activeTab, setActiveTab] = useState<PieceTab>('canvas');
-  const [transitionOpen, setTransitionOpen] = useState(true);
   const [audioOpen, setAudioOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -867,6 +865,8 @@ export function PieceDetailPage() {
                   usePlaybackStore.getState().play(formations.length - 1, idx, durations, 'single', dancerLabel);
                 }
               }}
+              onUpdateTransition={(fId, updates) => updateFormation(fId, updates)}
+              bpm={piece.bpm}
             />
           )}
         </div>
@@ -996,63 +996,6 @@ export function PieceDetailPage() {
               </div>
             </Card>
 
-            {/* Transition Settings */}
-            {activeIdx > 0 && (
-              <Card
-                header={
-                  <button
-                    onClick={() => setTransitionOpen((o) => !o)}
-                    className="flex items-center justify-between w-full"
-                  >
-                    <h3 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
-                      <Clock size={14} />
-                      Transition
-                    </h3>
-                    {transitionOpen ? <ChevronUp size={14} className="text-text-secondary" /> : <ChevronDown size={14} className="text-text-secondary" />}
-                  </button>
-                }
-              >
-                {transitionOpen && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-medium text-text-secondary mb-1.5">
-                        Duration: {activeFormation.transition_duration_ms ?? 2000}ms
-                        {piece.bpm ? ` (${((activeFormation.transition_duration_ms ?? 2000) / (60000 / piece.bpm)).toFixed(1)} counts)` : ''}
-                      </label>
-                      <input
-                        type="range"
-                        min={500}
-                        max={5000}
-                        step={100}
-                        value={activeFormation.transition_duration_ms ?? 2000}
-                        onChange={(e) =>
-                          updateFormation(activeFormation.id, {
-                            transition_duration_ms: parseInt(e.target.value),
-                          })
-                        }
-                        className="w-full"
-                        style={{ accentColor: 'var(--color-accent)' }}
-                      />
-                      <div className="flex justify-between text-[10px] text-text-tertiary mt-0.5">
-                        <span>0.5s</span>
-                        <span>5s</span>
-                      </div>
-                    </div>
-
-                    <Select
-                      label="Easing"
-                      options={EASING_OPTIONS.map((e) => ({ value: e.value, label: e.label }))}
-                      value={(activeFormation.transition_easing ?? 'ease-in-out') as EasingType}
-                      onChange={(e) =>
-                        updateFormation(activeFormation.id, {
-                          transition_easing: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                )}
-              </Card>
-            )}
 
           </div>
         )}
