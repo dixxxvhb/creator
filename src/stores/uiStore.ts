@@ -10,8 +10,10 @@ interface UIState {
   showStageNumbers: boolean;
   canvasMode: CanvasMode;
   audiencePosition: AudiencePosition;
+  showComparison: boolean;
   selectedDancerIds: string[];
   setSidebarOpen: (open: boolean) => void;
+  toggleComparison: () => void;
   toggleGrid: () => void;
   toggleSnap: () => void;
   toggleStageNumbers: () => void;
@@ -30,8 +32,10 @@ export const useUIStore = create<UIState>((set) => ({
   showStageNumbers: true,
   canvasMode: 'select' as CanvasMode,
   audiencePosition: 'top',
+  showComparison: false,
   selectedDancerIds: [],
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  toggleComparison: () => set((state) => ({ showComparison: !state.showComparison })),
   toggleGrid: () => set((state) => ({ showGrid: !state.showGrid })),
   toggleSnap: () => set((state) => ({ snapToGrid: !state.snapToGrid })),
   toggleStageNumbers: () => set((state) => ({ showStageNumbers: !state.showStageNumbers })),

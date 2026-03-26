@@ -491,3 +491,12 @@ export interface ShowAct {
 }
 export type ShowActInsert = Omit<ShowAct, 'id' | 'created_at'>;
 export type ShowActUpdate = Partial<Omit<ShowActInsert, 'show_id'>>;
+
+// ─── Piece Share ───
+export interface PieceShare {
+  id: string;
+  piece_id: string;
+  token: string;
+  expires_at: string | null;
+  created_at: string;
+}

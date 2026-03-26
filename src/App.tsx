@@ -16,7 +16,34 @@ import { ShowDetailPage } from '@/pages/ShowDetailPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { RehearsalPage } from '@/pages/RehearsalPage';
 import { BackstagePage } from '@/pages/BackstagePage';
+import { ViewerPage } from '@/pages/ViewerPage';
 import { useAuthStore } from '@/stores/authStore';
+
+function AuthenticatedApp() {
+  return (
+    <AuthGuard>
+      <Routes>
+        <Route path="shows/:id/backstage" element={<BackstagePage />} />
+        <Route element={<AppLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="pieces" element={<PiecesPage />} />
+          <Route path="pieces/new" element={<PieceSetupPage />} />
+          <Route path="pieces/:id" element={<PieceDetailPage />} />
+          <Route path="pieces/:id/rehearse" element={<RehearsalPage />} />
+          <Route path="roster" element={<RosterPage />} />
+          <Route path="seasons" element={<SeasonsPage />} />
+          <Route path="seasons/:id" element={<SeasonDetailPage />} />
+          <Route path="competitions" element={<CompetitionsPage />} />
+          <Route path="costumes" element={<CostumesPage />} />
+          <Route path="shows" element={<ShowsPage />} />
+          <Route path="shows/:id" element={<ShowDetailPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </AuthGuard>
+  );
+}
 
 export function App() {
   const initialize = useAuthStore((s) => s.initialize);
@@ -26,28 +53,11 @@ export function App() {
   }, [initialize]);
 
   return (
-    <AuthGuard>
-      <BrowserRouter basename="/creator">
-        <Routes>
-          <Route path="shows/:id/backstage" element={<BackstagePage />} />
-          <Route element={<AppLayout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="pieces" element={<PiecesPage />} />
-            <Route path="pieces/new" element={<PieceSetupPage />} />
-            <Route path="pieces/:id" element={<PieceDetailPage />} />
-            <Route path="pieces/:id/rehearse" element={<RehearsalPage />} />
-            <Route path="roster" element={<RosterPage />} />
-            <Route path="seasons" element={<SeasonsPage />} />
-            <Route path="seasons/:id" element={<SeasonDetailPage />} />
-            <Route path="competitions" element={<CompetitionsPage />} />
-            <Route path="costumes" element={<CostumesPage />} />
-            <Route path="shows" element={<ShowsPage />} />
-            <Route path="shows/:id" element={<ShowDetailPage />} />
-            <Route path="settings" element={<SettingsPage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthGuard>
+    <BrowserRouter basename="/creator">
+      <Routes>
+        <Route path="/view/:token" element={<ViewerPage />} />
+        <Route path="/*" element={<AuthenticatedApp />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

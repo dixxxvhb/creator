@@ -5,6 +5,7 @@ import { GridLayer } from './GridLayer';
 import { DancerLayer } from './DancerLayer';
 import { PathLayer } from './PathLayer';
 import { OffstageGhostLayer } from './OffstageGhostLayer';
+import { ComparisonOverlay } from './ComparisonOverlay';
 import { useUIStore } from '@/stores/uiStore';
 import { useFormationStore } from '@/stores/formationStore';
 import { usePathStore } from '@/stores/pathStore';
@@ -80,6 +81,7 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   const showStageNumbers = useUIStore((s) => s.showStageNumbers);
   const canvasMode = useUIStore((s) => s.canvasMode);
   const audiencePosition = useUIStore((s) => s.audiencePosition);
+  const showComparison = useUIStore((s) => s.showComparison);
   const clearDancerSelection = useUIStore((s) => s.clearDancerSelection);
 
   const formations = useFormationStore((s) => s.formations);
@@ -473,6 +475,21 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
               onPathClick={handlePathClick}
             />
           )}
+          {/* Comparison overlay — ghost dots from adjacent formation */}
+          {!isPlayback && showComparison && formations.length >= 2 && (() => {
+            // Use previous formation; if at first, use next
+            const comparePositions = prevPositions.length > 0
+              ? prevPositions
+              : nextPositions;
+            return comparePositions.length > 0 ? (
+              <ComparisonOverlay
+                currentPositions={storedPositions}
+                comparePositions={comparePositions}
+                stageWidth={piece.stage_width}
+                stageHeight={piece.stage_depth}
+              />
+            ) : null;
+          })()}
           <DancerLayer
             positions={activePositions}
             snapToGrid={snapToGrid}

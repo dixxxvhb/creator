@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Music, Users, Pencil, Download, Trash2 } from 'lucide-react';
+import { ArrowLeft, Save, Music, Users, Pencil, Download, Trash2, Share2 } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -29,6 +29,7 @@ import { DancerManageModal } from '@/components/canvas/DancerManageModal';
 import { ExportModal } from '@/components/export/ExportModal';
 import { PrintView } from '@/components/export/PrintView';
 import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
+import { ShareModal } from '@/components/pieces/ShareModal';
 
 export function PieceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -133,6 +134,7 @@ export function PieceDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [quickStartDismissed, setQuickStartDismissed] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
   // --- Effects ---
   useEffect(() => {
@@ -299,6 +301,10 @@ export function PieceDetailPage() {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          <Button variant="secondary" size="sm" onClick={() => setShareModalOpen(true)}>
+            <Share2 size={14} />
+            <span className="hidden sm:inline">Share</span>
+          </Button>
           <Button variant="secondary" size="sm" onClick={() => setExportModalOpen(true)}>
             <Download size={14} />
             <span className="hidden sm:inline">Export</span>
@@ -509,6 +515,13 @@ export function PieceDetailPage() {
       <KeyboardShortcutsModal
         open={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
+      />
+
+      <ShareModal
+        open={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        pieceId={piece.id}
+        pieceTitle={piece.title}
       />
 
       {/* Delete piece confirmation */}

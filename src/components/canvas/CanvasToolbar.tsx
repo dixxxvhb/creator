@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Undo2,
   Redo2,
+  GitCompareArrows,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTierStore } from '@/stores/tierStore';
@@ -52,6 +53,9 @@ interface CanvasToolbarProps {
   onAddDancer: () => void;
   onRemoveDancer: () => void;
   onToggleAudiencePosition: () => void;
+  showComparison?: boolean;
+  canCompare?: boolean;
+  onToggleComparison?: () => void;
   onShowShortcuts?: () => void;
   canUndo?: boolean;
   canRedo?: boolean;
@@ -122,6 +126,9 @@ export function CanvasToolbar({
   onAddDancer,
   onRemoveDancer,
   onToggleAudiencePosition,
+  showComparison,
+  canCompare,
+  onToggleComparison,
   onShowShortcuts,
   canUndo,
   canRedo,
@@ -250,6 +257,21 @@ export function CanvasToolbar({
           <ToolButton onClick={onToggleAudiencePosition} title={`Audience at ${audiencePosition === 'top' ? 'top' : 'bottom'} — click to flip`} label={audiencePosition === 'top' ? 'Aud Top' : 'Aud Bot'}>
             {audiencePosition === 'top' ? <ArrowUpFromLine size={14} /> : <ArrowDownFromLine size={14} />}
           </ToolButton>
+
+          {onToggleComparison && (
+            <>
+              <Divider />
+              <ToolButton
+                onClick={onToggleComparison}
+                active={showComparison}
+                disabled={!canCompare}
+                title={canCompare ? 'Compare with previous/next formation — shows ghost dots and movement arrows' : 'Need at least 2 formations to compare'}
+                label="Compare"
+              >
+                <GitCompareArrows size={14} />
+              </ToolButton>
+            </>
+          )}
 
           {onShowShortcuts && (
             <>

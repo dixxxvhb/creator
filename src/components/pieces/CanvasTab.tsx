@@ -91,6 +91,8 @@ export function CanvasTab({
   const showStageNumbers = useUIStore((s) => s.showStageNumbers);
   const canvasMode = useUIStore((s) => s.canvasMode);
   const audiencePosition = useUIStore((s) => s.audiencePosition);
+  const showComparison = useUIStore((s) => s.showComparison);
+  const toggleComparison = useUIStore((s) => s.toggleComparison);
   const toggleGrid = useUIStore((s) => s.toggleGrid);
   const toggleSnap = useUIStore((s) => s.toggleSnap);
   const toggleStageNumbers = useUIStore((s) => s.toggleStageNumbers);
@@ -181,6 +183,9 @@ export function CanvasTab({
             onAddDancer={onOpenAddDancer}
             onRemoveDancer={() => onRemoveDancer()}
             onToggleAudiencePosition={() => setAudiencePosition(audiencePosition === 'top' ? 'bottom' : 'top')}
+            showComparison={showComparison}
+            canCompare={formations.length >= 2}
+            onToggleComparison={toggleComparison}
             onShowShortcuts={onShowShortcuts}
             canUndo={canUndo}
             canRedo={canRedo}
