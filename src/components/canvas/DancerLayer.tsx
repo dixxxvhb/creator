@@ -1,5 +1,6 @@
 import { Group } from 'react-konva';
 import { DancerDot } from './DancerDot';
+import { useUIStore } from '@/stores/uiStore';
 import type { DancerPosition, CanvasMode, Dancer } from '@/types';
 
 interface DancerLayerProps {
@@ -44,6 +45,7 @@ export function DancerLayer({
 }: DancerLayerProps) {
   // Build a lookup map for dancer names
   const dancerNameMap = new Map(rosterDancers.map((d) => [d.id, d.short_name]));
+  const selectedDancerIds = useUIStore((s) => s.selectedDancerIds);
 
   return (
     <Group>
@@ -63,6 +65,8 @@ export function DancerLayer({
           stageWidth={stageWidth}
           stageDepth={stageDepth}
           activeFormationId={activeFormationId}
+          isSelected={selectedDancerIds.includes(pos.id)}
+          allPositions={positions}
           onDragMove={onDragMove}
           onDragEnd={onDragEnd}
         />

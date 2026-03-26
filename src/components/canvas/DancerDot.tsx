@@ -4,6 +4,7 @@ import type Konva from 'konva';
 import type { DancerPosition, CanvasMode } from '@/types';
 import { usePathStore } from '@/stores/pathStore';
 import { useUIStore } from '@/stores/uiStore';
+import { useFormationStore } from '@/stores/formationStore';
 import { isOffstage, getOffstageDirection, clampToEdge } from '@/lib/offstage';
 import { simplifyPath } from '@/lib/pathUtils';
 import { toast } from '@/stores/toastStore';
@@ -28,6 +29,10 @@ interface DancerDotProps {
   isFocal?: boolean;
   /** Active formation ID for saving drawn paths */
   activeFormationId?: string;
+  /** Whether this dancer is selected in multi-select */
+  isSelected?: boolean;
+  /** All positions in current formation (for group drag) */
+  allPositions?: DancerPosition[];
   onDragMove: (id: string, x: number, y: number) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
 }
@@ -57,11 +62,15 @@ export function DancerDot({
   stageWidth,
   stageDepth,
   activeFormationId,
+  isSelected = false,
+  allPositions = [],
   onDragMove,
   onDragEnd,
 }: DancerDotProps) {
   const groupRef = useRef<Konva.Group>(null);
   const originalPosRef = useRef<{ x: number; y: number } | null>(null);
+  // Stores initial positions of all selected dancers at drag start for group drag
+  const groupDragStartRef = useRef<Map<string, { x: number; y: number }> | null>(null);
   const isDrawMode = canvasMode === 'draw-freehand' || canvasMode === 'draw-geometric';
 
   // Offstage detection
@@ -81,11 +90,28 @@ export function DancerDot({
   const isActiveDrawDrag = isDrawMode && isDrawing && isDrawingTarget && interactive;
 
   function handleDragStart() {
-    if (!canDrawDrag) return;
-    // Store original position so we can snap back after drawing
-    originalPosRef.current = { x: renderPos.x, y: renderPos.y };
-    usePathStore.getState().startDrawing(position.dancer_label, true);
-    usePathStore.getState().addDrawingPoint(position.x, position.y);
+    if (canDrawDrag) {
+      // Drawing mode — store original position so we can snap back after drawing
+      originalPosRef.current = { x: renderPos.x, y: renderPos.y };
+      usePathStore.getState().startDrawing(position.dancer_label, true);
+      usePathStore.getState().addDrawingPoint(position.x, position.y);
+      return;
+    }
+
+    // Group drag: if this dancer is selected and part of a multi-selection, store all selected positions
+    if (isSelected && !isDrawMode) {
+      const selectedIds = useUIStore.getState().selectedDancerIds;
+      if (selectedIds.length > 1) {
+        const startPositions = new Map<string, { x: number; y: number }>();
+        for (const id of selectedIds) {
+          const pos = allPositions.find((p) => p.id === id);
+          if (pos) {
+            startPositions.set(id, { x: pos.x, y: pos.y });
+          }
+        }
+        groupDragStartRef.current = startPositions;
+      }
+    }
   }
 
   function handleDragMove() {
@@ -97,6 +123,21 @@ export function DancerDot({
     if (originalPosRef.current) {
       // Drawing mode — add trail point
       usePathStore.getState().addDrawingPoint(x, y);
+    } else if (groupDragStartRef.current && activeFormationId) {
+      // Group drag — move all other selected dancers by the same delta
+      const myStart = groupDragStartRef.current.get(position.id);
+      if (myStart) {
+        const dx = x - myStart.x;
+        const dy = y - myStart.y;
+        const updatePos = useFormationStore.getState().updateLocalPosition;
+        for (const [id, start] of groupDragStartRef.current) {
+          if (id !== position.id) {
+            updatePos(activeFormationId, id, start.x + dx, start.y + dy);
+          }
+        }
+      }
+      // Move self normally
+      onDragMove(position.id, x, y);
     } else {
       // Select mode — move dancer position
       onDragMove(position.id, x, y);
@@ -125,6 +166,40 @@ export function DancerDot({
       } else {
         usePathStore.getState().cancelDrawing();
       }
+    } else if (groupDragStartRef.current && activeFormationId) {
+      // Group drag end — snap all selected dancers individually
+      const myStart = groupDragStartRef.current.get(position.id);
+      let x = node.x();
+      let y = node.y();
+
+      if (snapToGrid && stageWidth != null && stageDepth != null && !isOffstage(x, y, stageWidth, stageDepth)) {
+        const SNAP_UNIT = 25;
+        x = Math.round(x / SNAP_UNIT) * SNAP_UNIT;
+        y = Math.round(y / SNAP_UNIT) * SNAP_UNIT;
+        node.position({ x, y });
+      }
+      onDragEnd(position.id, x, y);
+
+      // Snap and finalize other selected dancers
+      if (myStart) {
+        const dx = x - myStart.x;
+        const dy = y - myStart.y;
+        const updatePos = useFormationStore.getState().updateLocalPosition;
+        for (const [id, start] of groupDragStartRef.current) {
+          if (id !== position.id) {
+            let nx = start.x + dx;
+            let ny = start.y + dy;
+            if (snapToGrid && stageWidth != null && stageDepth != null && !isOffstage(nx, ny, stageWidth, stageDepth)) {
+              const SNAP_UNIT = 25;
+              nx = Math.round(nx / SNAP_UNIT) * SNAP_UNIT;
+              ny = Math.round(ny / SNAP_UNIT) * SNAP_UNIT;
+            }
+            updatePos(activeFormationId, id, nx, ny);
+          }
+        }
+      }
+
+      groupDragStartRef.current = null;
     } else {
       // Select mode — normal drag end with snap
       let x = node.x();
@@ -139,20 +214,34 @@ export function DancerDot({
     }
   }
 
-  // Click handler for draw mode — show toast on last formation
-  function handleDrawClick(e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) {
+  // Click handler — handles both draw mode and multi-select
+  function handleClick(e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) {
     e.cancelBubble = true;
-    if (isDrawing) return;
 
-    if (!hasNextFormation) {
-      toast.info('This is the last formation — go to a previous formation to draw paths.');
+    // Draw mode click behavior
+    if (isDrawMode) {
+      if (isDrawing) return;
+
+      if (!hasNextFormation) {
+        toast.info('This is the last formation — go to a previous formation to draw paths.');
+        return;
+      }
+
+      toast.info('Now drag the dancer to draw their path.');
       return;
     }
 
-    // In select mode, clicking a dancer enters draw mode
+    // Select mode — multi-select with Shift/Ctrl/Meta
     if (canvasMode === 'select') {
-      useUIStore.getState().setCanvasMode('draw-freehand');
-      toast.info('Now drag the dancer to draw their path.');
+      const evt = e.evt;
+      const isMultiKey = ('shiftKey' in evt && evt.shiftKey) || ('ctrlKey' in evt && evt.ctrlKey) || ('metaKey' in evt && evt.metaKey);
+      const uiStore = useUIStore.getState();
+
+      if (isMultiKey) {
+        uiStore.toggleDancerSelection(position.id);
+      } else {
+        uiStore.setDancerSelection([position.id]);
+      }
     }
   }
 
@@ -177,12 +266,22 @@ export function DancerDot({
       y={renderPos.y}
       opacity={effectiveOpacity}
       draggable={isDraggable}
-      onDragStart={canDrawDrag ? handleDragStart : undefined}
+      onDragStart={handleDragStart}
       onDragMove={isDraggable ? handleDragMove : undefined}
       onDragEnd={isDraggable ? handleDragEnd : undefined}
-      onClick={handleDrawClick}
-      onTap={handleDrawClick}
+      onClick={handleClick}
+      onTap={handleClick}
     >
+      {/* Multi-select ring */}
+      {isSelected && !isDrawMode && (
+        <Circle
+          radius={DOT_RADIUS + 5}
+          stroke="#B4838D"
+          strokeWidth={2}
+          dash={[4, 4]}
+          listening={false}
+        />
+      )}
       {/* Active drawing target — bright glow ring */}
       {showTargetRing && (
         <Circle

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { AudioUploader } from '@/components/audio/AudioUploader';
 import { AudioPlayer } from '@/components/audio/AudioPlayer';
 import { AudioTimeline } from '@/components/audio/AudioTimeline';
+import { WaveformTimeline } from '@/components/audio/WaveformTimeline';
 import { PositionRow } from './PositionRow';
 import type { Piece, Formation, DancerPosition, Dancer } from '@/types';
 
@@ -23,6 +24,7 @@ interface FormationNotesPanelProps {
   isAudioPlaying: boolean;
   audioCurrentTime: number;
   audioDuration: number;
+  audioUrl: string | null;
   toggleAudio: () => void;
   seekAudio: (time: number) => void;
   hasAudio: boolean;
@@ -52,6 +54,7 @@ export function FormationNotesPanel({
   isAudioPlaying,
   audioCurrentTime,
   audioDuration,
+  audioUrl,
   toggleAudio,
   seekAudio,
   hasAudio,
@@ -122,15 +125,31 @@ export function FormationNotesPanel({
                   onSeek={seekAudio}
                 />
                 {audioDuration > 0 && (
-                  <AudioTimeline
-                    formations={formations}
-                    duration={audioDuration}
-                    currentTime={audioCurrentTime}
-                    activeFormationId={activeFormationId}
-                    onSeek={seekAudio}
-                    onUpdateTimestamp={onUpdateTimestamp}
-                    onSelectFormation={onSelectFormation}
-                  />
+                  audioUrl ? (
+                    <WaveformTimeline
+                      audioUrl={audioUrl}
+                      formations={formations}
+                      activeFormationId={activeFormationId}
+                      currentTime={audioCurrentTime}
+                      duration={audioDuration}
+                      isPlaying={isAudioPlaying}
+                      onSeek={seekAudio}
+                      onPlay={toggleAudio}
+                      onPause={toggleAudio}
+                      onUpdateTimestamp={onUpdateTimestamp}
+                      onSelectFormation={onSelectFormation}
+                    />
+                  ) : (
+                    <AudioTimeline
+                      formations={formations}
+                      duration={audioDuration}
+                      currentTime={audioCurrentTime}
+                      activeFormationId={activeFormationId}
+                      onSeek={seekAudio}
+                      onUpdateTimestamp={onUpdateTimestamp}
+                      onSelectFormation={onSelectFormation}
+                    />
+                  )
                 )}
                 <AudioUploader
                   onUpload={onAudioUpload}

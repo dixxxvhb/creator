@@ -80,6 +80,7 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   const showStageNumbers = useUIStore((s) => s.showStageNumbers);
   const canvasMode = useUIStore((s) => s.canvasMode);
   const audiencePosition = useUIStore((s) => s.audiencePosition);
+  const clearDancerSelection = useUIStore((s) => s.clearDancerSelection);
 
   const formations = useFormationStore((s) => s.formations);
   const activeFormationId = useFormationStore((s) => s.activeFormationId);
@@ -254,16 +255,17 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     cancelDrawing();
   }, [isDrawing, isDragDrawing, canvasMode, activeFormationId, drawingPoints, drawingDancerLabel, savePath, cancelDrawing, setCanvasMode]);
 
-  // Click on stage — deselect path when in select mode
+  // Click on stage — deselect path and clear dancer selection when in select mode
   const handleStageClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
       if (canvasMode === 'select') {
         if (e.target === e.target.getStage() || e.target.getClassName() === 'Rect') {
           stopEditing();
+          clearDancerSelection();
         }
       }
     },
-    [canvasMode, stopEditing]
+    [canvasMode, stopEditing, clearDancerSelection]
   );
 
   // Keyboard shortcuts for drawing
@@ -286,6 +288,11 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isDrawing, cancelDrawing, selectedPath, activeFormationId]);
+
+  // Clear dancer selection when formation changes
+  useEffect(() => {
+    clearDancerSelection();
+  }, [activeFormationId, clearDancerSelection]);
 
   // Control point drag handler
   const handleControlPointDrag = useCallback(

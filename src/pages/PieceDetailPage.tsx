@@ -402,6 +402,7 @@ export function PieceDetailPage() {
             isAudioPlaying={isAudioPlaying}
             audioCurrentTime={audioCurrentTime}
             audioDuration={audioDuration}
+            audioUrl={piece.audio_url}
             toggleAudio={toggleAudio}
             seekAudio={seekAudio}
             hasAudio={hasAudio}
