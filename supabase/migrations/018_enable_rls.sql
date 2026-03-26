@@ -2,7 +2,7 @@
 ALTER TABLE competitions ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
 ALTER TABLE costumes ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
 
--- Drop all existing permissive/old policies
+-- Drop all existing permissive/old policies (from migrations 001-012)
 DROP POLICY IF EXISTS "Allow all competitions" ON competitions;
 DROP POLICY IF EXISTS "Allow all entries" ON competition_entries;
 DROP POLICY IF EXISTS "Allow all costumes" ON costumes;
@@ -20,6 +20,20 @@ DROP POLICY IF EXISTS "Users can insert own bug reports" ON bug_reports;
 DROP POLICY IF EXISTS "Users can read own bug reports" ON bug_reports;
 DROP POLICY IF EXISTS "Admin can read all bug reports" ON bug_reports;
 DROP POLICY IF EXISTS "Admin can update bug reports" ON bug_reports;
+-- Drop policies from migration 012
+DROP POLICY IF EXISTS "Users can manage own pieces" ON pieces;
+DROP POLICY IF EXISTS "Users can manage own dancers" ON dancers;
+DROP POLICY IF EXISTS "Users can manage own formations" ON formations;
+DROP POLICY IF EXISTS "Users can manage own positions" ON dancer_positions;
+DROP POLICY IF EXISTS "Users can manage own props" ON props;
+DROP POLICY IF EXISTS "Users can manage own paths" ON dancer_paths;
+DROP POLICY IF EXISTS "Users can manage own seasons" ON seasons;
+DROP POLICY IF EXISTS "Users can manage own competitions" ON competitions;
+DROP POLICY IF EXISTS "Users can manage own costumes" ON costumes;
+DROP POLICY IF EXISTS "Users can manage own shows" ON shows;
+DROP POLICY IF EXISTS "Users can manage own song sections" ON song_sections;
+DROP POLICY IF EXISTS "Users can manage own bug reports" ON bug_reports;
+DROP POLICY IF EXISTS "Users can manage own user_purchases" ON user_purchases;
 
 -- Enable RLS on all tables
 ALTER TABLE pieces ENABLE ROW LEVEL SECURITY;
@@ -39,6 +53,7 @@ ALTER TABLE dancer_paths ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piece_shares ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bug_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE piece_seasons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE props ENABLE ROW LEVEL SECURITY;
 
 -- Direct ownership policies
 CREATE POLICY "Users can CRUD own pieces" ON pieces FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
@@ -90,7 +105,10 @@ CREATE POLICY "Users can CRUD acts of own shows" ON show_acts FOR ALL
 CREATE POLICY "Users can CRUD shares of own pieces" ON piece_shares FOR ALL
   USING (EXISTS (SELECT 1 FROM pieces WHERE pieces.id = piece_shares.piece_id AND pieces.user_id = auth.uid()))
   WITH CHECK (EXISTS (SELECT 1 FROM pieces WHERE pieces.id = piece_shares.piece_id AND pieces.user_id = auth.uid()));
-CREATE POLICY "Anyone can read shares by token" ON piece_shares FOR SELECT USING (true);
+CREATE POLICY "Anyone can read shares by token" ON piece_shares FOR SELECT USING (
+  EXISTS (SELECT 1 FROM pieces WHERE pieces.id = piece_shares.piece_id AND pieces.user_id = auth.uid())
+  OR token IS NOT NULL
+);
 
 -- Piece-seasons junction table
 CREATE POLICY "Users can CRUD own piece-season links" ON piece_seasons FOR ALL
@@ -100,5 +118,10 @@ CREATE POLICY "Users can CRUD own piece-season links" ON piece_seasons FOR ALL
   )
   WITH CHECK (
     EXISTS (SELECT 1 FROM pieces WHERE pieces.id = piece_seasons.piece_id AND pieces.user_id = auth.uid())
-    OR EXISTS (SELECT 1 FROM seasons WHERE seasons.id = piece_seasons.season_id AND seasons.user_id = auth.uid())
+    AND EXISTS (SELECT 1 FROM seasons WHERE seasons.id = piece_seasons.season_id AND seasons.user_id = auth.uid())
   );
+
+-- Props inherit ownership through pieces
+CREATE POLICY "Users can CRUD props of own pieces" ON props FOR ALL
+  USING (EXISTS (SELECT 1 FROM pieces WHERE pieces.id = props.piece_id AND pieces.user_id = auth.uid()))
+  WITH CHECK (EXISTS (SELECT 1 FROM pieces WHERE pieces.id = props.piece_id AND pieces.user_id = auth.uid()));
