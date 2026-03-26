@@ -15,6 +15,7 @@ export interface Piece {
   stage_depth: number;
   notes: string;
   sort_order: number;
+  choreographer: string | null;
   focal_dancer_id: string | null;
   created_at: string;
   updated_at: string;

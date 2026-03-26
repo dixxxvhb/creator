@@ -41,6 +41,7 @@ import type { ExportFormat } from '@/components/export/ExportModal';
 import { PrintView } from '@/components/export/PrintView';
 import { exportPng } from '@/lib/exportImage';
 import { exportPdf } from '@/lib/exportPdf';
+import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
 import type { DancerPosition, DancerPositionInsert, Dancer } from '@/types';
 
 const PositionRow = memo(function PositionRow({
@@ -51,6 +52,7 @@ const PositionRow = memo(function PositionRow({
   onToggleFocal,
   onAssign,
   onQuickAdd,
+  onRemove,
 }: {
   pos: DancerPosition;
   rosterDancers: Dancer[];
@@ -59,6 +61,7 @@ const PositionRow = memo(function PositionRow({
   onToggleFocal: (dancerId: string | null) => void;
   onAssign: (formationId: string, positionId: string, dancerId: string | null, color?: string) => void;
   onQuickAdd: (name: string, positionId: string) => void;
+  onRemove?: (dancerLabel: string) => void;
 }) {
   const [quickName, setQuickName] = useState('');
   const [mode, setMode] = useState<'input' | 'select'>('input');
@@ -88,6 +91,16 @@ const PositionRow = memo(function PositionRow({
         <span className="text-text-tertiary text-[10px] shrink-0">
           ({Math.round(pos.x)},{Math.round(pos.y)})
         </span>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={() => onRemove(pos.dancer_label)}
+            className="p-0.5 text-text-tertiary hover:text-red-400 transition-colors"
+            title={`Remove dancer ${pos.dancer_label} from piece`}
+          >
+            <Trash2 size={11} />
+          </button>
+        )}
       </div>
     );
   }
@@ -148,6 +161,16 @@ const PositionRow = memo(function PositionRow({
           </button>
         </div>
       )}
+      {onRemove && (
+        <button
+          type="button"
+          onClick={() => onRemove(pos.dancer_label)}
+          className="p-0.5 text-text-tertiary hover:text-red-400 transition-colors shrink-0"
+          title={`Remove dancer ${pos.dancer_label} from piece`}
+        >
+          <Trash2 size={11} />
+        </button>
+      )}
     </div>
   );
 });
@@ -174,6 +197,7 @@ export function PieceDetailPage() {
   const formationsLoading = useFormationStore((s) => s.isLoading);
 
   const addFormation = useFormationStore((s) => s.addFormation);
+  const reorderFormations = useFormationStore((s) => s.reorderFormations);
   const goNext = useFormationStore((s) => s.goNext);
   const goPrev = useFormationStore((s) => s.goPrev);
 
@@ -240,6 +264,8 @@ export function PieceDetailPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [printData, setPrintData] = useState<{ stageImages: (string | null)[] } | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [quickStartDismissed, setQuickStartDismissed] = useState(false);
   const isDirty = useFormationStore((s) => s.isDirty);
 
   // Local state for notes textareas — debounce API calls (BUG-012)
@@ -373,6 +399,20 @@ export function PieceDetailPage() {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
   }, [isDirty, activeFormationId, savePositions]);
+
+  // Global keyboard shortcut: ? opens keyboard shortcuts modal
+  useEffect(() => {
+    function handleShortcutKey(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+      if (e.key === '?' || (e.key === '/' && e.shiftKey)) {
+        e.preventDefault();
+        setShortcutsOpen(true);
+      }
+    }
+    document.addEventListener('keydown', handleShortcutKey);
+    return () => document.removeEventListener('keydown', handleShortcutKey);
+  }, []);
 
   // Sync piece audio URL to audioStore + set playback mode
   useEffect(() => {
@@ -565,26 +605,31 @@ export function PieceDetailPage() {
     updateLocalPositionDancer(activeFormationId, positionId, newDancer.id, newDancer.color);
   }
 
-  async function handleRemoveDancer() {
+  async function handleRemoveDancer(dancerLabel?: string) {
     if (!piece || piece.dancer_count <= 1) return;
     const newCount = piece.dancer_count - 1;
-    const removeLabel = generateLabel(newCount); // label of the last dancer
+    // If no label specified, remove the last dancer (highest label)
+    const removeLabel = dancerLabel ?? generateLabel(newCount);
 
     // Update piece dancer count
     await updatePiece(piece.id, { dancer_count: newCount });
 
-    // Remove that dancer's position from every formation
+    // Remove that dancer's position from every formation, then relabel sequentially
     for (const formation of formations) {
       const existing = positions[formation.id] ?? [];
       const filtered = existing.filter((p) => p.dancer_label !== removeLabel);
-      await savePositions(formation.id, filtered.map((p) => ({
-        formation_id: formation.id,
-        dancer_id: p.dancer_id,
-        dancer_label: p.dancer_label,
-        x: p.x,
-        y: p.y,
-        color: p.color,
-      })));
+      // Relabel remaining dancers to keep labels sequential (A, B, C...)
+      const relabeled = filtered
+        .sort((a, b) => a.dancer_label.localeCompare(b.dancer_label))
+        .map((p, i) => ({
+          formation_id: formation.id,
+          dancer_id: p.dancer_id,
+          dancer_label: generateLabel(i),
+          x: p.x,
+          y: p.y,
+          color: p.color,
+        }));
+      await savePositions(formation.id, relabeled);
     }
   }
 
@@ -866,8 +911,9 @@ export function PieceDetailPage() {
                 }
               }}
               onAddDancer={() => setAddDancerModalOpen(true)}
-              onRemoveDancer={handleRemoveDancer}
+              onRemoveDancer={() => handleRemoveDancer()}
               onToggleAudiencePosition={() => setAudiencePosition(audiencePosition === 'top' ? 'bottom' : 'top')}
+              onShowShortcuts={() => setShortcutsOpen(true)}
             />
             {activeFormation && (
               <span className="text-sm text-text-secondary font-medium">
@@ -901,12 +947,12 @@ export function PieceDetailPage() {
               />
             </div>
             {/* Empty state overlay when no dancers */}
-            {piece.dancer_count === 0 && activePositions.length === 0 && (
+            {piece.dancer_count === 0 && activePositions.length === 0 && !quickStartDismissed && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="pointer-events-auto bg-surface-elevated/95 backdrop-blur-sm border border-border rounded-2xl p-8 max-w-sm text-center space-y-4 shadow-lg">
-                  <p className="text-lg font-semibold text-text-primary">Blank canvas</p>
+                  <p className="text-lg font-semibold text-text-primary">Add dancers to get started</p>
                   <p className="text-sm text-text-secondary">
-                    Add dancers one at a time, or populate a group to get started.
+                    Use the toolbar to add dancers, then drag them into position.
                   </p>
                   <div className="flex flex-col gap-2">
                     <button
@@ -935,6 +981,17 @@ export function PieceDetailPage() {
                       </button>
                     </div>
                   </div>
+                  <div className="pt-2 border-t border-border space-y-3">
+                    <p className="text-xs text-text-tertiary">
+                      Press <kbd className="inline-flex items-center justify-center min-w-[20px] px-1.5 py-0.5 rounded bg-surface-secondary text-text-secondary text-[10px] font-mono border border-border">?</kbd> for keyboard shortcuts
+                    </p>
+                    <button
+                      onClick={() => setQuickStartDismissed(true)}
+                      className="text-xs text-text-tertiary hover:text-text-secondary transition-colors"
+                    >
+                      Got it
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -956,6 +1013,9 @@ export function PieceDetailPage() {
               onSelect={setActiveFormation}
               onAdd={handleAddFormation}
               onDelete={handleDeleteFormation}
+              onReorder={(orderedIds) => {
+                if (piece) reorderFormations(piece.id, orderedIds);
+              }}
               onDeletePath={(fId, label) => removePath(fId, label)}
               onDeleteAllPaths={(fId) => {
                 const fPaths = allPaths[fId] ?? [];
@@ -1081,7 +1141,7 @@ export function PieceDetailPage() {
                       <UserPlus size={12} />
                       Add
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={handleRemoveDancer} disabled={piece.dancer_count <= 0}>
+                    <Button variant="secondary" size="sm" onClick={() => handleRemoveDancer()} disabled={piece.dancer_count <= 0}>
                       <UserMinus size={12} />
                     </Button>
                   </div>
@@ -1100,6 +1160,7 @@ export function PieceDetailPage() {
                         onToggleFocal={(dancerId) => updatePiece(piece.id, { focal_dancer_id: dancerId })}
                         onAssign={updateLocalPositionDancer}
                         onQuickAdd={handleQuickAddDancer}
+                        onRemove={piece.dancer_count > 1 ? handleRemoveDancer : undefined}
                       />
                     ))}
                   </div>
@@ -1140,7 +1201,8 @@ export function PieceDetailPage() {
           activeFormationId={activeFormationId}
           onAssign={updateLocalPositionDancer}
           onAddDancer={() => setAddDancerModalOpen(true)}
-          onRemoveDancer={handleRemoveDancer}
+          onRemoveDancer={() => handleRemoveDancer()}
+          onRemoveSpecificDancer={piece.dancer_count > 1 ? handleRemoveDancer : undefined}
         />
       </div>
 
@@ -1177,7 +1239,7 @@ export function PieceDetailPage() {
         onAssign={updateLocalPositionDancer}
         activeFormationId={activeFormationId}
         onAddDancer={() => setAddDancerModalOpen(true)}
-        onRemoveDancer={handleRemoveDancer}
+        onRemoveDancer={() => handleRemoveDancer()}
       />
 
       <PieceInfoModal
@@ -1195,6 +1257,11 @@ export function PieceDetailPage() {
         onExport={handleExport}
         isExporting={isExporting}
         formationCount={formations.length}
+      />
+
+      <KeyboardShortcutsModal
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
       />
 
       {/* Delete piece confirmation */}

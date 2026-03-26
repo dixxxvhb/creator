@@ -62,6 +62,7 @@ export function QuickAddPieceModal({ open, onClose, onCreated }: QuickAddPieceMo
         audio_url: null,
         stage_width: defaultStageWidth,
         stage_depth: defaultStageDepth,
+        choreographer: null,
         notes: '',
         sort_order: 0,
         focal_dancer_id: null,

@@ -57,6 +57,8 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     }),
     zoomReset: () => {
       setZoom(1);
+      setPanX(0);
+      setPanY(0);
       onZoomChange?.(1);
     },
     getZoom: () => zoom,
@@ -68,6 +70,10 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
 
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const isPanningRef = useRef(false);
+  const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   const showGrid = useUIStore((s) => s.showGrid);
   const snapToGrid = useUIStore((s) => s.snapToGrid);
@@ -133,22 +139,54 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   // Center the stage in the container
   const stagePixelW = piece.stage_width * scale;
   const stagePixelH = piece.stage_depth * scale;
-  const offsetX = (containerSize.width - stagePixelW) / 2;
-  const offsetY = (containerSize.height - stagePixelH) / 2;
+  const offsetX = (containerSize.width - stagePixelW) / 2 + panX;
+  const offsetY = (containerSize.height - stagePixelH) / 2 + panY;
 
-  // Wheel zoom — only with Ctrl/Cmd held, otherwise let page scroll
+  // Wheel: Ctrl/Cmd+wheel = zoom, plain wheel/trackpad scroll = pan
   const handleWheel = useCallback(
     (e: Konva.KonvaEventObject<WheelEvent>) => {
-      if (!e.evt.ctrlKey && !e.evt.metaKey) return; // let page scroll normally
-      e.evt.preventDefault();
-      const delta = e.evt.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
-      setZoom((z) => {
-        const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta));
-        onZoomChange?.(next);
-        return next;
-      });
+      const evt = e.evt;
+      if (evt.ctrlKey || evt.metaKey) {
+        // Zoom (existing behavior)
+        evt.preventDefault();
+        const delta = evt.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+        setZoom((z) => {
+          const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z + delta));
+          onZoomChange?.(next);
+          return next;
+        });
+      } else {
+        // Pan via scroll/trackpad two-finger swipe
+        evt.preventDefault();
+        setPanX((px) => px - evt.deltaX);
+        setPanY((py) => py - evt.deltaY);
+      }
     },
     [onZoomChange]
+  );
+
+  // Middle-mouse-button drag to pan
+  const handleMouseDown = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      if (e.evt.button === 1) {
+        // Middle mouse button
+        e.evt.preventDefault();
+        isPanningRef.current = true;
+        panStartRef.current = { x: e.evt.clientX, y: e.evt.clientY, panX, panY };
+      }
+    },
+    [panX, panY]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: Konva.KonvaEventObject<MouseEvent>) => {
+      if (!isPanningRef.current) return;
+      const dx = e.evt.clientX - panStartRef.current.x;
+      const dy = e.evt.clientY - panStartRef.current.y;
+      setPanX(panStartRef.current.panX + dx);
+      setPanY(panStartRef.current.panY + dy);
+    },
+    []
   );
 
   // Drag callbacks
@@ -177,9 +215,15 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     [offsetX, offsetY, scale]
   );
 
-  // Freehand: mouse move adds points while drawing
+  // Combined mouse move: panning + freehand drawing
   const handleStageMouseMove = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      // Middle-button pan
+      if (isPanningRef.current && 'clientX' in e.evt) {
+        handleMouseMove(e as Konva.KonvaEventObject<MouseEvent>);
+        return;
+      }
+      // Freehand drawing
       if (!isDrawing || isDragDrawing || canvasMode !== 'draw-freehand') return;
       const stage = e.target.getStage();
       if (!stage) return;
@@ -188,19 +232,23 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
       const pt = pixelToStage(pointer.x, pointer.y);
       addDrawingPoint(pt.x, pt.y);
     },
-    [isDrawing, isDragDrawing, canvasMode, pixelToStage, addDrawingPoint]
+    [isDrawing, isDragDrawing, canvasMode, pixelToStage, addDrawingPoint, handleMouseMove]
   );
 
   const setCanvasMode = useUIStore((s) => s.setCanvasMode);
 
-  // Freehand: mouse up finishes drawing
-  const handleStageMouseUp = useCallback(() => {
+  // Mouse up: stop panning + finish freehand drawing
+  const handleStageMouseUp = useCallback((_e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    // Stop middle-button pan
+    if (isPanningRef.current) {
+      isPanningRef.current = false;
+      return;
+    }
+    // Freehand drawing finish
     if (!isDrawing || isDragDrawing || canvasMode !== 'draw-freehand' || !activeFormationId) return;
-    // Simplify the path before saving
     const simplified = simplifyPath(drawingPoints, 0.3);
     if (simplified.length >= 2 && drawingDancerLabel) {
       savePath(activeFormationId, drawingDancerLabel, simplified, 'freehand');
-      // Auto-exit draw mode after saving
       setCanvasMode('select');
     }
     cancelDrawing();
@@ -279,12 +327,14 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     <div
       ref={containerRef}
       className="w-full h-full min-h-[250px] bg-surface rounded-xl overflow-hidden border border-border relative"
+      onContextMenu={(e) => { if (e.button === 1) e.preventDefault(); }}
     >
       <Stage
         ref={stageRef}
         width={containerSize.width}
         height={containerSize.height}
         onWheel={handleWheel}
+        onMouseDown={handleMouseDown}
         onMouseMove={handleStageMouseMove}
         onTouchMove={handleStageMouseMove}
         onMouseUp={handleStageMouseUp}

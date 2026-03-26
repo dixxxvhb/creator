@@ -107,6 +107,7 @@ export function PieceSetupForm({ onSubmit, isSubmitting }: PieceSetupFormProps) 
       stage_width: defaultStageWidth,
       stage_depth: defaultStageDepth,
       notes: notes.trim(),
+      choreographer: null,
       sort_order: 0,
       focal_dancer_id: null,
     };

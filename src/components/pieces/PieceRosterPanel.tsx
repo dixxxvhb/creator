@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { UserPlus, UserMinus } from 'lucide-react';
+import { UserPlus, UserMinus, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import type { DancerPosition, Dancer } from '@/types';
@@ -12,6 +12,7 @@ interface PieceRosterPanelProps {
   onAssign: (formationId: string, positionId: string, dancerId: string | null, color?: string) => void;
   onAddDancer: () => void;
   onRemoveDancer: () => void;
+  onRemoveSpecificDancer?: (dancerLabel: string) => void;
 }
 
 const RosterPositionRow = memo(function RosterPositionRow({
@@ -19,11 +20,13 @@ const RosterPositionRow = memo(function RosterPositionRow({
   rosterDancers,
   formationId,
   onAssign,
+  onRemove,
 }: {
   pos: DancerPosition;
   rosterDancers: Dancer[];
   formationId: string;
   onAssign: (formationId: string, positionId: string, dancerId: string | null, color?: string) => void;
+  onRemove?: (dancerLabel: string) => void;
 }) {
   const assignedDancer = pos.dancer_id ? rosterDancers.find((d) => d.id === pos.dancer_id) : null;
   return (
@@ -44,6 +47,16 @@ const RosterPositionRow = memo(function RosterPositionRow({
           <option key={d.id} value={d.id}>{d.short_name}</option>
         ))}
       </select>
+      {onRemove && (
+        <button
+          type="button"
+          onClick={() => onRemove(pos.dancer_label)}
+          className="p-0.5 text-text-tertiary hover:text-red-400 transition-colors shrink-0"
+          title={`Remove dancer ${pos.dancer_label} from piece`}
+        >
+          <Trash2 size={12} />
+        </button>
+      )}
     </div>
   );
 });
@@ -56,6 +69,7 @@ export function PieceRosterPanel({
   onAssign,
   onAddDancer,
   onRemoveDancer,
+  onRemoveSpecificDancer,
 }: PieceRosterPanelProps) {
   return (
     <div className="max-w-2xl">
@@ -86,6 +100,7 @@ export function PieceRosterPanel({
                   rosterDancers={rosterDancers}
                   formationId={activeFormationId!}
                   onAssign={onAssign}
+                  onRemove={dancerCount > 1 ? onRemoveSpecificDancer : undefined}
                 />
               ))}
             </div>

@@ -8,6 +8,8 @@ interface ProgramAct {
   songTitle: string | null;
   songArtist: string | null;
   intermissionBefore: boolean;
+  dancerNames?: string[];
+  choreographer?: string | null;
 }
 
 interface ProgramOptions {
@@ -83,7 +85,10 @@ export function generateProgramPDF(options: ProgramOptions): void {
 
   for (const act of acts) {
     // Check if we need a new page (leave room for footer)
-    const neededSpace = act.intermissionBefore ? lineHeight * 3 + 20 : lineHeight * 2 + 8;
+    let extraLines = 0;
+    if (act.choreographer) extraLines++;
+    if (act.dancerNames && act.dancerNames.length > 0) extraLines++;
+    const neededSpace = (act.intermissionBefore ? lineHeight * 3 + 20 : lineHeight * 2 + 8) + extraLines * subLineHeight;
     if (y + neededSpace > pageHeight - 60) {
       addFooter(doc, pageWidth, pageHeight, margin, studioName);
       doc.addPage();
@@ -138,6 +143,28 @@ export function generateProgramPDF(options: ProgramOptions): void {
       doc.text(songParts.join(' '), margin + labelWidth, y);
       doc.setTextColor(0);
       y += subLineHeight;
+    }
+
+    // Choreographer
+    if (act.choreographer) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(9);
+      doc.setTextColor(120);
+      doc.text(`Choreography by ${act.choreographer}`, margin + labelWidth, y);
+      doc.setTextColor(0);
+      y += subLineHeight;
+    }
+
+    // Dancer names
+    if (act.dancerNames && act.dancerNames.length > 0) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(140);
+      const dancerText = `Dancers: ${act.dancerNames.join(', ')}`;
+      const dancerLines = doc.splitTextToSize(dancerText, contentWidth - labelWidth);
+      doc.text(dancerLines, margin + labelWidth, y);
+      doc.setTextColor(0);
+      y += dancerLines.length * (subLineHeight - 2);
     }
 
     y += 6;

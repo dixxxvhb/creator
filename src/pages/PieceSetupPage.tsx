@@ -115,6 +115,7 @@ export function PieceSetupPage() {
         stage_width: defaultStageWidth,
         stage_depth: defaultStageDepth,
         notes: '',
+        choreographer: null,
         sort_order: 0,
         focal_dancer_id: null,
       };

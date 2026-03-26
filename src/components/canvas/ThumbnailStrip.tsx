@@ -19,6 +19,7 @@ interface ThumbnailStripProps {
   onEditPath?: (formationId: string, dancerLabel: string) => void;
   onPlayPath?: (formationId: string, dancerLabel: string) => void;
   onUpdateTransition?: (formationId: string, updates: { transition_duration_ms?: number; transition_easing?: string }) => void;
+  onReorder?: (orderedIds: string[]) => void;
   bpm?: number | null;
 }
 
@@ -311,23 +312,91 @@ export function ThumbnailStrip({
   onEditPath,
   onPlayPath,
   onUpdateTransition,
+  onReorder,
   bpm,
 }: ThumbnailStripProps) {
   const dancerNameMap = new Map(rosterDancers.map((d) => [d.id, d.short_name]));
+
+  // Drag-and-drop state
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDragIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragIndex !== null && index !== dragIndex) {
+      setHoverIndex(index);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setHoverIndex(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    if (dragIndex === null || dragIndex === dropIndex) {
+      setDragIndex(null);
+      setHoverIndex(null);
+      return;
+    }
+
+    const newOrder = [...formations];
+    const [moved] = newOrder.splice(dragIndex, 1);
+    newOrder.splice(dropIndex, 0, moved);
+
+    onReorder?.(newOrder.map((f) => f.id));
+
+    setDragIndex(null);
+    setHoverIndex(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setHoverIndex(null);
+  };
 
   return (
     <div className="flex gap-1.5 overflow-x-auto pb-2 px-1 items-end">
       {formations.map((f, i) => (
         <div key={f.id} className="contents">
-          <MiniFormation
-            formation={f}
-            positions={positions[f.id] ?? []}
-            piece={piece}
-            isActive={f.id === activeFormationId}
-            canDelete={formations.length > 1}
-            onClick={() => onSelect(f.id)}
-            onDelete={() => onDelete?.(f.id)}
-          />
+          {/* Drop indicator before this item */}
+          {hoverIndex === i && dragIndex !== null && dragIndex > i && (
+            <div className="shrink-0 w-1 self-stretch rounded-full my-1" style={{ backgroundColor: 'var(--color-accent)' }} />
+          )}
+          <div
+            draggable
+            onDragStart={(e) => handleDragStart(e, i)}
+            onDragOver={(e) => handleDragOver(e, i)}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, i)}
+            onDragEnd={handleDragEnd}
+            className="shrink-0"
+            style={{
+              opacity: dragIndex === i ? 0.4 : 1,
+              cursor: 'grab',
+            }}
+          >
+            <MiniFormation
+              formation={f}
+              positions={positions[f.id] ?? []}
+              piece={piece}
+              isActive={f.id === activeFormationId}
+              canDelete={formations.length > 1}
+              onClick={() => onSelect(f.id)}
+              onDelete={() => onDelete?.(f.id)}
+            />
+          </div>
+          {/* Drop indicator after this item */}
+          {hoverIndex === i && dragIndex !== null && dragIndex < i && (
+            <div className="shrink-0 w-1 self-stretch rounded-full my-1" style={{ backgroundColor: 'var(--color-accent)' }} />
+          )}
           {/* Transition indicator between this and next formation */}
           {i < formations.length - 1 && (
             <TransitionIndicator

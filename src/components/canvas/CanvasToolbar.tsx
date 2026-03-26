@@ -15,6 +15,7 @@ import {
   ArrowDownFromLine,
   Hash,
   Lock,
+  HelpCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTierStore } from '@/stores/tierStore';
@@ -46,6 +47,7 @@ interface CanvasToolbarProps {
   onAddDancer: () => void;
   onRemoveDancer: () => void;
   onToggleAudiencePosition: () => void;
+  onShowShortcuts?: () => void;
 }
 
 function ToolButton({
@@ -111,6 +113,7 @@ export function CanvasToolbar({
   onAddDancer,
   onRemoveDancer,
   onToggleAudiencePosition,
+  onShowShortcuts,
 }: CanvasToolbarProps) {
   const hasDrawnPathways = useTierStore((s) => s.hasFeature('drawn_pathways'));
 
@@ -195,6 +198,15 @@ export function CanvasToolbar({
       <ToolButton onClick={onZoomIn} title="Zoom in">
         <ZoomIn size={14} />
       </ToolButton>
+
+      {onShowShortcuts && (
+        <>
+          <Divider />
+          <ToolButton onClick={onShowShortcuts} title="Keyboard shortcuts (?)">
+            <HelpCircle size={14} />
+          </ToolButton>
+        </>
+      )}
     </div>
   );
 }

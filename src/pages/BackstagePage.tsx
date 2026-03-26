@@ -1,9 +1,12 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ChevronLeft, X } from 'lucide-react';
 import { useShowStore } from '@/stores/showStore';
 import { usePieceStore } from '@/stores/pieceStore';
+import { useRosterStore } from '@/stores/rosterStore';
+import { buildPieceDancerMap } from '@/lib/showConflicts';
 import { TierGate } from '@/components/ui/TierGate';
+import type { Piece } from '@/types';
 
 export function BackstagePage() {
   const { id } = useParams<{ id: string }>();
@@ -17,7 +20,11 @@ export function BackstagePage() {
   const pieces = usePieceStore((s) => s.pieces);
   const loadPieces = usePieceStore((s) => s.load);
 
+  const dancers = useRosterStore((s) => s.dancers);
+  const loadDancers = useRosterStore((s) => s.load);
+
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [pieceDancerMap, setPieceDancerMap] = useState<Map<string, Set<string>>>(new Map());
 
   const show = shows.find((s) => s.id === id);
   const sortedActs = [...showActs].sort((a, b) => a.act_number - b.act_number);
@@ -26,11 +33,47 @@ export function BackstagePage() {
   useEffect(() => {
     if (shows.length === 0) loadAllShows();
     if (pieces.length === 0) loadPieces();
-  }, [shows.length, pieces.length, loadAllShows, loadPieces]);
+    if (dancers.length === 0) loadDancers();
+  }, [shows.length, pieces.length, dancers.length, loadAllShows, loadPieces, loadDancers]);
 
   useEffect(() => {
     if (id) loadShowActs(id);
   }, [id, loadShowActs]);
+
+  // Build dancer map for all pieces in the show
+  useEffect(() => {
+    const pieceIds = [...new Set(sortedActs.map((a) => a.piece_id))];
+    if (pieceIds.length === 0) {
+      setPieceDancerMap(new Map());
+      return;
+    }
+    let cancelled = false;
+    buildPieceDancerMap(pieceIds).then((map) => {
+      if (!cancelled) setPieceDancerMap(map);
+    });
+    return () => { cancelled = true; };
+  }, [sortedActs]);
+
+  // Build a lookup: dancerId -> display name
+  const dancerNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of dancers) {
+      map.set(d.id, d.short_name || d.full_name);
+    }
+    return map;
+  }, [dancers]);
+
+  // Get dancer names for a piece
+  function getDancerNames(pieceId: string): string[] {
+    const dancerIds = pieceDancerMap.get(pieceId);
+    if (!dancerIds || dancerIds.size === 0) return [];
+    const names: string[] = [];
+    for (const did of dancerIds) {
+      const name = dancerNameMap.get(did);
+      names.push(name ?? 'Unknown');
+    }
+    return names.sort();
+  }
 
   // Keyboard navigation
   const goNext = useCallback(() => {
@@ -63,7 +106,7 @@ export function BackstagePage() {
   }, [goNext, goPrev, goBack]);
 
   // Helpers
-  function getPiece(pieceId: string) {
+  function getPiece(pieceId: string): Piece | undefined {
     return pieces.find((p) => p.id === pieceId);
   }
 
@@ -91,6 +134,9 @@ export function BackstagePage() {
   const nextAct = currentIndex < sortedActs.length - 1 ? sortedActs[currentIndex + 1] : null;
   const currentPiece = currentAct ? getPiece(currentAct.piece_id) : null;
   const nextPiece = nextAct ? getPiece(nextAct.piece_id) : null;
+
+  const currentDancerNames = currentAct ? getDancerNames(currentAct.piece_id) : [];
+  const nextDancerNames = nextAct ? getDancerNames(nextAct.piece_id) : [];
 
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === sortedActs.length - 1;
@@ -141,6 +187,31 @@ export function BackstagePage() {
               <span>{currentPiece.dancer_count} dancer{currentPiece.dancer_count !== 1 ? 's' : ''}</span>
             )}
           </div>
+
+          {/* Song info */}
+          {(currentPiece?.song_title || currentPiece?.song_artist) && (
+            <p className="mt-3 text-base text-gray-400 italic">
+              {currentPiece.song_title && `"${currentPiece.song_title}"`}
+              {currentPiece.song_title && currentPiece.song_artist && ' '}
+              {currentPiece.song_artist && `by ${currentPiece.song_artist}`}
+            </p>
+          )}
+
+          {/* Choreographer */}
+          {currentPiece?.choreographer && (
+            <p className="mt-1 text-sm text-gray-500">
+              Choreography by {currentPiece.choreographer}
+            </p>
+          )}
+
+          {/* Dancer names */}
+          {currentDancerNames.length > 0 && (
+            <p className="mt-3 text-sm text-gray-400">
+              <span className="text-gray-500 font-medium">Dancers:</span>{' '}
+              {currentDancerNames.join(', ')}
+            </p>
+          )}
+
           {currentAct.notes && (
             <p className="mt-4 text-base text-gray-500 italic">{currentAct.notes}</p>
           )}
@@ -178,6 +249,23 @@ export function BackstagePage() {
                   <span>{nextPiece.dancer_count} dancer{nextPiece.dancer_count !== 1 ? 's' : ''}</span>
                 )}
               </div>
+
+              {/* Next act song info */}
+              {(nextPiece?.song_title || nextPiece?.song_artist) && (
+                <p className="mt-1.5 text-sm text-gray-500 italic">
+                  {nextPiece.song_title && `"${nextPiece.song_title}"`}
+                  {nextPiece.song_title && nextPiece.song_artist && ' '}
+                  {nextPiece.song_artist && `by ${nextPiece.song_artist}`}
+                </p>
+              )}
+
+              {/* Next act dancer names */}
+              {nextDancerNames.length > 0 && (
+                <p className="mt-1.5 text-xs text-gray-500">
+                  <span className="font-medium">Dancers:</span>{' '}
+                  {nextDancerNames.join(', ')}
+                </p>
+              )}
             </div>
           </>
         )}

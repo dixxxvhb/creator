@@ -20,6 +20,7 @@ interface FormationState {
   updateLocalPosition: (formationId: string, positionId: string, x: number, y: number) => void;
   updateLocalPositionDancer: (formationId: string, positionId: string, dancerId: string | null, color?: string) => void;
   savePositions: (formationId: string, positions: DancerPositionInsert[], silent?: boolean) => Promise<void>;
+  reorderFormations: (pieceId: string, orderedIds: string[]) => Promise<void>;
   goNext: () => void;
   goPrev: () => void;
   reset: () => void;
@@ -104,6 +105,28 @@ export const useFormationStore = create<FormationState>((set, get) => ({
   },
 
   setActiveFormation: (id) => set({ activeFormationId: id }),
+
+  reorderFormations: async (pieceId, orderedIds) => {
+    // Optimistic local update
+    set((state) => {
+      const formationMap = new Map(state.formations.map((f) => [f.id, f]));
+      const reordered = orderedIds
+        .map((id, i) => {
+          const f = formationMap.get(id);
+          return f ? { ...f, index: i } : null;
+        })
+        .filter((f): f is Formation => f !== null);
+      return { formations: reordered };
+    });
+    try {
+      await formationsService.reorderFormations(pieceId, orderedIds);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to reorder formations';
+      toast.error(message);
+      // Reload to get correct order from DB
+      get().load(pieceId);
+    }
+  },
 
   updateLocalPosition: (formationId, positionId, x, y) => {
     set((state) => {

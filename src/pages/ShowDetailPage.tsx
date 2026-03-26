@@ -17,6 +17,7 @@ import { useShowStore } from '@/stores/showStore';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { useProfileStore } from '@/stores/profileStore';
+import { useRosterStore } from '@/stores/rosterStore';
 import { detectConflicts, buildPieceDancerMap } from '@/lib/showConflicts';
 import { optimizeShowOrder } from '@/lib/showOptimizer';
 import { generateProgramPDF } from '@/lib/exportProgram';
@@ -60,6 +61,9 @@ export function ShowDetailPage() {
 
   const studioName = useProfileStore((s) => s.studioName);
 
+  const rosterDancers = useRosterStore((s) => s.dancers);
+  const loadDancers = useRosterStore((s) => s.load);
+
   // ── local state ──────────────────────────────────────────────────────────
   const [showEditForm, setShowEditForm] = useState(false);
   const [showPiecePicker, setShowPiecePicker] = useState(false);
@@ -90,7 +94,8 @@ export function ShowDetailPage() {
     if (shows.length === 0) loadAllShows();
     if (pieces.length === 0) loadPieces();
     if (seasons.length === 0) loadSeasons();
-  }, [shows.length, pieces.length, seasons.length, loadAllShows, loadPieces, loadSeasons]);
+    if (rosterDancers.length === 0) loadDancers();
+  }, [shows.length, pieces.length, seasons.length, rosterDancers.length, loadAllShows, loadPieces, loadSeasons, loadDancers]);
 
   useEffect(() => {
     if (id) loadShowActs(id);
@@ -120,6 +125,26 @@ export function ShowDetailPage() {
     const result = detectConflicts(orderedPieceIds, pieceDancerMap, show?.buffer_acts ?? 2);
     setConflicts(result);
   }, [sortedActs, pieceDancerMap, show?.buffer_acts]);
+
+  // ── dancer name lookup ──────────────────────────────────────────────────
+  const dancerNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const d of rosterDancers) {
+      map.set(d.id, d.short_name || d.full_name);
+    }
+    return map;
+  }, [rosterDancers]);
+
+  function getDancerNamesForPiece(pieceId: string): string[] {
+    const dancerIds = pieceDancerMap.get(pieceId);
+    if (!dancerIds || dancerIds.size === 0) return [];
+    const names: string[] = [];
+    for (const did of dancerIds) {
+      const name = dancerNameMap.get(did);
+      names.push(name ?? 'Unknown');
+    }
+    return names.sort();
+  }
 
   // ── conflict helpers ─────────────────────────────────────────────────────
   const conflictIndices = useMemo(() => {
@@ -345,6 +370,7 @@ export function ShowDetailPage() {
           onClick={() => {
             const programActs = sortedActs.map((act, i) => {
               const piece = pieces.find((p) => p.id === act.piece_id);
+              const dancerNames = getDancerNamesForPiece(act.piece_id);
               return {
                 actNumber: i + 1,
                 title: piece?.title ?? 'Unknown Piece',
@@ -353,6 +379,8 @@ export function ShowDetailPage() {
                 songTitle: piece?.song_title ?? null,
                 songArtist: piece?.song_artist ?? null,
                 intermissionBefore: act.intermission_before,
+                dancerNames: dancerNames.length > 0 ? dancerNames : undefined,
+                choreographer: piece?.choreographer ?? null,
               };
             });
             generateProgramPDF({
