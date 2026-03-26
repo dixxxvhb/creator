@@ -9,6 +9,7 @@ interface AuthState {
   isInitialized: boolean;
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signInAnonymously: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   initialize: () => void;
 }
@@ -34,6 +35,12 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signIn: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) return { error: error.message };
+    return { error: null };
+  },
+
+  signInAnonymously: async () => {
+    const { error } = await supabase.auth.signInAnonymously();
     if (error) return { error: error.message };
     return { error: null };
   },

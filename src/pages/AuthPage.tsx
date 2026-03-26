@@ -20,13 +20,28 @@ export function AuthPage() {
 
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
+  const signInAnonymously = useAuthStore((s) => s.signInAnonymously);
 
-  function handleAccessCode() {
+  async function handleAccessCode() {
     if (accessCode.toUpperCase().trim() !== ACCESS_CODE) {
       setError('Invalid access code');
       return;
     }
     setError(null);
+
+    if (BETA_ENABLED) {
+      // Beta: skip email/password, sign in anonymously
+      setIsSubmitting(true);
+      const { error } = await signInAnonymously();
+      setIsSubmitting(false);
+      if (error) {
+        setError('Anonymous sign-in failed. Please enable anonymous auth in Supabase dashboard (Auth > Settings), then try again.');
+        return;
+      }
+      // Auth state change listener in authStore will set user, AuthGuard will pass
+      return;
+    }
+
     setAccessGranted(true);
   }
 
@@ -91,6 +106,7 @@ export function AuthPage() {
                 placeholder="Enter your beta access code"
                 required
                 autoFocus
+                disabled={isSubmitting}
               />
               {error && (
                 <p className="text-sm text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
@@ -102,7 +118,7 @@ export function AuthPage() {
                 loading={isSubmitting}
                 className="w-full"
               >
-                Enter
+                {isSubmitting ? 'Setting up...' : 'Enter'}
               </Button>
             </form>
           </Card>

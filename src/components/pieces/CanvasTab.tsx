@@ -2,6 +2,7 @@ import { useRef, type RefObject } from 'react';
 import { FormationCanvas, ThumbnailStrip, CanvasToolbar, PlaybackControls } from '@/components/canvas';
 import type { FormationCanvasHandle } from '@/components/canvas';
 import { Spinner } from '@/components/ui/Spinner';
+import { CanvasTutorial } from '@/components/onboarding/CanvasTutorial';
 import { useUIStore } from '@/stores/uiStore';
 import { useFormationStore } from '@/stores/formationStore';
 import { usePathStore } from '@/stores/pathStore';
@@ -85,6 +86,9 @@ export function CanvasTab({
   onRedo,
 }: CanvasTabProps) {
   const quickPopulateRef = useRef<HTMLInputElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const thumbnailRef = useRef<HTMLDivElement>(null);
 
   const showGrid = useUIStore((s) => s.showGrid);
   const snapToGrid = useUIStore((s) => s.snapToGrid);
@@ -127,7 +131,7 @@ export function CanvasTab({
       {/* Canvas area */}
       <div className="flex-1 flex flex-col gap-3 min-w-0">
         {/* Toolbar */}
-        <div className="flex items-center justify-between gap-2 flex-wrap min-w-0">
+        <div ref={toolbarRef} className="flex items-center justify-between gap-2 flex-wrap min-w-0">
           <CanvasToolbar
             showGrid={showGrid}
             snapToGrid={snapToGrid}
@@ -199,8 +203,8 @@ export function CanvasTab({
           )}
         </div>
 
-        {/* Formation Canvas */}
-        <div className="w-full min-h-[300px] h-[65vh] relative">
+        {/* Formation Canvas — fills viewport minus header/tabs/toolbar/thumbnails */}
+        <div ref={canvasContainerRef} className="w-full h-[max(300px,calc(100dvh-320px))] relative">
           <FormationCanvas ref={canvasRef} piece={piece} playbackPositions={interpolatedPositions} onZoomChange={onZoomChange} />
           {/* Playback controls */}
           <div className="absolute top-2 left-2 z-10">
@@ -275,6 +279,7 @@ export function CanvasTab({
         </div>
 
         {/* Thumbnail strip */}
+        <div ref={thumbnailRef}>
         {formationsLoading ? (
           <div className="flex justify-center py-4">
             <Spinner />
@@ -315,7 +320,15 @@ export function CanvasTab({
             bpm={piece.bpm}
           />
         )}
+        </div>
       </div>
+
+      {/* One-time canvas tutorial */}
+      <CanvasTutorial
+        toolbarRef={toolbarRef}
+        canvasRef={canvasContainerRef}
+        thumbnailRef={thumbnailRef}
+      />
     </div>
   );
 }

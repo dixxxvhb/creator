@@ -162,7 +162,6 @@ export function DancerDot({
           pathStore.savePath(activeFormationId, pathStore.drawingDancerLabel, simplified, 'freehand');
         }
         pathStore.cancelDrawing();
-        useUIStore.getState().setCanvasMode('select');
       } else {
         usePathStore.getState().cancelDrawing();
       }

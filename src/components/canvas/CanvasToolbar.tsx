@@ -206,21 +206,24 @@ export function CanvasToolbar({
 
         <Divider />
 
-        {/* Toggle advanced tools */}
-        <ToolButton
-          onClick={() => setToolbarAdvanced(!toolbarAdvanced)}
-          active={toolbarAdvanced}
-          title={toolbarAdvanced ? 'Hide advanced tools' : 'Show more tools'}
-          label="More"
-        >
-          {toolbarAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        </ToolButton>
+        {/* Toggle advanced tools — mobile only, auto-expanded on md+ */}
+        <div className="md:hidden">
+          <ToolButton
+            onClick={() => setToolbarAdvanced(!toolbarAdvanced)}
+            active={toolbarAdvanced}
+            title={toolbarAdvanced ? 'Hide advanced tools' : 'Show more tools'}
+            label="More"
+          >
+            {toolbarAdvanced ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </ToolButton>
+        </div>
       </div>
 
       {/* Advanced toolbar row */}
       <div
         className={cn(
           'overflow-hidden transition-all duration-200 ease-in-out',
+          'md:max-h-20 md:opacity-100 md:mt-1',
           toolbarAdvanced ? 'max-h-20 opacity-100 mt-1' : 'max-h-0 opacity-0'
         )}
       >

@@ -131,6 +131,15 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     return () => ro.disconnect();
   }, []);
 
+  // Block page scroll when wheel/touch events happen inside the canvas
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const blockScroll = (e: WheelEvent) => e.preventDefault();
+    el.addEventListener('wheel', blockScroll, { passive: false });
+    return () => el.removeEventListener('wheel', blockScroll);
+  }, []);
+
   // Compute scale to fit stage in container with padding
   // Less padding on smaller screens to maximize stage area
   const padding = Math.min(containerSize.width, containerSize.height) < 500 ? 20 : 40;
@@ -238,8 +247,6 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     [isDrawing, isDragDrawing, canvasMode, pixelToStage, addDrawingPoint, handleMouseMove]
   );
 
-  const setCanvasMode = useUIStore((s) => s.setCanvasMode);
-
   // Mouse up: stop panning + finish freehand drawing
   const handleStageMouseUp = useCallback((_e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
     // Stop middle-button pan
@@ -252,10 +259,9 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     const simplified = simplifyPath(drawingPoints, 0.3);
     if (simplified.length >= 2 && drawingDancerLabel) {
       savePath(activeFormationId, drawingDancerLabel, simplified, 'freehand');
-      setCanvasMode('select');
     }
     cancelDrawing();
-  }, [isDrawing, isDragDrawing, canvasMode, activeFormationId, drawingPoints, drawingDancerLabel, savePath, cancelDrawing, setCanvasMode]);
+  }, [isDrawing, isDragDrawing, canvasMode, activeFormationId, drawingPoints, drawingDancerLabel, savePath, cancelDrawing]);
 
   // Click on stage — deselect path and clear dancer selection when in select mode
   const handleStageClick = useCallback(
@@ -335,7 +341,7 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   return (
     <div
       ref={containerRef}
-      className="w-full h-full min-h-[250px] bg-surface rounded-xl overflow-hidden border border-border relative"
+      className="w-full h-full min-h-[250px] bg-surface rounded-xl overflow-hidden border border-border relative touch-none"
       onContextMenu={(e) => { if (e.button === 1) e.preventDefault(); }}
     >
       <Stage
