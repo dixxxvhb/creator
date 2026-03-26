@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Info } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -7,7 +7,9 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Button } from '@/components/ui/Button';
 import { QuickAddPieceModal } from '@/components/pieces';
 import { ENTRY_CATEGORIES, AWARD_TIERS } from '@/types';
-import type { CompetitionEntry, CompetitionEntryInsert, Piece } from '@/types';
+import { computeAgeAtDate } from '@/lib/age';
+import { useRosterStore } from '@/stores/rosterStore';
+import type { CompetitionEntry, CompetitionEntryInsert, Piece, Dancer, DancerPosition } from '@/types';
 
 interface EntryFormModalProps {
   open: boolean;
@@ -21,6 +23,12 @@ interface EntryFormModalProps {
   categories?: string[];
   levels?: string[];
   styles?: string[];
+  // Feature 2: duplicate detection
+  existingEntries?: CompetitionEntry[];
+  // Feature 1 & 3: competition date + piece positions
+  competitionDate?: string | null;
+  /** Map of piece_id -> DancerPosition[] (first formation positions) */
+  piecePositions?: Record<string, DancerPosition[]>;
 }
 
 const PLACEMENT_OPTIONS = [
@@ -47,6 +55,46 @@ function groupSizeToCategory(groupSize: string | null): string {
   }
 }
 
+/**
+ * Given a youngest dancer age and the division config, find the matching division name.
+ */
+function matchDivision(
+  youngestAge: number,
+  divisions: { name: string; minAge: number; maxAge: number }[],
+): string | null {
+  for (const div of divisions) {
+    if (youngestAge >= div.minAge && youngestAge <= div.maxAge) {
+      return div.name;
+    }
+  }
+  return null;
+}
+
+/**
+ * Resolve dancer names from positions using the roster.
+ */
+function resolveDancerNames(
+  positions: DancerPosition[],
+  dancers: Dancer[],
+): string[] {
+  const dancerMap = new Map(dancers.map((d) => [d.id, d]));
+  // Deduplicate by dancer_id (positions may repeat across formations)
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const pos of positions) {
+    const key = pos.dancer_id ?? pos.dancer_label;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (pos.dancer_id) {
+      const dancer = dancerMap.get(pos.dancer_id);
+      names.push(dancer?.full_name ?? dancer?.short_name ?? pos.dancer_label);
+    } else {
+      names.push(pos.dancer_label);
+    }
+  }
+  return names;
+}
+
 export function EntryFormModal({
   open,
   onClose,
@@ -58,6 +106,9 @@ export function EntryFormModal({
   categories,
   levels,
   styles,
+  existingEntries,
+  competitionDate,
+  piecePositions,
 }: EntryFormModalProps) {
   const [pieceId, setPieceId] = useState('');
   const [category, setCategory] = useState('');
@@ -72,8 +123,23 @@ export function EntryFormModal({
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
+  const [autoAgeDivisionInfo, setAutoAgeDivisionInfo] = useState<string | null>(null);
 
+  const rosterDancers = useRosterStore((s) => s.dancers);
   const selectedPiece = pieces.find((p) => p.id === pieceId) ?? null;
+
+  // Get positions for the selected piece
+  const selectedPiecePositions = useMemo(() => {
+    if (!pieceId || !piecePositions) return [];
+    return piecePositions[pieceId] ?? [];
+  }, [pieceId, piecePositions]);
+
+  // Feature 3: Resolve dancer names from positions
+  const dancerNames = useMemo(() => {
+    if (selectedPiecePositions.length === 0) return [];
+    return resolveDancerNames(selectedPiecePositions, rosterDancers);
+  }, [selectedPiecePositions, rosterDancers]);
 
   useEffect(() => {
     if (open) {
@@ -88,6 +154,8 @@ export function EntryFormModal({
       setScore(entry?.score?.toString() ?? '');
       setSpecialAwards(entry?.special_awards ?? '');
       setNotes(entry?.notes ?? '');
+      setAutoAgeDivisionInfo(null);
+      setShowDuplicateConfirm(false);
     }
   }, [open, entry]);
 
@@ -98,6 +166,48 @@ export function EntryFormModal({
       if (suggested) setCategory(suggested);
     }
   }, [selectedPiece, entry]);
+
+  // Feature 1: Auto-suggest age division from dancer birthdates
+  useEffect(() => {
+    if (!selectedPiece || entry || !divisions || divisions.length === 0 || selectedPiecePositions.length === 0) {
+      setAutoAgeDivisionInfo(null);
+      return;
+    }
+
+    const refDate = competitionDate ? new Date(competitionDate + 'T00:00:00') : new Date();
+    const dancerMap = new Map(rosterDancers.map((d) => [d.id, d]));
+
+    // Get all dancer ages from positions
+    const ages: number[] = [];
+    const seen = new Set<string>();
+    for (const pos of selectedPiecePositions) {
+      const key = pos.dancer_id ?? pos.dancer_label;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (pos.dancer_id) {
+        const dancer = dancerMap.get(pos.dancer_id);
+        if (dancer?.birthday) {
+          const age = computeAgeAtDate(dancer.birthday, refDate);
+          if (age !== null) ages.push(age);
+        }
+      }
+    }
+
+    if (ages.length === 0) {
+      setAutoAgeDivisionInfo(null);
+      return;
+    }
+
+    const youngestAge = Math.min(...ages);
+    const matchedDivision = matchDivision(youngestAge, divisions);
+
+    if (matchedDivision) {
+      setAgeDivision(matchedDivision);
+      setAutoAgeDivisionInfo(`Auto: ${matchedDivision} (youngest dancer age: ${youngestAge})`);
+    } else {
+      setAutoAgeDivisionInfo(`No matching division for youngest age ${youngestAge}`);
+    }
+  }, [selectedPiece, entry, divisions, selectedPiecePositions, rosterDancers, competitionDate]);
 
   // Build category options from competition config or fallback
   const categoryOptions = [
@@ -133,8 +243,7 @@ export function EntryFormModal({
     ...pieces.map((p) => ({ value: p.id, label: p.title })),
   ];
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function doSubmit() {
     if (!pieceId) return;
     if (score && parseFloat(score) < 0) return;
     setIsSubmitting(true);
@@ -153,9 +262,26 @@ export function EntryFormModal({
       score: score ? parseFloat(score) : null,
       special_awards: specialAwards.trim() || null,
       notes,
+      dancer_names: dancerNames.length > 0 ? dancerNames : undefined,
     });
     setIsSubmitting(false);
     onClose();
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pieceId) return;
+
+    // Feature 2: Duplicate entry detection (only for new entries)
+    if (!entry && existingEntries) {
+      const isDuplicate = existingEntries.some((e) => e.piece_id === pieceId);
+      if (isDuplicate) {
+        setShowDuplicateConfirm(true);
+        return;
+      }
+    }
+
+    await doSubmit();
   }
 
   return (
@@ -183,6 +309,23 @@ export function EntryFormModal({
           </button>
         </div>
 
+        {/* Feature 3: Dancer names badges */}
+        {dancerNames.length > 0 && (
+          <div>
+            <label className="text-xs font-medium text-text-secondary block mb-1.5">Dancers</label>
+            <div className="flex flex-wrap gap-1.5">
+              {dancerNames.map((name) => (
+                <span
+                  key={name}
+                  className="inline-block text-xs px-2 py-0.5 rounded-full bg-surface-secondary text-text-primary"
+                >
+                  {name}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Category */}
         {categoryOptions.length > 1 ? (
           <Select
@@ -202,12 +345,24 @@ export function EntryFormModal({
 
         {/* Age Division */}
         {divisionOptions.length > 1 && (
-          <Select
-            label="Age Division"
-            options={divisionOptions}
-            value={ageDivision}
-            onChange={(e) => setAgeDivision(e.target.value)}
-          />
+          <div>
+            <Select
+              label="Age Division"
+              options={divisionOptions}
+              value={ageDivision}
+              onChange={(e) => {
+                setAgeDivision(e.target.value);
+                // Clear auto info when user manually overrides
+                if (autoAgeDivisionInfo) setAutoAgeDivisionInfo(null);
+              }}
+            />
+            {autoAgeDivisionInfo && (
+              <p className="text-xs text-[var(--color-accent)] mt-1 flex items-center gap-1">
+                <Info size={12} />
+                {autoAgeDivisionInfo}
+              </p>
+            )}
+          </div>
         )}
 
         {/* Competitive Level */}
@@ -287,6 +442,30 @@ export function EntryFormModal({
           </Button>
         </div>
       </form>
+
+      {/* Feature 2: Duplicate entry confirmation dialog */}
+      <Modal
+        open={showDuplicateConfirm}
+        onClose={() => setShowDuplicateConfirm(false)}
+        title="Duplicate Entry"
+      >
+        <p className="text-sm text-text-secondary mb-4">
+          This piece is already entered in this competition. Add another entry?
+        </p>
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={() => setShowDuplicateConfirm(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              setShowDuplicateConfirm(false);
+              await doSubmit();
+            }}
+          >
+            Add Anyway
+          </Button>
+        </div>
+      </Modal>
 
       <QuickAddPieceModal
         open={showQuickAdd}

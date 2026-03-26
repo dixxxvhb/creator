@@ -18,7 +18,9 @@ import { useSeasonStore } from '@/stores/seasonStore';
 import { usePieceStore } from '@/stores/pieceStore';
 import { AWARD_TIERS } from '@/types';
 import { TierGate } from '@/components/ui/TierGate';
-import type { Competition, CompetitionEntry, CompetitionInsert, CompetitionEntryInsert, SeasonInsert } from '@/types';
+import * as formationsService from '@/services/formations';
+import * as positionsService from '@/services/dancerPositions';
+import type { Competition, CompetitionEntry, CompetitionInsert, CompetitionEntryInsert, SeasonInsert, DancerPosition } from '@/types';
 
 // ── helpers ────────────────────────────────────────────────────────────────────
 
@@ -74,6 +76,7 @@ export function SeasonDetailPage() {
   const [deleteConfirmEntry, setDeleteConfirmEntry] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const compCardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [piecePositions, setPiecePositions] = useState<Record<string, DancerPosition[]>>({});
 
   const season = seasons.find((s) => s.id === id);
   const assignedPieceIds = pieceSeasons.filter((ps) => ps.season_id === id).map((ps) => ps.piece_id);
@@ -90,6 +93,33 @@ export function SeasonDetailPage() {
       loadEntriesBySeason(id);
     }
   }, [id, loadCompetitions, loadEntriesBySeason]);
+
+  // Load first-formation positions for all relevant pieces (for dancer name resolution + age division)
+  const relevantPieces = assignedPieces.length > 0 ? assignedPieces : pieces;
+  useEffect(() => {
+    if (relevantPieces.length === 0) return;
+    let cancelled = false;
+    async function loadPiecePositions() {
+      const result: Record<string, DancerPosition[]> = {};
+      // For each piece, get formations then positions from the first formation
+      await Promise.all(
+        relevantPieces.map(async (piece) => {
+          try {
+            const formations = await formationsService.fetchFormations(piece.id);
+            if (formations.length > 0) {
+              const positions = await positionsService.fetchPositions(formations[0].id);
+              result[piece.id] = positions;
+            }
+          } catch {
+            // Silently skip pieces that fail to load
+          }
+        }),
+      );
+      if (!cancelled) setPiecePositions(result);
+    }
+    loadPiecePositions();
+    return () => { cancelled = true; };
+  }, [relevantPieces.map((p) => p.id).join(',')]);
 
   // Auto-expand competitions with entries
   useEffect(() => {
@@ -643,6 +673,9 @@ export function SeasonDetailPage() {
           categories={competitions.find((c) => c.id === showEntryForm)?.configured_categories}
           levels={competitions.find((c) => c.id === showEntryForm)?.configured_levels}
           styles={competitions.find((c) => c.id === showEntryForm)?.configured_styles}
+          existingEntries={entries.filter((e) => e.competition_id === showEntryForm)}
+          competitionDate={competitions.find((c) => c.id === showEntryForm)?.date}
+          piecePositions={piecePositions}
         />
       )}
       <PiecePickerModal

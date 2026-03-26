@@ -6,3 +6,6 @@ export { PieceNotesPanel } from './PieceNotesPanel';
 export { PieceRosterPanel } from './PieceRosterPanel';
 export { SongSectionsPanel } from './SongSectionsPanel';
 export { QuickAddPieceModal } from './QuickAddPieceModal';
+export { PositionRow } from './PositionRow';
+export { CanvasTab } from './CanvasTab';
+export { FormationNotesPanel } from './FormationNotesPanel';

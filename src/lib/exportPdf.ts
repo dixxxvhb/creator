@@ -1,11 +1,12 @@
 import { jsPDF } from 'jspdf';
-import type { Formation, DancerPosition, Piece } from '@/types';
+import type { Formation, DancerPosition, Piece, Dancer } from '@/types';
 
 interface ExportPdfOptions {
   piece: Piece;
   formations: Formation[];
   positions: Record<string, DancerPosition[]>;
   stageImages: (string | null)[]; // data URLs per formation
+  rosterDancers?: Dancer[];
 }
 
 const MARGIN = 20;
@@ -19,7 +20,7 @@ const CONTENT_W = PAGE_W - MARGIN * 2;
  * - Dancer list
  * - Choreo notes + counts
  */
-export function exportPdf({ piece, formations, positions, stageImages }: ExportPdfOptions): void {
+export function exportPdf({ piece, formations, positions, stageImages, rosterDancers }: ExportPdfOptions): void {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const filename = sanitizeFilename(piece.title);
 
@@ -91,8 +92,10 @@ export function exportPdf({ piece, formations, positions, stageImages }: ExportP
           doc.addPage();
           y = MARGIN;
         }
+        const rosterMatch = pos.dancer_id ? rosterDancers?.find((d) => d.id === pos.dancer_id) : null;
+        const nameStr = rosterMatch ? ` — ${rosterMatch.full_name}` : '';
         doc.text(
-          `${pos.dancer_label}  —  (${Math.round(pos.x)}, ${Math.round(pos.y)})`,
+          `${pos.dancer_label}${nameStr}  (${Math.round(pos.x)}, ${Math.round(pos.y)})`,
           MARGIN + 10,
           y
         );
