@@ -1,10 +1,12 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import type { Dancer, DancerInsert, DancerUpdate } from '@/types';
 
 export async function fetchDancers(): Promise<Dancer[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('dancers')
     .select('*')
+    .eq('user_id', userId)
     .eq('is_active', true)
     .order('full_name', { ascending: true });
   if (error) throw new Error(`Failed to fetch dancers: ${error.message}`);
@@ -12,9 +14,10 @@ export async function fetchDancers(): Promise<Dancer[]> {
 }
 
 export async function createDancer(dancer: DancerInsert): Promise<Dancer> {
+  const user_id = await getCurrentUserId();
   const { data, error } = await supabase
     .from('dancers')
-    .insert(dancer)
+    .insert({ ...dancer, user_id })
     .select()
     .single();
   if (error) throw new Error(`Failed to create dancer: ${error.message}`);

@@ -1,10 +1,17 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import type { BugReport, BugReportInsert, BugStatus } from '@/types';
 
 export async function createBugReport(report: BugReportInsert): Promise<BugReport> {
+  // user_id is optional — allow anonymous bug reports
+  let user_id: string | undefined;
+  try {
+    user_id = await getCurrentUserId();
+  } catch {
+    // Not authenticated — submit anonymously
+  }
   const { data, error } = await supabase
     .from('bug_reports')
-    .insert(report)
+    .insert(user_id ? { ...report, user_id } : report)
     .select()
     .single();
   if (error) throw new Error(`Failed to submit bug report: ${error.message}`);

@@ -1,10 +1,12 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import type { Piece, PieceInsert, PieceUpdate } from '@/types';
 
 export async function fetchPieces(): Promise<Piece[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('pieces')
     .select('*')
+    .eq('user_id', userId)
     .order('sort_order', { ascending: true });
   if (error) throw new Error(`Failed to fetch pieces: ${error.message}`);
   return data;
@@ -21,9 +23,10 @@ export async function fetchPiece(id: string): Promise<Piece> {
 }
 
 export async function createPiece(piece: PieceInsert): Promise<Piece> {
+  const user_id = await getCurrentUserId();
   const { data, error } = await supabase
     .from('pieces')
-    .insert(piece)
+    .insert({ ...piece, user_id })
     .select()
     .single();
   if (error) throw new Error(`Failed to create piece: ${error.message}`);

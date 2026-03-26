@@ -1,21 +1,25 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import type { Show, ShowInsert, ShowUpdate, ShowAct, ShowActInsert, ShowActUpdate } from '@/types';
 
 // ─── Shows ───
 
 export async function fetchAllShows(): Promise<Show[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('shows')
     .select('*')
+    .eq('user_id', userId)
     .order('date', { ascending: true });
   if (error) throw new Error(`Failed to fetch shows: ${error.message}`);
   return data;
 }
 
 export async function fetchShows(seasonId: string): Promise<Show[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('shows')
     .select('*')
+    .eq('user_id', userId)
     .eq('season_id', seasonId)
     .order('date', { ascending: true });
   if (error) throw new Error(`Failed to fetch shows: ${error.message}`);
@@ -23,9 +27,10 @@ export async function fetchShows(seasonId: string): Promise<Show[]> {
 }
 
 export async function createShow(show: ShowInsert): Promise<Show> {
+  const user_id = await getCurrentUserId();
   const { data, error } = await supabase
     .from('shows')
-    .insert(show)
+    .insert({ ...show, user_id })
     .select()
     .single();
   if (error) throw new Error(`Failed to create show: ${error.message}`);

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import type {
   Competition, CompetitionInsert, CompetitionUpdate,
   CompetitionEntry, CompetitionEntryInsert, CompetitionEntryUpdate,
@@ -7,18 +7,22 @@ import type {
 // ─── Competitions ───
 
 export async function fetchAllCompetitions(): Promise<Competition[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('competitions')
     .select('*')
+    .eq('user_id', userId)
     .order('date', { ascending: true });
   if (error) throw new Error(`Failed to fetch competitions: ${error.message}`);
   return data;
 }
 
 export async function fetchCompetitions(seasonId: string): Promise<Competition[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('competitions')
     .select('*')
+    .eq('user_id', userId)
     .eq('season_id', seasonId)
     .order('date', { ascending: true });
   if (error) throw new Error(`Failed to fetch competitions: ${error.message}`);
@@ -26,9 +30,10 @@ export async function fetchCompetitions(seasonId: string): Promise<Competition[]
 }
 
 export async function createCompetition(comp: CompetitionInsert): Promise<Competition> {
+  const user_id = await getCurrentUserId();
   const { data, error } = await supabase
     .from('competitions')
-    .insert(comp)
+    .insert({ ...comp, user_id })
     .select()
     .single();
   if (error) throw new Error(`Failed to create competition: ${error.message}`);

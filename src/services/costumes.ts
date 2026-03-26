@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import type {
   Costume, CostumeInsert, CostumeUpdate,
   CostumeAssignment, CostumeAssignmentInsert, CostumeAssignmentUpdate,
@@ -7,18 +7,21 @@ import type {
 // ─── Costumes ───
 
 export async function fetchCostumes(): Promise<Costume[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('costumes')
     .select('*')
+    .eq('user_id', userId)
     .order('created_at', { ascending: true });
   if (error) throw new Error(`Failed to fetch costumes: ${error.message}`);
   return data;
 }
 
 export async function createCostume(costume: CostumeInsert): Promise<Costume> {
+  const user_id = await getCurrentUserId();
   const { data, error } = await supabase
     .from('costumes')
-    .insert(costume)
+    .insert({ ...costume, user_id })
     .select()
     .single();
   if (error) throw new Error(`Failed to create costume: ${error.message}`);

@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/Button';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
-import { BETA_ENABLED, ACCESS_CODE, TESTER_EMAIL, TESTER_PASSWORD } from '@/lib/beta';
+import { BETA_ENABLED, ACCESS_CODE } from '@/lib/beta';
 
 export function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<'login' | 'signup'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -16,39 +16,18 @@ export function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [accessCode, setAccessCode] = useState('');
-  const [showDirectLogin, setShowDirectLogin] = useState(false);
+  const [accessGranted, setAccessGranted] = useState(false);
 
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
 
-  async function handleAccessCode() {
+  function handleAccessCode() {
     if (accessCode.toUpperCase().trim() !== ACCESS_CODE) {
       setError('Invalid access code');
       return;
     }
-
     setError(null);
-    setIsSubmitting(true);
-
-    // Try signing in to shared tester account
-    let { error: signInError } = await signIn(TESTER_EMAIL, TESTER_PASSWORD);
-
-    if (signInError) {
-      // Account doesn't exist yet — create it, then sign in
-      const { error: signUpError } = await signUp(TESTER_EMAIL, TESTER_PASSWORD);
-      if (signUpError) {
-        // If signup also fails, try sign-in one more time (race condition / already exists)
-        const retry = await signIn(TESTER_EMAIL, TESTER_PASSWORD);
-        if (retry.error) {
-          setError('Unable to sign in. Try again.');
-          setIsSubmitting(false);
-          return;
-        }
-      }
-    }
-
-    setIsSubmitting(false);
-    // Auth state listener in authStore handles the redirect
+    setAccessGranted(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -74,6 +53,8 @@ export function AuthPage() {
       const { error } = await signUp(email, password);
       if (error) {
         setError(error);
+      } else {
+        setSignupSuccess(true);
       }
     }
 
@@ -93,8 +74,8 @@ export function AuthPage() {
           <p className="text-sm text-text-secondary">Choreography, visualized.</p>
         </div>
 
-        {BETA_ENABLED && !showDirectLogin ? (
-          /* Beta mode: access code only */
+        {BETA_ENABLED && !accessGranted ? (
+          /* Beta mode: access code gate */
           <Card>
             <form onSubmit={(e) => { e.preventDefault(); handleAccessCode(); }} className="space-y-4">
               <div className="text-center mb-2">
@@ -123,13 +104,6 @@ export function AuthPage() {
               >
                 Enter
               </Button>
-              <button
-                type="button"
-                onClick={() => setShowDirectLogin(true)}
-                className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors pt-1"
-              >
-                Sign in with email instead
-              </button>
             </form>
           </Card>
         ) : signupSuccess ? (
@@ -150,8 +124,15 @@ export function AuthPage() {
             </div>
           </Card>
         ) : (
-          /* Standard login/signup (public launch or direct login) */
+          /* Login/signup form (shown after access code validated, or when beta is off) */
           <Card>
+            {BETA_ENABLED && (
+              <div className="text-center mb-4">
+                <p className="text-xs text-accent-600 font-medium">
+                  Access granted — create your account or log in
+                </p>
+              </div>
+            )}
             <div className="flex gap-1 bg-surface-secondary rounded-lg p-1 mb-4">
               <button
                 onClick={() => { setMode('login'); setError(null); }}
@@ -219,10 +200,10 @@ export function AuthPage() {
               {BETA_ENABLED && (
                 <button
                   type="button"
-                  onClick={() => { setShowDirectLogin(false); setError(null); }}
+                  onClick={() => { setAccessGranted(false); setError(null); }}
                   className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors pt-1"
                 >
-                  Use access code instead
+                  Enter a different access code
                 </button>
               )}
             </form>

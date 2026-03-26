@@ -1,19 +1,22 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getCurrentUserId } from '@/lib/supabase';
 import type { Season, SeasonInsert, SeasonUpdate, PieceSeason } from '@/types';
 
 export async function fetchSeasons(): Promise<Season[]> {
+  const userId = await getCurrentUserId();
   const { data, error } = await supabase
     .from('seasons')
     .select('*')
+    .eq('user_id', userId)
     .order('year', { ascending: false });
   if (error) throw new Error(`Failed to fetch seasons: ${error.message}`);
   return data;
 }
 
 export async function createSeason(season: SeasonInsert): Promise<Season> {
+  const user_id = await getCurrentUserId();
   const { data, error } = await supabase
     .from('seasons')
-    .insert(season)
+    .insert({ ...season, user_id })
     .select()
     .single();
   if (error) throw new Error(`Failed to create season: ${error.message}`);
