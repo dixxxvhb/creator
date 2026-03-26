@@ -1,11 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'sonner';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { BottomTabBar } from './BottomTabBar';
+import { AppErrorBoundary } from './AppErrorBoundary';
 import { BugReportButton } from '@/components/feedback/BugReportButton';
+import { Spinner } from '@/components/ui/Spinner';
 import { useProfileStore } from '@/stores/profileStore';
 import { pageVariants, pageTransition } from '@/lib/motion';
 
@@ -60,7 +62,7 @@ export function AppLayout() {
           onToggleTheme={toggleTheme}
         />
         <main className="flex-1 overflow-y-auto">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}
               variants={pageVariants}
@@ -70,7 +72,11 @@ export function AppLayout() {
               transition={pageTransition}
               className="min-h-full"
             >
-              <Outlet />
+              <AppErrorBoundary>
+                <Suspense fallback={<div className="flex justify-center py-12"><Spinner size="lg" /></div>}>
+                  <Outlet />
+                </Suspense>
+              </AppErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </main>

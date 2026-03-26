@@ -1,23 +1,25 @@
-import { useEffect } from 'react';
+import { useEffect, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
-import { DashboardPage } from '@/pages/DashboardPage';
-import { PiecesPage } from '@/pages/PiecesPage';
-import { PieceSetupPage } from '@/pages/PieceSetupPage';
-import { PieceDetailPage } from '@/pages/PieceDetailPage';
-import { RosterPage } from '@/pages/RosterPage';
-import { SeasonsPage } from '@/pages/SeasonsPage';
-import { SeasonDetailPage } from '@/pages/SeasonDetailPage';
-import { CompetitionsPage } from '@/pages/CompetitionsPage';
-import { CostumesPage } from '@/pages/CostumesPage';
-import { ShowsPage } from '@/pages/ShowsPage';
-import { ShowDetailPage } from '@/pages/ShowDetailPage';
-import { SettingsPage } from '@/pages/SettingsPage';
-import { RehearsalPage } from '@/pages/RehearsalPage';
-import { BackstagePage } from '@/pages/BackstagePage';
-import { ViewerPage } from '@/pages/ViewerPage';
 import { useAuthStore } from '@/stores/authStore';
+
+// Lazy-load all pages for code splitting
+const DashboardPage = lazy(() => import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const PiecesPage = lazy(() => import('@/pages/PiecesPage').then(m => ({ default: m.PiecesPage })));
+const PieceSetupPage = lazy(() => import('@/pages/PieceSetupPage').then(m => ({ default: m.PieceSetupPage })));
+const PieceDetailPage = lazy(() => import('@/pages/PieceDetailPage').then(m => ({ default: m.PieceDetailPage })));
+const RosterPage = lazy(() => import('@/pages/RosterPage').then(m => ({ default: m.RosterPage })));
+const SeasonsPage = lazy(() => import('@/pages/SeasonsPage').then(m => ({ default: m.SeasonsPage })));
+const SeasonDetailPage = lazy(() => import('@/pages/SeasonDetailPage').then(m => ({ default: m.SeasonDetailPage })));
+const CompetitionsPage = lazy(() => import('@/pages/CompetitionsPage').then(m => ({ default: m.CompetitionsPage })));
+const CostumesPage = lazy(() => import('@/pages/CostumesPage').then(m => ({ default: m.CostumesPage })));
+const ShowsPage = lazy(() => import('@/pages/ShowsPage').then(m => ({ default: m.ShowsPage })));
+const ShowDetailPage = lazy(() => import('@/pages/ShowDetailPage').then(m => ({ default: m.ShowDetailPage })));
+const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const RehearsalPage = lazy(() => import('@/pages/RehearsalPage').then(m => ({ default: m.RehearsalPage })));
+const BackstagePage = lazy(() => import('@/pages/BackstagePage').then(m => ({ default: m.BackstagePage })));
+const ViewerPage = lazy(() => import('@/pages/ViewerPage').then(m => ({ default: m.ViewerPage })));
 
 function AuthenticatedApp() {
   return (
