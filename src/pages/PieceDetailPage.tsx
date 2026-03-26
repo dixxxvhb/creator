@@ -81,6 +81,10 @@ export function PieceDetailPage() {
     handleQuickPopulate,
     handleQuickAddDancer,
     handleSavePositions,
+    canUndo,
+    canRedo,
+    handleUndo,
+    handleRedo,
   } = useFormationEditor(id);
 
   const {
@@ -371,6 +375,10 @@ export function PieceDetailPage() {
           onOpenAddDancer={() => setAddDancerModalOpen(true)}
           onShowShortcuts={() => setShortcutsOpen(true)}
           onUpdateFormation={updateFormation}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
         />
 
         {/* Right panel: notes */}

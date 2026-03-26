@@ -160,6 +160,7 @@ export interface UserProfile {
   avatarUrl: string | null;
   defaultStageWidth: number;
   defaultStageDepth: number;
+  toolbarAdvanced: boolean;
 }
 
 export const ACCENT_PRESETS = [

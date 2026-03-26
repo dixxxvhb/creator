@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useStore } from 'zustand';
 import { useFormationStore } from '@/stores/formationStore';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useRosterStore } from '@/stores/rosterStore';
+import { useUIStore } from '@/stores/uiStore';
+import { usePathStore } from '@/stores/pathStore';
 import { generateLabel } from '@/lib/formationTemplates';
 import { applyTemplate } from '@/lib/formationTemplates';
 import { toast } from '@/stores/toastStore';
@@ -333,6 +336,52 @@ export function useFormationEditor(pieceId: string | undefined) {
     await savePositions(activeFormationId, inserts);
   }
 
+  // --- Undo/Redo for position changes via zundo ---
+  const canUndo = useStore(useFormationStore.temporal, (s) => s.pastStates.length > 0);
+  const canRedo = useStore(useFormationStore.temporal, (s) => s.futureStates.length > 0);
+
+  const handleUndo = useCallback(() => {
+    useFormationStore.temporal.getState().undo();
+  }, []);
+
+  const handleRedo = useCallback(() => {
+    useFormationStore.temporal.getState().redo();
+  }, []);
+
+  // Keyboard bindings: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z = redo
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      const mod = e.metaKey || e.ctrlKey;
+      if (!mod || e.key.toLowerCase() !== 'z') return;
+
+      // In draw mode, let the path undo system handle Ctrl+Z
+      const mode = useUIStore.getState().canvasMode;
+      if (mode === 'draw-freehand' || mode === 'draw-geometric') {
+        if (!e.shiftKey) {
+          // Ctrl+Z in draw mode → path undo
+          e.preventDefault();
+          usePathStore.getState().undo();
+          return;
+        }
+        // Shift+Z in draw mode → ignore (no path redo)
+        return;
+      }
+
+      e.preventDefault();
+      if (e.shiftKey) {
+        handleRedo();
+      } else {
+        handleUndo();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
+
   return {
     localChoreoNotes,
     setLocalChoreoNotes,
@@ -347,5 +396,9 @@ export function useFormationEditor(pieceId: string | undefined) {
     handleQuickPopulate,
     handleQuickAddDancer,
     handleSavePositions,
+    canUndo,
+    canRedo,
+    handleUndo,
+    handleRedo,
   };
 }

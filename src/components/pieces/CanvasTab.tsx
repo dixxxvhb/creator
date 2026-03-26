@@ -43,6 +43,11 @@ interface CanvasTabProps {
   onShowShortcuts: () => void;
   // Thumbnail strip handlers
   onUpdateFormation: (id: string, updates: Partial<Formation>) => Promise<void>;
+  // Undo/Redo
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export function CanvasTab({
@@ -74,6 +79,10 @@ export function CanvasTab({
   onOpenAddDancer,
   onShowShortcuts,
   onUpdateFormation,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }: CanvasTabProps) {
   const quickPopulateRef = useRef<HTMLInputElement>(null);
 
@@ -173,6 +182,10 @@ export function CanvasTab({
             onRemoveDancer={() => onRemoveDancer()}
             onToggleAudiencePosition={() => setAudiencePosition(audiencePosition === 'top' ? 'bottom' : 'top')}
             onShowShortcuts={onShowShortcuts}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            onUndo={onUndo}
+            onRedo={onRedo}
           />
           {activeFormation && (
             <span className="text-sm text-text-secondary font-medium">

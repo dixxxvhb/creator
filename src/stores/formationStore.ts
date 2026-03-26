@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { temporal } from 'zundo';
 import type { Formation, FormationInsert, FormationUpdate, DancerPosition, DancerPositionInsert } from '@/types';
 import * as formationsService from '@/services/formations';
 import * as positionsService from '@/services/dancerPositions';
@@ -26,7 +27,9 @@ interface FormationState {
   reset: () => void;
 }
 
-export const useFormationStore = create<FormationState>((set, get) => ({
+export const useFormationStore = create<FormationState>()(
+  temporal(
+    (set, get) => ({
   formations: [],
   positions: {},
   activeFormationId: null,
@@ -207,4 +210,12 @@ export const useFormationStore = create<FormationState>((set, get) => ({
       isDirty: false,
       error: null,
     }),
-}));
+    }),
+    {
+      partialize: (state) => ({
+        positions: state.positions,
+      }),
+      limit: 30,
+    },
+  )
+);

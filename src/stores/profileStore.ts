@@ -14,6 +14,7 @@ const DEFAULT_PROFILE: UserProfile = {
   avatarUrl: null,
   defaultStageWidth: 1000,
   defaultStageDepth: 600,
+  toolbarAdvanced: false,
 };
 
 function loadProfile(): UserProfile {
@@ -88,6 +89,7 @@ interface ProfileState extends UserProfile {
   setCustomGreeting: (greeting: string) => void;
   setDefaultStageWidth: (w: number) => void;
   setDefaultStageDepth: (d: number) => void;
+  setToolbarAdvanced: (v: boolean) => void;
   initProfile: () => void;
 }
 
@@ -132,6 +134,11 @@ export const useProfileStore = create<ProfileState>((set, get) => {
     setDefaultStageDepth: (d: number) => {
       set({ defaultStageDepth: d });
       saveProfile({ ...get(), defaultStageDepth: d });
+    },
+
+    setToolbarAdvanced: (v: boolean) => {
+      set({ toolbarAdvanced: v });
+      saveProfile({ ...get(), toolbarAdvanced: v });
     },
 
     initProfile: () => {
