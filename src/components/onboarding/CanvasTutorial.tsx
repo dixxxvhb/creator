@@ -106,7 +106,8 @@ export function CanvasTutorial({ toolbarRef, canvasRef, thumbnailRef }: CanvasTu
     r: 12,
   };
 
-  // Tooltip position
+  // Tooltip position — clamp to viewport so it's always visible
+  const tooltipH = 160; // approximate tooltip height
   const tooltipStyle: React.CSSProperties = {
     position: 'fixed',
     left: Math.max(16, Math.min(cutout.x, window.innerWidth - 340)),
@@ -114,9 +115,21 @@ export function CanvasTutorial({ toolbarRef, canvasRef, thumbnailRef }: CanvasTu
   };
 
   if (currentStep.position === 'below') {
-    tooltipStyle.top = cutout.y + cutout.h + 12;
+    const belowY = cutout.y + cutout.h + 12;
+    // If tooltip would go off-screen below, place it above instead
+    if (belowY + tooltipH > window.innerHeight) {
+      tooltipStyle.top = Math.max(16, cutout.y - tooltipH - 12);
+    } else {
+      tooltipStyle.top = belowY;
+    }
   } else {
-    tooltipStyle.bottom = window.innerHeight - cutout.y + 12;
+    const aboveY = cutout.y - tooltipH - 12;
+    // If tooltip would go off-screen above, place it below instead
+    if (aboveY < 16) {
+      tooltipStyle.top = Math.min(cutout.y + cutout.h + 12, window.innerHeight - tooltipH - 16);
+    } else {
+      tooltipStyle.top = aboveY;
+    }
   }
 
   return (
