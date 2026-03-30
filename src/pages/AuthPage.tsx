@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
-import { BETA_ENABLED, ACCESS_CODE, grantBetaAccess } from '@/lib/beta';
+import { BETA_ENABLED, ACCESS_CODE } from '@/lib/beta';
 
 export function AuthPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('signup');
@@ -20,6 +20,7 @@ export function AuthPage() {
 
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
+  const signInAnonymously = useAuthStore((s) => s.signInAnonymously);
 
   async function handleAccessCode() {
     if (accessCode.toUpperCase().trim() !== ACCESS_CODE) {
@@ -29,9 +30,13 @@ export function AuthPage() {
     setError(null);
 
     if (BETA_ENABLED) {
-      // Beta: grant access via localStorage and reload to let AuthGuard pick it up
-      grantBetaAccess();
-      window.location.reload();
+      setIsSubmitting(true);
+      const { error } = await signInAnonymously();
+      setIsSubmitting(false);
+      if (error) {
+        setError('Sign-in failed. Please try again.');
+        return;
+      }
       return;
     }
 
