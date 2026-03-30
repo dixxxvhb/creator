@@ -131,11 +131,16 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     return () => ro.disconnect();
   }, []);
 
-  // Block page scroll when wheel/touch events happen inside the canvas
+  // Block page scroll only for zoom (Ctrl/Cmd+wheel) or trackpad pan (has deltaX)
+  // Pure vertical scroll passes through to the page
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const blockScroll = (e: WheelEvent) => e.preventDefault();
+    const blockScroll = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey || Math.abs(e.deltaX) > 0) {
+        e.preventDefault();
+      }
+    };
     el.addEventListener('wheel', blockScroll, { passive: false });
     return () => el.removeEventListener('wheel', blockScroll);
   }, []);
@@ -154,12 +159,13 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   const offsetX = (containerSize.width - stagePixelW) / 2 + panX;
   const offsetY = (containerSize.height - stagePixelH) / 2 + panY;
 
-  // Wheel: Ctrl/Cmd+wheel = zoom, plain wheel/trackpad scroll = pan
+  // Wheel: Ctrl/Cmd+wheel = zoom, two-finger trackpad swipe (has deltaX) = pan
+  // Pure vertical mouse wheel = let page scroll (don't preventDefault)
   const handleWheel = useCallback(
     (e: Konva.KonvaEventObject<WheelEvent>) => {
       const evt = e.evt;
       if (evt.ctrlKey || evt.metaKey) {
-        // Zoom (existing behavior)
+        // Zoom
         evt.preventDefault();
         const delta = evt.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
         setZoom((z) => {
@@ -167,12 +173,13 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
           onZoomChange?.(next);
           return next;
         });
-      } else {
-        // Pan via scroll/trackpad two-finger swipe
+      } else if (Math.abs(evt.deltaX) > 0) {
+        // Trackpad two-finger swipe (has horizontal component) = pan
         evt.preventDefault();
         setPanX((px) => px - evt.deltaX);
         setPanY((py) => py - evt.deltaY);
       }
+      // Pure vertical scroll: don't preventDefault, let page scroll naturally
     },
     [onZoomChange]
   );
