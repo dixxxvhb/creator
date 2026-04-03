@@ -98,16 +98,14 @@ export function RosterPage() {
           />
         ) : (
           <>
-            {dancers.length > 0 && (
-              <div className="mb-6">
-                <SearchInput
-                  value={search}
-                  onChange={setSearch}
-                  placeholder="Search dancers..."
-                  className="max-w-md"
-                />
-              </div>
-            )}
+            <div className="mb-6">
+              <SearchInput
+                value={search}
+                onChange={setSearch}
+                placeholder="Search dancers..."
+                className="max-w-md"
+              />
+            </div>
             <motion.div
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
               variants={staggerContainer}

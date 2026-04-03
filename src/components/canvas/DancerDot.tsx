@@ -8,6 +8,7 @@ import { useFormationStore } from '@/stores/formationStore';
 import { isOffstage, getOffstageDirection, clampToEdge } from '@/lib/offstage';
 import { simplifyPath } from '@/lib/pathUtils';
 import { toast } from '@/stores/toastStore';
+import { SNAP_UNIT } from '@/lib/canvasConstants';
 
 interface DancerDotProps {
   position: DancerPosition;
@@ -172,7 +173,6 @@ export function DancerDot({
       let y = node.y();
 
       if (snapToGrid && stageWidth != null && stageDepth != null && !isOffstage(x, y, stageWidth, stageDepth)) {
-        const SNAP_UNIT = 25;
         x = Math.round(x / SNAP_UNIT) * SNAP_UNIT;
         y = Math.round(y / SNAP_UNIT) * SNAP_UNIT;
         node.position({ x, y });
@@ -189,8 +189,7 @@ export function DancerDot({
             let nx = start.x + dx;
             let ny = start.y + dy;
             if (snapToGrid && stageWidth != null && stageDepth != null && !isOffstage(nx, ny, stageWidth, stageDepth)) {
-              const SNAP_UNIT = 25;
-              nx = Math.round(nx / SNAP_UNIT) * SNAP_UNIT;
+                    nx = Math.round(nx / SNAP_UNIT) * SNAP_UNIT;
               ny = Math.round(ny / SNAP_UNIT) * SNAP_UNIT;
             }
             updatePos(activeFormationId, id, nx, ny);
@@ -204,7 +203,6 @@ export function DancerDot({
       let x = node.x();
       let y = node.y();
       if (snapToGrid && stageWidth != null && stageDepth != null && !isOffstage(x, y, stageWidth, stageDepth)) {
-        const SNAP_UNIT = 25;
         x = Math.round(x / SNAP_UNIT) * SNAP_UNIT;
         y = Math.round(y / SNAP_UNIT) * SNAP_UNIT;
         node.position({ x, y });

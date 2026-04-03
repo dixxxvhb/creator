@@ -271,8 +271,6 @@ export function ShowDetailPage() {
         .filter((ps) => ps.season_id === show.season_id)
         .map((ps) => ps.piece_id)
     );
-    // If no pieces are assigned to the season yet, show all (graceful fallback)
-    if (assignedIds.size === 0) return pieces;
     return pieces.filter((p) => assignedIds.has(p.id));
   }, [pieces, show?.season_id, seasonPieceIds]);
 

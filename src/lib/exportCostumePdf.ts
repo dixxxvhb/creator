@@ -122,7 +122,9 @@ export function exportAllCostumesPdf(allData: CostumePdfData[]) {
 
       doc.setFontSize(10);
       doc.setTextColor(40);
-      doc.text(`${piece.title} — ${costume.name}`, 18, y); y += 5;
+      const titleText = `${piece.title} — ${costume.name}`;
+      const titleLines = doc.splitTextToSize(titleText, 174);
+      doc.text(titleLines, 18, y); y += titleLines.length * 5;
 
       doc.setFontSize(9);
       doc.setTextColor(80);
@@ -130,15 +132,19 @@ export function exportAllCostumesPdf(allData: CostumePdfData[]) {
       if (assignment.size) details.push(`Size: ${assignment.size}`);
       if (costume.color) details.push(`Color: ${costume.color}`);
       details.push(`Status: ${assignment.status}`);
-      doc.text(details.join('  |  '), 22, y); y += 5;
+      const detailText = details.join('  |  ');
+      const detailLines = doc.splitTextToSize(detailText, 170);
+      doc.text(detailLines, 22, y); y += detailLines.length * 5;
 
       if (assignment.alteration_notes) {
-        const altLines = doc.splitTextToSize(`Alterations: ${assignment.alteration_notes}`, 174);
+        const altLines = doc.splitTextToSize(`Alterations: ${assignment.alteration_notes}`, 170);
         doc.text(altLines, 22, y); y += altLines.length * 5;
       }
 
       for (const acc of accessories) {
-        doc.text(`  + ${acc.accessory_type}: ${acc.description || '(no description)'}`, 22, y); y += 5;
+        const accText = `  + ${acc.accessory_type}: ${acc.description || '(no description)'}`;
+        const accLines = doc.splitTextToSize(accText, 170);
+        doc.text(accLines, 22, y); y += accLines.length * 5;
       }
 
       y += 3;

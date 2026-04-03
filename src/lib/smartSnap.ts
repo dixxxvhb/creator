@@ -1,7 +1,6 @@
 import type { DancerPosition } from '@/types';
 import { isOffstage } from './offstage';
-
-const SNAP_UNIT = 25;
+import { SNAP_UNIT } from './canvasConstants';
 const LINE_SPACING = 5; // 2 stage numbers apart in coordinate units
 
 function snapCoord(v: number): number {

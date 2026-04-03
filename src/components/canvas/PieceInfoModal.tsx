@@ -105,6 +105,7 @@ export function PieceInfoModal({ open, onClose, piece, onSave }: PieceInfoModalP
           <Input
             label="BPM"
             type="number"
+            min={0}
             value={bpm}
             onChange={(e) => setBpm(e.target.value)}
             placeholder="120"
@@ -112,6 +113,7 @@ export function PieceInfoModal({ open, onClose, piece, onSave }: PieceInfoModalP
           <Input
             label="Duration (seconds)"
             type="number"
+            min={0}
             value={durationSeconds}
             onChange={(e) => setDurationSeconds(e.target.value)}
             placeholder="180"
@@ -123,6 +125,7 @@ export function PieceInfoModal({ open, onClose, piece, onSave }: PieceInfoModalP
           <Input
             label="Stage Width"
             type="number"
+            min={1}
             value={stageWidth}
             onChange={(e) => setStageWidth(e.target.value)}
             placeholder="40"
@@ -130,6 +133,7 @@ export function PieceInfoModal({ open, onClose, piece, onSave }: PieceInfoModalP
           <Input
             label="Stage Depth"
             type="number"
+            min={1}
             value={stageDepth}
             onChange={(e) => setStageDepth(e.target.value)}
             placeholder="30"

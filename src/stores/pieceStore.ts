@@ -9,6 +9,8 @@ import { useTierStore } from '@/stores/tierStore';
 import { useFormationStore } from '@/stores/formationStore';
 import { usePathStore } from '@/stores/pathStore';
 import { useSongSectionStore } from '@/stores/songSectionStore';
+import { useCostumeStore } from '@/stores/costumeStore';
+import { useSeasonStore } from '@/stores/seasonStore';
 
 interface PieceState {
   pieces: Piece[];
@@ -83,6 +85,28 @@ export const usePieceStore = create<PieceState>((set, get) => ({
       useFormationStore.getState().reset();
       usePathStore.getState().reset();
       useSongSectionStore.getState().reset();
+
+      // Filter costume data belonging to the deleted piece
+      const costumeState = useCostumeStore.getState();
+      const deletedCostumeIds = costumeState.costumes
+        .filter((c) => c.piece_id === id)
+        .map((c) => c.id);
+      if (deletedCostumeIds.length > 0) {
+        useCostumeStore.setState({
+          costumes: costumeState.costumes.filter((c) => c.piece_id !== id),
+          assignments: costumeState.assignments.filter((a) => !deletedCostumeIds.includes(a.costume_id)),
+          accessories: costumeState.accessories.filter((a) => !deletedCostumeIds.includes(a.costume_id)),
+        });
+      }
+
+      // Filter piece-season links for the deleted piece
+      const seasonState = useSeasonStore.getState();
+      if (seasonState.pieceSeasons.some((ps) => ps.piece_id === id)) {
+        useSeasonStore.setState({
+          pieceSeasons: seasonState.pieceSeasons.filter((ps) => ps.piece_id !== id),
+        });
+      }
+
       toast.success('Piece deleted');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to delete piece';

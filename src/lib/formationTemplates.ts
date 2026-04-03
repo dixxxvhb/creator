@@ -1,5 +1,6 @@
 import { DANCER_COLORS } from '@/types';
 import type { DancerPositionInsert } from '@/types';
+import { SNAP_UNIT } from '@/lib/canvasConstants';
 
 // ─── Label Generator (A, B, ... Z, AA, AB...) ───
 
@@ -34,8 +35,6 @@ function distribute(count: number, w: number, h: number, fn: (i: number, n: numb
   return Array.from({ length: count }, (_, i) => fn(i, count, w, h));
 }
 
-// Snap a coordinate to the nearest 0.5 stage number (1.25 coordinate units)
-const SNAP_UNIT = 1.25;
 function snapCoord(v: number): number {
   return Math.round(v / SNAP_UNIT) * SNAP_UNIT;
 }
