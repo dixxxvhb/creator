@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { toast } from '@/stores/toastStore';
 import type { DancerPosition, DancerPositionInsert, DancerPositionUpdate } from '@/types';
 
 export async function fetchPositions(formationId: string): Promise<DancerPosition[]> {
@@ -36,33 +35,40 @@ export async function upsertPositions(
   formationId: string,
   positions: DancerPositionInsert[]
 ): Promise<DancerPosition[]> {
-  // Delete all existing positions for this formation
-  const { error: deleteError } = await supabase
+  // Safe order: insert new first, then delete old — prevents data loss if network drops mid-operation
+  // 1. Get IDs of existing positions so we can delete them after insert
+  const { data: existing, error: fetchError } = await supabase
     .from('dancer_positions')
-    .delete()
+    .select('id')
     .eq('formation_id', formationId);
-  if (deleteError) throw new Error(`Failed to clear positions: ${deleteError.message}`);
+  if (fetchError) throw new Error(`Failed to fetch existing positions: ${fetchError.message}`);
 
-  // Insert the new batch
-  if (positions.length === 0) return [];
+  const oldIds = (existing ?? []).map((p) => p.id);
 
-  try {
+  // 2. Insert new positions (fresh UUIDs from Supabase)
+  let inserted: DancerPosition[] = [];
+  if (positions.length > 0) {
     const { data, error: insertError } = await supabase
       .from('dancer_positions')
       .insert(positions)
       .select();
-    if (insertError) {
-      toast.error(`Positions were cleared but failed to save new ones: ${insertError.message}. Try saving again.`);
-      throw new Error(`Failed to save positions after delete: ${insertError.message}`);
-    }
-    return data;
-  } catch (err) {
-    // Re-throw if already our error, otherwise wrap
-    if (err instanceof Error && err.message.startsWith('Failed to save positions after delete:')) throw err;
-    const msg = err instanceof Error ? err.message : 'Unknown error';
-    toast.error(`Positions were cleared but failed to save new ones: ${msg}. Try saving again.`);
-    throw new Error(`Failed to save positions after delete: ${msg}`);
+    if (insertError) throw new Error(`Failed to save positions: ${insertError.message}`);
+    inserted = data;
   }
+
+  // 3. Delete old positions by ID (if insert succeeded, safe to remove)
+  if (oldIds.length > 0) {
+    const { error: deleteError } = await supabase
+      .from('dancer_positions')
+      .delete()
+      .in('id', oldIds);
+    if (deleteError) {
+      // Non-fatal: duplicates exist but no data was lost
+      console.warn('Failed to clean up old positions (duplicates may exist):', deleteError.message);
+    }
+  }
+
+  return inserted;
 }
 
 export async function updatePosition(

@@ -44,7 +44,20 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   useImperativeHandle(ref, () => ({
     toDataURL: (pixelRatio = 2) => {
       if (!stageRef.current) return null;
-      return stageRef.current.toDataURL({ pixelRatio });
+      // Temporarily reset zoom/pan to capture full stage at 1:1
+      const stage = stageRef.current;
+      const prevScale = stage.scaleX();
+      const prevX = stage.x();
+      const prevY = stage.y();
+      stage.scale({ x: 1, y: 1 });
+      stage.position({ x: 0, y: 0 });
+      stage.batchDraw();
+      const url = stage.toDataURL({ pixelRatio });
+      // Restore previous zoom/pan
+      stage.scale({ x: prevScale, y: prevScale });
+      stage.position({ x: prevX, y: prevY });
+      stage.batchDraw();
+      return url;
     },
     zoomIn: () => setZoom((z) => {
       const next = Math.min(MAX_ZOOM, z + ZOOM_STEP);

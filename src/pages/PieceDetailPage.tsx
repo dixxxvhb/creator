@@ -225,12 +225,20 @@ export function PieceDetailPage() {
   }
 
   async function handleUpdateTimestamp(formationId: string, timestamp: number) {
-    await updateFormation(formationId, { timestamp_seconds: timestamp });
+    try {
+      await updateFormation(formationId, { timestamp_seconds: timestamp });
+    } catch {
+      toast.error('Failed to update timestamp');
+    }
   }
 
   async function onSavePositions() {
     setIsSaving(true);
-    await handleSavePositions();
+    try {
+      await handleSavePositions();
+    } catch {
+      toast.error('Failed to save positions');
+    }
     setIsSaving(false);
   }
 

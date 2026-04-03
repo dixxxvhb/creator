@@ -174,134 +174,148 @@ export function useFormationEditor(pieceId: string | undefined) {
 
   async function handleApplyTemplate(templateId: string, roleAssignments?: RoleAssignment[]) {
     if (!activeFormationId || !piece) return;
-    const newPositions = applyTemplate(
-      templateId,
-      piece.dancer_count,
-      piece.stage_width,
-      piece.stage_depth,
-      activeFormationId,
-      {
-        roleAssignments,
-        existingPositions: activePositions.map((p) => ({
-          dancer_label: p.dancer_label,
-          dancer_id: p.dancer_id,
-          color: p.color,
-        })),
-        focalDancerId: piece.focal_dancer_id,
-      },
-    );
-    if (newPositions.length > 0) {
-      await savePositions(activeFormationId, newPositions);
+    try {
+      const newPositions = applyTemplate(
+        templateId,
+        piece.dancer_count,
+        piece.stage_width,
+        piece.stage_depth,
+        activeFormationId,
+        {
+          roleAssignments,
+          existingPositions: activePositions.map((p) => ({
+            dancer_label: p.dancer_label,
+            dancer_id: p.dancer_id,
+            color: p.color,
+          })),
+          focalDancerId: piece.focal_dancer_id,
+        },
+      );
+      if (newPositions.length > 0) {
+        await savePositions(activeFormationId, newPositions);
+      }
+    } catch {
+      toast.error('Failed to apply template');
     }
   }
 
   async function handleAddDancers(params: AddDancerParams) {
     if (!piece) return;
+    try {
+      let dancerId = params.dancer.id;
+      let dancerColor = params.dancer.color;
 
-    let dancerId = params.dancer.id;
-    let dancerColor = params.dancer.color;
+      if (params.create) {
+        const color = dancerColor || DANCER_COLORS[piece.dancer_count % DANCER_COLORS.length];
+        const newDancer = await addRosterDancer({
+          full_name: params.create.fullName,
+          short_name: params.create.shortName,
+          birthday: null,
+          color,
+          is_active: true,
+        });
+        if (!newDancer) return;
+        dancerId = newDancer.id;
+        dancerColor = newDancer.color;
+      }
 
-    if (params.create) {
-      const color = dancerColor || DANCER_COLORS[piece.dancer_count % DANCER_COLORS.length];
-      const newDancer = await addRosterDancer({
-        full_name: params.create.fullName,
-        short_name: params.create.shortName,
-        birthday: null,
-        color,
-        is_active: true,
-      });
-      if (!newDancer) return;
-      dancerId = newDancer.id;
-      dancerColor = newDancer.color;
-    }
+      const newIdx = piece.dancer_count;
+      const label = generateLabel(newIdx);
+      const [startIdx, endIdx] = params.formationRange;
 
-    const newIdx = piece.dancer_count;
-    const label = generateLabel(newIdx);
-    const [startIdx, endIdx] = params.formationRange;
+      await updatePiece(piece.id, { dancer_count: piece.dancer_count + 1 });
 
-    await updatePiece(piece.id, { dancer_count: piece.dancer_count + 1 });
-
-    for (let i = startIdx; i <= endIdx && i < formations.length; i++) {
-      const formation = formations[i];
-      const existing = positions[formation.id] ?? [];
-      const newPosition: DancerPositionInsert = {
-        formation_id: formation.id,
-        dancer_id: dancerId,
-        dancer_label: label,
-        x: piece.stage_width / 2,
-        y: piece.stage_depth / 2,
-        color: dancerColor,
-      };
-      await savePositions(formation.id, [
-        ...existing.map((p) => ({
+      for (let i = startIdx; i <= endIdx && i < formations.length; i++) {
+        const formation = formations[i];
+        const existing = positions[formation.id] ?? [];
+        const newPosition: DancerPositionInsert = {
           formation_id: formation.id,
-          dancer_id: p.dancer_id,
-          dancer_label: p.dancer_label,
-          x: p.x,
-          y: p.y,
-          color: p.color,
-        })),
-        newPosition,
-      ]);
-    }
+          dancer_id: dancerId,
+          dancer_label: label,
+          x: piece.stage_width / 2,
+          y: piece.stage_depth / 2,
+          color: dancerColor,
+        };
+        await savePositions(formation.id, [
+          ...existing.map((p) => ({
+            formation_id: formation.id,
+            dancer_id: p.dancer_id,
+            dancer_label: p.dancer_label,
+            x: p.x,
+            y: p.y,
+            color: p.color,
+          })),
+          newPosition,
+        ]);
+      }
 
-    const newCount = piece.dancer_count + 1;
-    if (newCount < 4) {
-      toast.info(`Only ${newCount} dancer${newCount !== 1 ? 's' : ''} so far — add more anytime from the toolbar.`);
-    }
+      const newCount = piece.dancer_count + 1;
+      if (newCount < 4) {
+        toast.info(`Only ${newCount} dancer${newCount !== 1 ? 's' : ''} so far — add more anytime from the toolbar.`);
+      }
 
-    if (piece.dancer_count === 0 && !templateHintShown.current) {
-      templateHintShown.current = true;
-      toast.info('Tip: Use the Template button to quickly arrange dancers into formations.');
+      if (piece.dancer_count === 0 && !templateHintShown.current) {
+        templateHintShown.current = true;
+        toast.info('Tip: Use the Template button to quickly arrange dancers into formations.');
+      }
+    } catch {
+      toast.error('Failed to add dancer');
     }
   }
 
   async function handleRemoveDancer(dancerLabel?: string) {
     if (!piece || piece.dancer_count <= 1) return;
-    const newCount = piece.dancer_count - 1;
-    const removeLabel = dancerLabel ?? generateLabel(newCount);
+    try {
+      const newCount = piece.dancer_count - 1;
+      const removeLabel = dancerLabel ?? generateLabel(newCount);
 
-    await updatePiece(piece.id, { dancer_count: newCount });
+      await updatePiece(piece.id, { dancer_count: newCount });
 
-    for (const formation of formations) {
-      const existing = positions[formation.id] ?? [];
-      const filtered = existing.filter((p) => p.dancer_label !== removeLabel);
-      const relabeled = filtered
-        .sort((a, b) => a.dancer_label.localeCompare(b.dancer_label))
-        .map((p, i) => ({
-          formation_id: formation.id,
-          dancer_id: p.dancer_id,
-          dancer_label: generateLabel(i),
-          x: p.x,
-          y: p.y,
-          color: p.color,
-        }));
-      await savePositions(formation.id, relabeled);
+      for (const formation of formations) {
+        const existing = positions[formation.id] ?? [];
+        const filtered = existing.filter((p) => p.dancer_label !== removeLabel);
+        const relabeled = filtered
+          .sort((a, b) => a.dancer_label.localeCompare(b.dancer_label))
+          .map((p, i) => ({
+            formation_id: formation.id,
+            dancer_id: p.dancer_id,
+            dancer_label: generateLabel(i),
+            x: p.x,
+            y: p.y,
+            color: p.color,
+          }));
+        await savePositions(formation.id, relabeled);
+      }
+    } catch {
+      toast.error('Failed to remove dancer');
     }
   }
 
   async function handleQuickPopulate(count: number) {
     if (!piece) return;
+    try {
+      await updatePiece(piece.id, { dancer_count: count });
 
-    await updatePiece(piece.id, { dancer_count: count });
-
-    for (const formation of formations) {
-      const positionInserts: DancerPositionInsert[] = [];
-      for (let i = 0; i < count; i++) {
-        const label = generateLabel(i);
-        const color = DANCER_COLORS[i % DANCER_COLORS.length];
-        const SNAP = 1.25;
-        const t = count === 1 ? 0.5 : i / (count - 1);
-        positionInserts.push({
-          formation_id: formation.id,
-          dancer_id: null,
-          dancer_label: label,
-          x: Math.round((piece.stage_width * 0.1 + t * piece.stage_width * 0.8) / SNAP) * SNAP,
-          y: Math.round((piece.stage_depth / 2) / SNAP) * SNAP,
-          color,
-        });
+      for (const formation of formations) {
+        const positionInserts: DancerPositionInsert[] = [];
+        for (let i = 0; i < count; i++) {
+          const label = generateLabel(i);
+          const color = DANCER_COLORS[i % DANCER_COLORS.length];
+          const SNAP = 1.25;
+          const t = count === 1 ? 0.5 : i / (count - 1);
+          positionInserts.push({
+            formation_id: formation.id,
+            dancer_id: null,
+            dancer_label: label,
+            x: Math.round((piece.stage_width * 0.1 + t * piece.stage_width * 0.8) / SNAP) * SNAP,
+            y: Math.round((piece.stage_depth / 2) / SNAP) * SNAP,
+            color,
+          });
+        }
+        await savePositions(formation.id, positionInserts);
       }
-      await savePositions(formation.id, positionInserts);
+    } catch {
+      toast.error('Failed to populate dancers');
     }
   }
 
