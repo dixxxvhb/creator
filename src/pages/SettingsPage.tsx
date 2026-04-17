@@ -5,11 +5,10 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useProfileStore } from '@/stores/profileStore';
-import { useTierStore } from '@/stores/tierStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useBugReportStore } from '@/stores/bugReportStore';
-import { ACCENT_PRESETS, TIER_LABELS } from '@/types';
-import type { Tier, BugStatus } from '@/types';
+import { ACCENT_PRESETS } from '@/types';
+import type { BugStatus } from '@/types';
 import { cn } from '@/lib/utils';
 import { ADMIN_EMAIL } from '@/lib/beta';
 import { Badge } from '@/components/ui/Badge';
@@ -40,9 +39,6 @@ export function SettingsPage() {
     setDefaultStageDepth,
   } = useProfileStore();
 
-  const tier = useTierStore((s) => s.tier);
-  const setTier = useTierStore((s) => s.setTier);
-
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
 
@@ -65,26 +61,6 @@ export function SettingsPage() {
   return (
     <PageContainer title="Settings">
       <div className="space-y-8 max-w-2xl">
-        {/* Subscription Section (Dev Only) */}
-        <section>
-          <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">
-            Subscription (Dev Only)
-          </h2>
-          <Card>
-            <div className="flex gap-2">
-              {(['free', 'mid', 'studio'] as const).map((t) => (
-                <Button
-                  key={t}
-                  variant={tier === t ? 'primary' : 'secondary'}
-                  onClick={() => setTier(t as Tier)}
-                >
-                  {TIER_LABELS[t]}
-                </Button>
-              ))}
-            </div>
-          </Card>
-        </section>
-
         {/* Studio Section */}
         <section>
           <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">

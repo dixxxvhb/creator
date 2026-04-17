@@ -1,19 +1,9 @@
 import { create } from 'zustand';
 import type { Tier, TierFeature } from '@/types';
-import { TIER_FEATURES } from '@/types';
-import { BETA_ENABLED } from '@/lib/beta';
 
-const STORAGE_KEY = 'creator-tier';
-const TIER_ORDER: Record<Tier, number> = { free: 0, mid: 1, studio: 2 };
-
-function loadTier(): Tier {
-  // Beta testers get full access to all features
-  if (BETA_ENABLED) return 'studio';
-  if (typeof window === 'undefined') return 'free';
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === 'mid' || stored === 'studio') return stored;
-  return 'free';
-}
+// All tier gates are disabled during teacher beta. Every feature is unlocked.
+// To re-enable monetization later, restore the TIER_ORDER / localStorage logic
+// and let setTier actually persist a tier.
 
 interface TierState {
   tier: Tier;
@@ -21,16 +11,8 @@ interface TierState {
   setTier: (tier: Tier) => void;
 }
 
-export const useTierStore = create<TierState>((set, get) => ({
-  tier: loadTier(),
-
-  hasFeature: (feature: TierFeature) => {
-    const required = TIER_FEATURES[feature];
-    return TIER_ORDER[get().tier] >= TIER_ORDER[required];
-  },
-
-  setTier: (tier: Tier) => {
-    localStorage.setItem(STORAGE_KEY, tier);
-    set({ tier });
-  },
+export const useTierStore = create<TierState>((set) => ({
+  tier: 'studio',
+  hasFeature: () => true,
+  setTier: (tier: Tier) => set({ tier }),
 }));
