@@ -323,12 +323,15 @@ export function CanvasTab({
         </div>
       </div>
 
-      {/* One-time canvas tutorial */}
-      <CanvasTutorial
-        toolbarRef={toolbarRef}
-        canvasRef={canvasContainerRef}
-        thumbnailRef={thumbnailRef}
-      />
+      {/* One-time canvas tutorial — deferred until the empty-state card is gone,
+          so first-time users don't see two overlapping prompts at once. */}
+      {!(piece.dancer_count === 0 && activePositions.length === 0 && !quickStartDismissed) && (
+        <CanvasTutorial
+          toolbarRef={toolbarRef}
+          canvasRef={canvasContainerRef}
+          thumbnailRef={thumbnailRef}
+        />
+      )}
     </div>
   );
 }
