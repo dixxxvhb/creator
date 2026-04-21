@@ -41,19 +41,6 @@ export async function createShare(
   return data;
 }
 
-export async function getShareByToken(token: string): Promise<PieceShare | null> {
-  const { data, error } = await supabase
-    .from('piece_shares')
-    .select('*')
-    .eq('token', token)
-    .single();
-  if (error) {
-    if (error.code === 'PGRST116') return null; // not found
-    throw new Error(`Failed to fetch share: ${error.message}`);
-  }
-  return data;
-}
-
 export async function fetchSharedPiecePayload(token: string): Promise<SharedPiecePayload | null> {
   const { data, error } = await supabase.rpc('get_shared_piece_payload', {
     share_token: token,
