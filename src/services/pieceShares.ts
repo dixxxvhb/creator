@@ -1,5 +1,29 @@
 import { supabase } from '@/lib/supabase';
-import type { PieceShare } from '@/types';
+import type { PieceShare, SharedPiecePayload } from '@/types';
+
+const DEFAULT_PUBLIC_APP_URL = 'https://dixxxvhb.github.io/creator/';
+
+function ensureTrailingSlash(url: string): string {
+  return url.endsWith('/') ? url : `${url}/`;
+}
+
+function getConfiguredPublicAppUrl(): string | null {
+  const configured = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
+  return configured ? ensureTrailingSlash(configured) : null;
+}
+
+function getRuntimePublicAppUrl(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  const { origin, protocol, hostname } = window.location;
+  const isPublicWebOrigin =
+    (protocol === 'http:' || protocol === 'https:') &&
+    hostname !== 'localhost' &&
+    hostname !== '127.0.0.1';
+
+  if (!isPublicWebOrigin) return null;
+  return ensureTrailingSlash(`${origin}${import.meta.env.BASE_URL}`);
+}
 
 export async function createShare(
   pieceId: string,
@@ -28,6 +52,27 @@ export async function getShareByToken(token: string): Promise<PieceShare | null>
     throw new Error(`Failed to fetch share: ${error.message}`);
   }
   return data;
+}
+
+export async function fetchSharedPiecePayload(token: string): Promise<SharedPiecePayload | null> {
+  const { data, error } = await supabase.rpc('get_shared_piece_payload', {
+    share_token: token,
+  });
+
+  if (error) {
+    throw new Error(`Failed to fetch shared piece: ${error.message}`);
+  }
+
+  return (data as SharedPiecePayload | null) ?? null;
+}
+
+export function getShareUrl(token: string): string {
+  const baseUrl =
+    getConfiguredPublicAppUrl() ??
+    getRuntimePublicAppUrl() ??
+    DEFAULT_PUBLIC_APP_URL;
+
+  return new URL(`view/${token}`, baseUrl).toString();
 }
 
 export async function listShares(pieceId: string): Promise<PieceShare[]> {

@@ -500,3 +500,9 @@ export interface PieceShare {
   expires_at: string | null;
   created_at: string;
 }
+
+export interface SharedPiecePayload {
+  piece: Piece;
+  formations: Formation[];
+  positions: Record<string, DancerPosition[]>;
+}

@@ -3,7 +3,7 @@ import { Link2, Copy, Check, Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import { createShare, listShares, revokeShare } from '@/services/pieceShares';
+import { createShare, listShares, revokeShare, getShareUrl } from '@/services/pieceShares';
 import { toast } from '@/stores/toastStore';
 import type { PieceShare } from '@/types';
 
@@ -45,10 +45,6 @@ function formatExpiry(expiresAt: string | null): string {
   const date = new Date(expiresAt);
   if (date < new Date()) return 'Expired';
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function getShareUrl(token: string): string {
-  return `${window.location.origin}${import.meta.env.BASE_URL}view/${token}`;
 }
 
 export function ShareModal({ open, onClose, pieceId, pieceTitle }: ShareModalProps) {

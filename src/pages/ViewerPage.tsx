@@ -2,17 +2,13 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Stage, Layer, Circle, Text, Line, Rect } from 'react-konva';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
-import { getShareByToken } from '@/services/pieceShares';
-import { fetchPiece } from '@/services/pieces';
-import { fetchFormations } from '@/services/formations';
-import { fetchPositionsBatch } from '@/services/dancerPositions';
+import { fetchSharedPiecePayload } from '@/services/pieceShares';
 import { cn } from '@/lib/utils';
-import type { Piece, Formation, DancerPosition, PieceShare } from '@/types';
+import type { Piece, Formation, DancerPosition } from '@/types';
 
 export function ViewerPage() {
   const { token } = useParams<{ token: string }>();
 
-  const [share, setShare] = useState<PieceShare | null>(null);
   const [piece, setPiece] = useState<Piece | null>(null);
   const [formations, setFormations] = useState<Formation[]>([]);
   const [positions, setPositions] = useState<Record<string, DancerPosition[]>>({});
@@ -44,36 +40,19 @@ export function ViewerPage() {
       return;
     }
 
+    const shareToken = token;
+
     async function load() {
       try {
-        const shareData = await getShareByToken(token!);
-        if (!shareData) {
-          setError('This share link is invalid or has been revoked.');
-          setLoading(false);
+        const payload = await fetchSharedPiecePayload(shareToken);
+        if (!payload) {
+          setError('This share link is invalid, expired, or has been revoked.');
           return;
         }
 
-        // Check expiration
-        if (shareData.expires_at && new Date(shareData.expires_at) < new Date()) {
-          setError('This share link has expired.');
-          setLoading(false);
-          return;
-        }
-
-        setShare(shareData);
-
-        const [pieceData, formationData] = await Promise.all([
-          fetchPiece(shareData.piece_id),
-          fetchFormations(shareData.piece_id),
-        ]);
-
-        setPiece(pieceData);
-        setFormations(formationData);
-
-        if (formationData.length > 0) {
-          const posData = await fetchPositionsBatch(formationData.map((f) => f.id));
-          setPositions(posData);
-        }
+        setPiece(payload.piece);
+        setFormations(payload.formations);
+        setPositions(payload.positions);
       } catch {
         setError('Failed to load piece data.');
       } finally {
@@ -163,7 +142,7 @@ export function ViewerPage() {
     );
   }
 
-  if (!piece || !share) return null;
+  if (!piece) return null;
 
   const currentFormation = formations[currentIndex];
   const currentPositions = currentFormation ? (positions[currentFormation.id] ?? []) : [];
