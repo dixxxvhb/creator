@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Personal command center dashboard for Dixon Van Hoozer-Bowles." />
+    <title>Dixon Command Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="memorial-circles" aria-hidden="true"></div>
+
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="location" id="location">Orlando, FL</p>
+          <h1 id="time">--:--</h1>
+          <p class="date-line"><span id="greeting">Welcome back</span><span id="date">Loading date</span></p>
+        </div>
+        <div class="hero-actions">
+          <select id="themePicker" aria-label="Theme picker">
+            <option value="forest">Forest</option>
+            <option value="rose">Rose</option>
+            <option value="stage">Stage</option>
+          </select>
+          <button class="ghost-button" id="lightToggle" type="button">Light</button>
+        </div>
+      </header>
+
+      <section class="dashboard" id="dashboard">
+        <article class="widget weather wide" draggable="true" data-widget="weather">
+          <div class="widget-head">
+            <h2>Weather</h2>
+            <button class="collapse" type="button" aria-label="Collapse Weather">−</button>
+          </div>
+          <div class="widget-body">
+            <div class="weather-now">
+              <div>
+                <p class="kicker">Current</p>
+                <strong id="weatherTemp">--</strong>
+                <span id="weatherSummary">Loading Orlando weather</span>
+              </div>
+              <div>
+                <p class="kicker">Today</p>
+                <strong id="weatherRange">-- / --</strong>
+                <span id="weatherUpdated">Open-Meteo</span>
+              </div>
+            </div>
+            <div class="forecast" id="forecast"></div>
+          </div>
+        </article>
+
+        <article class="widget dwd-status" draggable="true" data-widget="dwd">
+          <div class="widget-head">
+            <h2>DWD ProSeries</h2>
+            <button class="collapse" type="button" aria-label="Collapse DWD ProSeries">−</button>
+          </div>
+          <div class="widget-body stats-grid">
+            <div class="stat">
+              <span>Registration open</span>
+              <strong id="daysSinceRegistration">0</strong>
+              <small>days</small>
+            </div>
+            <div class="stat gold">
+              <span>Season 1</span>
+              <strong id="seasonCountdown">0</strong>
+              <small>days out</small>
+            </div>
+            <div class="stat">
+              <span>First audition</span>
+              <strong id="auditionCountdown">0</strong>
+              <small>days out</small>
+            </div>
+          </div>
+        </article>
+
+        <article class="widget daily-log" draggable="true" data-widget="log">
+          <div class="widget-head">
+            <h2>Daily Log</h2>
+            <button class="collapse" type="button" aria-label="Collapse Daily Log">−</button>
+          </div>
+          <div class="widget-body">
+            <form id="logForm" class="single-line-form">
+              <input id="logInput" type="text" maxlength="180" autocomplete="off" placeholder="One honest line about today" />
+              <button type="submit">Save</button>
+            </form>
+            <button class="text-button" id="toggleLogEntries" type="button">Show last 7</button>
+            <ol class="entry-list collapsed" id="logEntries"></ol>
+          </div>
+        </article>
+
+        <article class="widget schedule wide" draggable="true" data-widget="schedule">
+          <div class="widget-head">
+            <h2>Schedule</h2>
+            <button class="collapse" type="button" aria-label="Collapse Schedule">−</button>
+          </div>
+          <div class="widget-body">
+            <form id="eventForm" class="event-form">
+              <input id="eventDate" type="date" required />
+              <input id="eventTime" type="time" required />
+              <input id="eventLabel" type="text" maxlength="80" placeholder="Event label" required />
+              <button type="submit">Add</button>
+            </form>
+            <div id="scheduleDays" class="schedule-days"></div>
+          </div>
+        </article>
+
+        <article class="widget quick-launch wide" draggable="true" data-widget="launch">
+          <div class="widget-head">
+            <h2>Quick Launch</h2>
+            <button class="collapse" type="button" aria-label="Collapse Quick Launch">−</button>
+          </div>
+          <div class="widget-body">
+            <div class="launch-grid" id="launchGrid"></div>
+          </div>
+        </article>
+
+        <article class="widget news wide" draggable="true" data-widget="news">
+          <div class="widget-head">
+            <h2>News</h2>
+            <button class="collapse" type="button" aria-label="Collapse News">−</button>
+          </div>
+          <div class="widget-body">
+            <div id="newsList" class="news-list"></div>
+          </div>
+        </article>
+
+        <article class="widget instagram" draggable="true" data-widget="instagram">
+          <div class="widget-head">
+            <h2>Instagram</h2>
+            <button class="collapse" type="button" aria-label="Collapse Instagram">−</button>
+          </div>
+          <div class="widget-body social-stack" id="instagramCards"></div>
+        </article>
+
+        <article class="widget scratchpad" draggable="true" data-widget="scratchpad">
+          <div class="widget-head">
+            <h2>Scratchpad</h2>
+            <button class="collapse" type="button" aria-label="Collapse Scratchpad">−</button>
+          </div>
+          <div class="widget-body">
+            <textarea id="scratchpad" placeholder="Loose notes, fragments, follow-ups"></textarea>
+            <p class="autosave" id="scratchSaved">Autosaves locally</p>
+          </div>
+        </article>
+
+        <article class="widget timer" draggable="true" data-widget="timer">
+          <div class="widget-head">
+            <h2>Focus Timer</h2>
+            <button class="collapse" type="button" aria-label="Collapse Focus Timer">−</button>
+          </div>
+          <div class="widget-body">
+            <div class="timer-face" id="timerFace">25:00</div>
+            <div class="timer-controls">
+              <button type="button" id="timerStart">Start</button>
+              <button type="button" id="timerReset">Reset</button>
+            </div>
+            <div class="timer-settings">
+              <label>Focus <input id="focusMinutes" type="number" min="1" max="120" value="25" /></label>
+              <label>Break <input id="breakMinutes" type="number" min="1" max="60" value="5" /></label>
+            </div>
+          </div>
+        </article>
+
+        <article class="widget social-placeholders" draggable="true" data-widget="social">
+          <div class="widget-head">
+            <h2>Social</h2>
+            <button class="collapse" type="button" aria-label="Collapse Social">−</button>
+          </div>
+          <div class="widget-body social-stack" id="socialCards"></div>
+        </article>
+      </section>
+    </main>
+
+    <dialog id="editLaunchDialog">
+      <form method="dialog" id="editLaunchForm" class="dialog-form">
+        <h2>Edit Quick Launch</h2>
+        <input type="hidden" id="editLaunchIndex" />
+        <label>Title <input id="editLaunchTitle" required /></label>
+        <label>URL <input id="editLaunchUrl" type="url" required /></label>
+        <label>Note <input id="editLaunchNote" /></label>
+        <label>Status <input id="editLaunchStatus" /></label>
+        <div class="dialog-actions">
+          <button type="button" id="cancelLaunchEdit">Cancel</button>
+          <button type="submit">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
