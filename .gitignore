@@ -32,3 +32,10 @@ ios/App/output/
 *.njsproj
 *.sln
 *.sw?
+
+# Session/tooling artifacts
+.remember/
+.superpowers/
+firepit-log.txt
+supabase/.temp/
+tailwind.design-md.js
