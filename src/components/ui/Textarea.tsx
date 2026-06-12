@@ -32,7 +32,7 @@ export function Textarea({
         id={textareaId}
         rows={rows}
         className={cn(
-          'w-full rounded-xl border bg-surface px-3.5 py-2.5 text-sm text-text-primary',
+          'w-full rounded-xl border bg-surface px-3.5 py-2.5 text-base text-text-primary',
           'border-border-light',
           'placeholder:text-text-tertiary',
           'focus:outline-none focus-ring-accent focus:border-transparent',

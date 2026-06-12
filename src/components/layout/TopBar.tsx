@@ -13,7 +13,7 @@ export function TopBar({
   onToggleTheme,
 }: TopBarProps) {
   return (
-    <header className="h-14 border-b border-border-light glass flex items-center justify-between px-4 md:px-6 shrink-0">
+    <header className="h-14 border-b border-border-light glass flex items-center justify-between px-4 md:px-6 shrink-0 select-none-chrome">
       <h1 className="font-display text-lg font-semibold text-text-primary tracking-wide">{title}</h1>
 
       <button

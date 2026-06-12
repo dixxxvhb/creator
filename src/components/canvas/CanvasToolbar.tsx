@@ -140,7 +140,7 @@ export function CanvasToolbar({
   const setToolbarAdvanced = useProfileStore((s) => s.setToolbarAdvanced);
 
   return (
-    <div className="bg-surface-elevated/80 backdrop-blur-sm border border-border rounded-xl px-2 py-1">
+    <div className="bg-surface-elevated/80 backdrop-blur-sm border border-border rounded-xl px-2 py-1 select-none-chrome">
       {/* Essential toolbar row */}
       <div className="flex items-center gap-0.5 flex-wrap">
         {/* Formation navigation */}

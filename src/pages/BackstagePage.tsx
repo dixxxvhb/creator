@@ -143,9 +143,9 @@ export function BackstagePage() {
 
   return (
     <TierGate feature="shows">
-    <div className="fixed inset-0 bg-gray-950 flex flex-col z-50 select-none">
+    <div className="fixed inset-0 bg-gray-950 flex flex-col z-50 select-none safe-x">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800 safe-top">
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <button
             onClick={goBack}
@@ -278,7 +278,7 @@ export function BackstagePage() {
       </div>
 
       {/* Bottom navigation */}
-      <div className="flex items-center justify-between px-6 py-5 border-t border-gray-800">
+      <div className="flex items-center justify-between px-6 py-5 border-t border-gray-800 safe-bottom">
         <button
           onClick={goPrev}
           disabled={isFirst}

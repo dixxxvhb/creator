@@ -158,9 +158,9 @@ export function ViewerPage() {
   const songText = [piece.song_title, piece.song_artist].filter(Boolean).join(' -- ');
 
   return (
-    <div className="min-h-dvh bg-stone-950 flex flex-col text-white">
+    <div className="min-h-dvh bg-stone-950 flex flex-col text-white safe-x">
       {/* Header */}
-      <header className="px-4 py-4 border-b border-stone-800 shrink-0">
+      <header className="px-4 py-4 border-b border-stone-800 shrink-0 safe-top">
         <h1 className="text-lg font-semibold text-center">{piece.title}</h1>
         {songText && (
           <p className="text-xs text-stone-500 text-center mt-0.5">{songText}</p>
@@ -254,7 +254,7 @@ export function ViewerPage() {
 
       {/* Bottom controls */}
       {formations.length > 0 && (
-        <div className="border-t border-stone-800 px-4 py-4 shrink-0">
+        <div className="border-t border-stone-800 px-4 py-4 shrink-0 safe-bottom">
           <div className="flex items-center justify-center gap-4 max-w-md mx-auto">
             <button
               onClick={goPrev}

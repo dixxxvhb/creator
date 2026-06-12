@@ -3,8 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>CREATOR</title>
+
+    <!-- iOS Add-to-Home-Screen: launch fullscreen as a standalone app -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CREATOR" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <!-- Status bar / browser chrome tint (kept in sync at runtime by profileStore.applyTheme) -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FDFBF7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#171412" />
+
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <!-- Early theme: apply dark class before first paint so launch doesn't flash white.
+         Mirrors profileStore semantics: default is DARK; legacy 'creator-theme' key honored. -->
+    <script>
+      (function () {
+        try {
+          var pref = null;
+          var stored = localStorage.getItem('creator-profile');
+          if (stored) pref = (JSON.parse(stored) || {}).themePreference || null;
+          if (!pref) {
+            var legacy = localStorage.getItem('creator-theme');
+            if (legacy === 'dark' || legacy === 'light') pref = legacy;
+          }
+          if (!pref) pref = 'dark'; // store default
+          var dark = pref === 'dark' || (pref === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+
     <!-- GitHub Pages SPA redirect: restores path from 404.html redirect -->
     <script>
       (function(l) {

@@ -60,7 +60,7 @@ export function AppLayout() {
           theme={effectiveTheme}
           onToggleTheme={toggleTheme}
         />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overscroll-contain">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={location.pathname}

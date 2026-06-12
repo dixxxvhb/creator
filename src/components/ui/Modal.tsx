@@ -82,7 +82,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md' }
                 <X size={18} />
               </button>
             </div>
-            <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">{children}</div>
+            <div className="px-6 py-5 max-h-[70vh] overflow-y-auto overscroll-contain">{children}</div>
           </motion.div>
 
           {/* Mobile: bottom sheet with slide-up animation */}
@@ -107,7 +107,7 @@ export function Modal({ open, onClose, title, children, className, size = 'md' }
                 <X size={18} />
               </button>
             </div>
-            <div className="px-5 py-5 pb-8 max-h-[80vh] overflow-y-auto">{children}</div>
+            <div className="px-5 py-5 pb-safe-max-8 max-h-[80vh] overflow-y-auto overscroll-contain">{children}</div>
           </motion.div>
         </motion.div>
       )}

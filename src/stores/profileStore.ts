@@ -79,6 +79,14 @@ function applyTheme(pref: 'light' | 'dark' | 'system') {
   root.classList.toggle('dark', isDark);
   // Remove legacy 'light' class if present
   root.classList.remove('light');
+
+  // Keep the iOS status bar / browser chrome tint in sync. The theme is
+  // user-overridable, so the static media-scoped metas in index.html can
+  // disagree with html.dark — overwrite both with the active surface color.
+  const themeColor = isDark ? '#171412' : '#FDFBF7';
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+    m.setAttribute('content', themeColor);
+  });
 }
 
 // initProfile runs on every AppLayout mount (twice under StrictMode) — the
