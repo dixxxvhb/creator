@@ -1,6 +1,12 @@
 import React, { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Stage, Layer, Rect, Line, Text, Circle, Group } from 'react-konva';
-import type Konva from 'konva';
+import Konva from 'konva';
+
+// Official Konva multi-touch pattern: keep the hit graph live during drags so
+// a second finger landing mid-drag is still seen (needed for pinch-while-
+// dragging). Global flag; the only other Konva surfaces (viewer, rehearsal,
+// thumbnails) are non-draggable, so the per-frame cost is negligible.
+Konva.hitOnDragEnabled = true;
 import { GridLayer } from './GridLayer';
 import { DancerLayer } from './DancerLayer';
 import { PathLayer } from './PathLayer';
@@ -88,6 +94,21 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   const [panY, setPanY] = useState(0);
   const isPanningRef = useRef(false);
   const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+
+  // --- Multi-touch pinch-zoom / two-finger pan ---
+  // touchmove events outrun React commits, so the gesture reads and writes
+  // viewRef synchronously; the effect below re-syncs it after every commit
+  // (covering buttons/wheel/reset, which can't run mid-gesture).
+  const pinchRef = useRef({
+    active: false,
+    lastDist: 0,
+    lastMid: { x: 0, y: 0 },
+    endedAt: 0,
+  });
+  const viewRef = useRef({ zoom: 1, panX: 0, panY: 0 });
+  useEffect(() => {
+    viewRef.current = { zoom, panX, panY };
+  });
 
   const showGrid = useUIStore((s) => s.showGrid);
   const snapToGrid = useUIStore((s) => s.snapToGrid);
@@ -238,6 +259,76 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     [activeFormationId, updateLocalPosition]
   );
 
+  // Two-finger gesture start: kill any in-progress single-finger interaction,
+  // then arm the pinch.
+  const handleTouchStart = useCallback((e: Konva.KonvaEventObject<TouchEvent>) => {
+    if (e.evt.touches.length < 2) return;
+    const stage = stageRef.current;
+    if (!stage) return;
+    e.evt.preventDefault();
+
+    // Second finger down while dragging a dancer: drop the dancer where it
+    // is (autosave + undo cover it) and switch to navigating.
+    stage.find((n: Konva.Node) => n.isDragging()).forEach((n) => n.stopDrag());
+    // Mid-draw pinch: abandon the partial path, no save.
+    if (usePathStore.getState().isDrawing) usePathStore.getState().cancelDrawing();
+
+    const rect = stage.container().getBoundingClientRect();
+    const t = e.evt.touches;
+    const p1 = { x: t[0].clientX - rect.left, y: t[0].clientY - rect.top };
+    const p2 = { x: t[1].clientX - rect.left, y: t[1].clientY - rect.top };
+    pinchRef.current = {
+      active: true,
+      lastDist: Math.hypot(p2.x - p1.x, p2.y - p1.y),
+      lastMid: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 },
+      endedAt: 0,
+    };
+  }, []);
+
+  // Midpoint-anchored pinch math: the stage point under the previous touch
+  // midpoint must land under the new midpoint at the new scale. Folding the
+  // midpoint movement into the anchor gives pinch-zoom AND two-finger pan in
+  // one formula; a pegged zoom still pans, which is the native feel.
+  const handlePinchMove = useCallback(
+    (evt: TouchEvent) => {
+      const stage = stageRef.current;
+      if (!stage) return;
+      const pr = pinchRef.current;
+      const rect = stage.container().getBoundingClientRect();
+      const t = evt.touches;
+      const p1 = { x: t[0].clientX - rect.left, y: t[0].clientY - rect.top };
+      const p2 = { x: t[1].clientX - rect.left, y: t[1].clientY - rect.top };
+      const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
+      const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
+      if (pr.lastDist > 0) {
+        const v = viewRef.current;
+        const W = containerSize.width;
+        const H = containerSize.height;
+        const SW = piece.stage_width;
+        const SD = piece.stage_depth;
+        const scaleOld = baseScale * v.zoom;
+        const zoomNew = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, v.zoom * (dist / pr.lastDist)));
+        const scaleNew = baseScale * zoomNew;
+
+        const sx = (pr.lastMid.x - ((W - SW * scaleOld) / 2 + v.panX)) / scaleOld;
+        const sy = (pr.lastMid.y - ((H - SD * scaleOld) / 2 + v.panY)) / scaleOld;
+        const panXNew = mid.x - sx * scaleNew - (W - SW * scaleNew) / 2;
+        const panYNew = mid.y - sy * scaleNew - (H - SD * scaleNew) / 2;
+
+        viewRef.current = { zoom: zoomNew, panX: panXNew, panY: panYNew };
+        setZoom(zoomNew);
+        setPanX(panXNew);
+        setPanY(panYNew);
+        onZoomChange?.(zoomNew);
+      }
+
+      pr.lastDist = dist;
+      pr.lastMid = mid;
+    },
+    [baseScale, containerSize.width, containerSize.height, piece.stage_width, piece.stage_depth, onZoomChange]
+  );
+
   // Path drawing: convert pixel coords to stage coords
   const pixelToStage = useCallback(
     (pixelX: number, pixelY: number) => ({
@@ -247,9 +338,18 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
     [offsetX, offsetY, scale]
   );
 
-  // Combined mouse move: panning + freehand drawing
+  // Combined mouse move: pinch + panning + freehand drawing
   const handleStageMouseMove = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      // Active pinch owns all pointer movement until it ends.
+      if (pinchRef.current.active) {
+        const evt = e.evt as TouchEvent;
+        if ('touches' in evt && evt.touches.length >= 2) {
+          evt.preventDefault();
+          handlePinchMove(evt);
+        }
+        return;
+      }
       // Middle-button pan
       if (isPanningRef.current && 'clientX' in e.evt) {
         handleMouseMove(e as Konva.KonvaEventObject<MouseEvent>);
@@ -264,11 +364,24 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
       const pt = pixelToStage(pointer.x, pointer.y);
       addDrawingPoint(pt.x, pt.y);
     },
-    [isDrawing, isDragDrawing, canvasMode, pixelToStage, addDrawingPoint, handleMouseMove]
+    [isDrawing, isDragDrawing, canvasMode, pixelToStage, addDrawingPoint, handleMouseMove, handlePinchMove]
   );
 
-  // Mouse up: stop panning + finish freehand drawing
+  // Mouse up: end pinch + stop panning + finish freehand drawing
   const handleStageMouseUp = useCallback((_e?: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+    // End the pinch when fingers drop below two. The remaining finger is
+    // inert (no new touchstart on a dot = no drag resumes) and must never
+    // reach the freehand-save path below.
+    if (pinchRef.current.active) {
+      const evt = _e?.evt as TouchEvent | undefined;
+      const remaining = evt && 'touches' in evt ? evt.touches.length : 0;
+      if (remaining < 2) {
+        pinchRef.current.active = false;
+        pinchRef.current.lastDist = 0;
+        pinchRef.current.endedAt = Date.now();
+      }
+      return;
+    }
     // Stop middle-button pan
     if (isPanningRef.current) {
       isPanningRef.current = false;
@@ -286,6 +399,9 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
   // Click on stage — deselect path and clear dancer selection when in select mode
   const handleStageClick = useCallback(
     (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => {
+      // A sloppy two-finger release can synthesize a stray tap that would
+      // clear the dancer multi-selection — swallow it.
+      if (Date.now() - pinchRef.current.endedAt < 350) return;
       if (canvasMode === 'select') {
         if (e.target === e.target.getStage() || e.target.getClassName() === 'Rect') {
           stopEditing();
@@ -370,6 +486,7 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
         height={containerSize.height}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
         onMouseMove={handleStageMouseMove}
         onTouchMove={handleStageMouseMove}
         onMouseUp={handleStageMouseUp}
