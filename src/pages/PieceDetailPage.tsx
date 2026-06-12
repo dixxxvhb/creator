@@ -4,7 +4,6 @@ import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
 import { Spinner } from '@/components/ui/Spinner';
-import { TemplatePickerModal } from '@/components/canvas';
 import { PieceTabs, PieceNotesPanel, SongSectionsPanel, PieceRosterPanel, CanvasTab, FormationNotesPanel } from '@/components/pieces';
 import type { PieceTab } from '@/components/pieces';
 import { useSongSectionStore } from '@/stores/songSectionStore';
@@ -23,13 +22,7 @@ import { usePlaybackStore } from '@/stores/playbackStore';
 import { computeAverageAge } from '@/lib/age';
 import { toast } from '@/stores/toastStore';
 import { uploadAudio, deleteAudio } from '@/services/audioStorage';
-import { AddDancerModal } from '@/components/canvas/AddDancerModal';
-import { PieceInfoModal } from '@/components/canvas/PieceInfoModal';
-import { DancerManageModal } from '@/components/canvas/DancerManageModal';
-import { ExportModal } from '@/components/export/ExportModal';
-import { PrintView } from '@/components/export/PrintView';
-import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
-import { ShareModal } from '@/components/pieces/ShareModal';
+import { PieceDetailModals } from '@/components/pieces/PieceDetailModals';
 import { DeletePieceDialog } from '@/components/pieces/DeletePieceDialog';
 
 export function PieceDetailPage() {
@@ -413,70 +406,42 @@ export function PieceDetailPage() {
         />
       </div>
 
-      {/* Modals */}
-      <AddDancerModal
-        open={addDancerModalOpen}
-        onClose={() => setAddDancerModalOpen(false)}
+      {/* Modals + overlays */}
+      <PieceDetailModals
+        piece={piece}
+        formations={formations}
+        positions={positions}
+        activePositions={activePositions}
+        activeIdx={activeIdx}
+        activeFormationId={activeFormationId}
         rosterDancers={rosterDancers}
         assignedDancerIds={assignedDancerIds}
-        formations={formations}
-        activeFormationIndex={activeIdx}
+        addDancerOpen={addDancerModalOpen}
+        templatePickerOpen={templatePickerOpen}
+        dancerManageOpen={dancerManageOpen}
+        pieceInfoOpen={pieceInfoOpen}
+        exportModalOpen={exportModalOpen}
+        shortcutsOpen={shortcutsOpen}
+        shareModalOpen={shareModalOpen}
+        onCloseAddDancer={() => setAddDancerModalOpen(false)}
+        onCloseTemplatePicker={() => setTemplatePickerOpen(false)}
+        onCloseDancerManage={() => setDancerManageOpen(false)}
+        onClosePieceInfo={() => setPieceInfoOpen(false)}
+        onCloseExportModal={() => setExportModalOpen(false)}
+        onCloseShortcuts={() => setShortcutsOpen(false)}
+        onCloseShareModal={() => setShareModalOpen(false)}
         onAddDancers={handleAddDancers}
-      />
-
-      <TemplatePickerModal
-        open={templatePickerOpen}
-        onClose={() => setTemplatePickerOpen(false)}
-        onSelect={handleApplyTemplate}
-        dancerCount={piece.dancer_count}
-        hasExistingPositions={activePositions.length > 0}
-        currentPositions={activePositions.map((p) => ({
-          dancer_label: p.dancer_label,
-          dancer_id: p.dancer_id,
-          color: p.color,
-        }))}
-        rosterDancers={rosterDancers}
-      />
-
-      <DancerManageModal
-        open={dancerManageOpen}
-        onClose={() => setDancerManageOpen(false)}
-        positions={activePositions}
-        rosterDancers={rosterDancers}
-        dancerCount={piece.dancer_count}
+        onApplyTemplate={handleApplyTemplate}
         onAssign={updateLocalPositionDancer}
-        activeFormationId={activeFormationId}
-        onAddDancer={() => setAddDancerModalOpen(true)}
+        onOpenAddDancer={() => setAddDancerModalOpen(true)}
         onRemoveDancer={() => handleRemoveDancer()}
-      />
-
-      <PieceInfoModal
-        open={pieceInfoOpen}
-        onClose={() => setPieceInfoOpen(false)}
-        piece={piece}
-        onSave={async (updates) => {
+        onSavePieceInfo={async (updates) => {
           await updatePiece(piece.id, updates);
         }}
-      />
-
-      <ExportModal
-        open={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
         onExport={handleExport}
         isExporting={isExporting}
-        formationCount={formations.length}
-      />
-
-      <KeyboardShortcutsModal
-        open={shortcutsOpen}
-        onClose={() => setShortcutsOpen(false)}
-      />
-
-      <ShareModal
-        open={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-        pieceId={piece.id}
-        pieceTitle={piece.title}
+        printData={printData}
+        onClosePrint={() => setPrintData(null)}
       />
 
       {/* Delete piece confirmation */}
@@ -486,26 +451,6 @@ export function PieceDetailPage() {
         onCancel={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeletePiece}
       />
-
-      {printData && piece && (
-        <PrintView
-          piece={piece}
-          formations={formations}
-          positions={positions}
-          stageImages={printData.stageImages}
-          onClose={() => setPrintData(null)}
-        />
-      )}
-
-      {/* Export overlay */}
-      {isExporting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto">
-          <div className="flex flex-col items-center gap-3">
-            <Spinner size="lg" />
-            <p className="text-sm font-medium text-white">Exporting...</p>
-          </div>
-        </div>
-      )}
     </PageContainer>
   );
 }
