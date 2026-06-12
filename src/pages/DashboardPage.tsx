@@ -5,7 +5,6 @@ import { Plus, Layers, Trophy, Users, ArrowRight, Music, Trash2, Sparkles } from
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Spinner } from '@/components/ui/Spinner';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { useRosterStore } from '@/stores/rosterStore';
@@ -200,8 +199,16 @@ export function DashboardPage() {
             </div>
 
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Spinner size="lg" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3.5 rounded-xl bg-surface-secondary">
+                    <div className="skeleton w-10 h-10 rounded-xl shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-3.5 w-3/4" />
+                      <div className="skeleton h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : pieces.length === 0 ? (
               <div className="text-center py-8">

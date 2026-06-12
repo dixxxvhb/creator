@@ -168,14 +168,18 @@ export const useFormationStore = create<FormationState>()(
       if (!targetPos) return state;
       const label = targetPos.dancer_label;
 
-      // Update this position AND all positions with the same label in other formations
+      // Update this position AND all positions with the same label in other
+      // formations. Preserve array references where nothing matched, so
+      // memoized thumbnails of untouched formations skip re-rendering.
       const newPositions = { ...state.positions };
       for (const [fId, fPositions] of Object.entries(newPositions)) {
-        newPositions[fId] = fPositions.map((p) =>
-          p.dancer_label === label
-            ? { ...p, dancer_id: dancerId, ...(color ? { color } : {}) }
-            : p
-        );
+        let changed = false;
+        const mapped = fPositions.map((p) => {
+          if (p.dancer_label !== label) return p;
+          changed = true;
+          return { ...p, dancer_id: dancerId, ...(color ? { color } : {}) };
+        });
+        if (changed) newPositions[fId] = mapped;
       }
 
       return { isDirty: true, editGeneration: state.editGeneration + 1, positions: newPositions };
