@@ -12,6 +12,7 @@ import type { BugStatus } from '@/types';
 import { cn } from '@/lib/utils';
 import { ADMIN_EMAIL } from '@/lib/beta';
 import { Badge } from '@/components/ui/Badge';
+import { InstallPromptCard } from '@/components/shared/InstallPromptCard';
 
 type ThemePref = 'light' | 'dark' | 'system';
 
@@ -228,6 +229,9 @@ export function SettingsPage() {
             </div>
           </Card>
         </section>
+
+        {/* Install on iPad (hidden once installed / on desktop) */}
+        <InstallPromptCard />
 
         {/* Stage Defaults Section */}
         <section>
