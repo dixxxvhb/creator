@@ -10,6 +10,7 @@ import { PieceTabs, PieceNotesPanel, SongSectionsPanel, PieceRosterPanel, Canvas
 import type { PieceTab } from '@/components/pieces';
 import { useSongSectionStore } from '@/stores/songSectionStore';
 import type { FormationCanvasHandle } from '@/components/canvas';
+import { SaveStatusIndicator } from '@/components/canvas/SaveStatusIndicator';
 import { usePlayback } from '@/hooks/usePlayback';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useFormationEditor } from '@/hooks/useFormationEditor';
@@ -82,6 +83,8 @@ export function PieceDetailPage() {
     handleQuickPopulate,
     handleQuickAddDancer,
     handleSavePositions,
+    saveStatus,
+    flushPendingSaves,
     canUndo,
     canRedo,
     handleUndo,
@@ -144,10 +147,14 @@ export function PieceDetailPage() {
   useEffect(() => {
     if (id) loadFormations(id);
     return () => {
+      // Flush BEFORE wiping the store — edits younger than the autosave
+      // debounce would otherwise be lost on every navigation away.
+      // (performSave snapshots synchronously, so reset() right after is safe.)
+      void flushPendingSaves();
       useFormationStore.getState().reset();
       usePathStore.getState().reset();
     };
-  }, [id, loadFormations]);
+  }, [id, loadFormations, flushPendingSaves]);
 
   useEffect(() => {
     if (id) loadSongSections(id);
@@ -309,6 +316,7 @@ export function PieceDetailPage() {
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          <SaveStatusIndicator status={saveStatus} />
           <Button variant="secondary" size="sm" onClick={() => setShareModalOpen(true)}>
             <Share2 size={14} />
             <span className="hidden sm:inline">Share</span>

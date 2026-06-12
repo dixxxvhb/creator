@@ -35,7 +35,7 @@ interface CanvasTabProps {
   toggleLoop: () => void;
   // Handlers from useFormationEditor
   onAddFormation: () => void;
-  onDeleteFormation: () => void;
+  onDeleteFormation: (id?: string) => void;
   onRemoveDancer: (label?: string) => void;
   onQuickPopulate: (count: number) => void;
   // Modal openers

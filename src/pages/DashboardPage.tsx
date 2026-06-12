@@ -54,7 +54,7 @@ export function DashboardPage() {
     try {
       for (const table of RESET_TABLES) {
         const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) console.warn(`Failed to clear ${table}:`, error.message);
+        if (error && import.meta.env.DEV) console.warn(`Failed to clear ${table}:`, error.message);
       }
       toast.success('All test data cleared');
       // Reload stores

@@ -35,51 +35,37 @@ export function useFormationEditor(pieceId: string | undefined) {
 
   // --- Auto-save logic ---
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedFadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const templateHintShown = useRef(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  // Saves are serialized through this queue so a flush can never race an
+  // in-flight autosave on the same formation.
+  const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
 
-  const flushAutoSave = useCallback(() => {
-    if (autoSaveTimerRef.current) {
-      clearTimeout(autoSaveTimerRef.current);
-      autoSaveTimerRef.current = null;
-    }
-    const dirtyFlag = useFormationStore.getState().isDirty;
-    if (!dirtyFlag) return;
-    const allPositions = useFormationStore.getState().positions;
-    const formationIds = Object.keys(allPositions);
-    formationIds.forEach((fId) => {
-      const positionsForFormation = allPositions[fId];
-      if (!positionsForFormation || positionsForFormation.length === 0) return;
-      const inserts: DancerPositionInsert[] = positionsForFormation.map((pos) => ({
-        formation_id: fId,
-        dancer_id: pos.dancer_id,
-        dancer_label: pos.dancer_label,
-        x: pos.x,
-        y: pos.y,
-        color: pos.color,
-      }));
-      savePositions(fId, inserts, true);
-    });
-  }, [savePositions]);
+  const scheduleSavedFade = useCallback(() => {
+    if (savedFadeTimerRef.current) clearTimeout(savedFadeTimerRef.current);
+    savedFadeTimerRef.current = setTimeout(() => setSaveStatus('idle'), 2500);
+  }, []);
 
-  // Flush on formation switch so pending saves aren't lost
-  const prevFormationId = useRef(activeFormationId);
-  useEffect(() => {
-    if (prevFormationId.current && prevFormationId.current !== activeFormationId) {
-      flushAutoSave();
-    }
-    prevFormationId.current = activeFormationId;
-  }, [activeFormationId, flushAutoSave]);
+  /**
+   * Persist every formation's positions. Snapshots the store SYNCHRONOUSLY at
+   * call time — callers may reset the store right after (navigation cleanup)
+   * and the snapshot must predate that. Clears isDirty only if no new edits
+   * arrived while the save was in flight (editGeneration check).
+   */
+  const performSave = useCallback((): Promise<boolean> => {
+    const store = useFormationStore.getState();
+    if (!store.isDirty) return Promise.resolve(true);
+    const gen = store.editGeneration;
+    const snapshot = store.positions;
 
-  useEffect(() => {
-    if (!isDirty || !activeFormationId) return;
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
-    autoSaveTimerRef.current = setTimeout(() => {
-      const allPositions = useFormationStore.getState().positions;
-      const formationIds = Object.keys(allPositions);
-      Promise.all(
-        formationIds.map((fId) => {
-          const positionsForFormation = allPositions[fId];
-          if (!positionsForFormation || positionsForFormation.length === 0) return Promise.resolve();
+    const run = async (): Promise<boolean> => {
+      const results = await Promise.all(
+        Object.keys(snapshot).map((fId) => {
+          const positionsForFormation = snapshot[fId];
+          if (!positionsForFormation || positionsForFormation.length === 0) {
+            return Promise.resolve(true);
+          }
           const inserts: DancerPositionInsert[] = positionsForFormation.map((pos) => ({
             formation_id: fId,
             dancer_id: pos.dancer_id,
@@ -88,14 +74,86 @@ export function useFormationEditor(pieceId: string | undefined) {
             y: pos.y,
             color: pos.color,
           }));
-          return savePositions(fId, inserts, true);
+          return useFormationStore.getState().savePositions(fId, inserts, true);
         })
       );
+      const ok = results.every((r) => r !== false);
+      if (ok && useFormationStore.getState().editGeneration === gen) {
+        useFormationStore.getState().clearDirty();
+      }
+      return ok;
+    };
+
+    const next = saveQueueRef.current.then(run);
+    // savePositions never rejects, but keep the queue unbreakable regardless.
+    saveQueueRef.current = next.catch(() => false);
+    return next;
+  }, []);
+
+  /** Cancel the pending debounce timer and save immediately if dirty. */
+  const flushPendingSaves = useCallback((): Promise<boolean> => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    return performSave();
+  }, [performSave]);
+
+  // Flush on formation switch so pending saves aren't lost
+  const prevFormationId = useRef(activeFormationId);
+  useEffect(() => {
+    if (prevFormationId.current && prevFormationId.current !== activeFormationId) {
+      void flushPendingSaves();
+    }
+    prevFormationId.current = activeFormationId;
+  }, [activeFormationId, flushPendingSaves]);
+
+  // Trailing debounce: re-keyed on `positions` so every edit re-arms the
+  // timer — including edits made after a failed save (isDirty stays true).
+  useEffect(() => {
+    if (!isDirty) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      autoSaveTimerRef.current = null;
+      setSaveStatus('saving');
+      let ok = await performSave();
+      if (!ok) {
+        // One quiet retry before telling the teacher.
+        await new Promise((resolve) => setTimeout(resolve, 2500));
+        ok = await performSave();
+      }
+      if (ok) {
+        setSaveStatus('saved');
+        scheduleSavedFade();
+      } else {
+        setSaveStatus('error');
+        toast.error("Couldn't save your changes. Check your connection. They'll retry when you keep editing.");
+      }
     }, 1500);
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [isDirty, activeFormationId, savePositions]);
+  }, [positions, isDirty, performSave, scheduleSavedFade]);
+
+  // iOS-safe flush surfaces: visibilitychange fires on home-swipe/app-switch
+  // in standalone web apps (beforeunload is unreliable on iOS), pagehide on
+  // real navigations, and the unmount cleanup covers in-app route changes.
+  useEffect(() => {
+    const flushIfDirty = () => {
+      if (useFormationStore.getState().isDirty) void flushPendingSaves();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushIfDirty();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', flushIfDirty);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', flushIfDirty);
+      if (savedFadeTimerRef.current) clearTimeout(savedFadeTimerRef.current);
+      flushIfDirty();
+    };
+  }, [flushPendingSaves]);
 
   // --- Notes debounce logic ---
   const [localChoreoNotes, setLocalChoreoNotes] = useState('');
@@ -162,11 +220,14 @@ export function useFormationEditor(pieceId: string | undefined) {
     }
   }
 
-  async function handleDeleteFormation() {
-    if (!activeFormationId || formations.length <= 1) return;
+  async function handleDeleteFormation(id?: string) {
+    // Delete the formation the user actually tapped (thumbnail X passes its
+    // id); fall back to the active one for keyboard/toolbar paths.
+    const targetId = id ?? activeFormationId;
+    if (!targetId || formations.length <= 1) return;
     try {
       const removeFormation = useFormationStore.getState().removeFormation;
-      await removeFormation(activeFormationId);
+      await removeFormation(targetId);
     } catch {
       toast.error('Failed to delete formation');
     }
@@ -339,15 +400,18 @@ export function useFormationEditor(pieceId: string | undefined) {
 
   async function handleSavePositions() {
     if (!activeFormationId) return;
-    const inserts: DancerPositionInsert[] = activePositions.map((pos) => ({
-      formation_id: activeFormationId,
-      dancer_id: pos.dancer_id,
-      dancer_label: pos.dancer_label,
-      x: pos.x,
-      y: pos.y,
-      color: pos.color,
-    }));
-    await savePositions(activeFormationId, inserts);
+    // Manual save goes through the same serialized queue as autosave.
+    useFormationStore.getState().markDirty();
+    setSaveStatus('saving');
+    const ok = await flushPendingSaves();
+    if (ok) {
+      setSaveStatus('saved');
+      scheduleSavedFade();
+      toast.success('Positions saved');
+    } else {
+      setSaveStatus('error');
+      toast.error("Couldn't save. Check your connection and try again.");
+    }
   }
 
   // --- Undo/Redo for position changes via zundo ---
@@ -355,11 +419,19 @@ export function useFormationEditor(pieceId: string | undefined) {
   const canRedo = useStore(useFormationStore.temporal, (s) => s.futureStates.length > 0);
 
   const handleUndo = useCallback(() => {
-    useFormationStore.temporal.getState().undo();
+    const temporal = useFormationStore.temporal.getState();
+    if (temporal.pastStates.length === 0) return;
+    temporal.undo();
+    // zundo restores positions directly — mark dirty so the reverted layout
+    // autosaves instead of silently un-undoing on the next reload.
+    useFormationStore.getState().markDirty();
   }, []);
 
   const handleRedo = useCallback(() => {
-    useFormationStore.temporal.getState().redo();
+    const temporal = useFormationStore.temporal.getState();
+    if (temporal.futureStates.length === 0) return;
+    temporal.redo();
+    useFormationStore.getState().markDirty();
   }, []);
 
   // Keyboard bindings: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z = redo
@@ -410,6 +482,8 @@ export function useFormationEditor(pieceId: string | undefined) {
     handleQuickPopulate,
     handleQuickAddDancer,
     handleSavePositions,
+    saveStatus,
+    flushPendingSaves,
     canUndo,
     canRedo,
     handleUndo,

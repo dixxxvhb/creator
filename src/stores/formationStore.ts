@@ -3,7 +3,7 @@ import { temporal } from 'zundo';
 import type { Formation, FormationInsert, FormationUpdate, DancerPosition, DancerPositionInsert } from '@/types';
 import * as formationsService from '@/services/formations';
 import * as positionsService from '@/services/dancerPositions';
-import { toast } from '@/stores/toastStore';
+import { toast, isAuthError } from '@/stores/toastStore';
 import { withRetry } from '@/lib/withRetry';
 
 interface FormationState {
@@ -12,6 +12,12 @@ interface FormationState {
   activeFormationId: string | null;
   isLoading: boolean;
   isDirty: boolean;
+  /**
+   * Increments on every local position edit. The autosave orchestrator
+   * snapshots this before a save and only clears isDirty if it is unchanged
+   * after — edits that arrive mid-save are never silently marked clean.
+   */
+  editGeneration: number;
   error: string | null;
 
   load: (pieceId: string) => Promise<void>;
@@ -21,7 +27,9 @@ interface FormationState {
   setActiveFormation: (id: string) => void;
   updateLocalPosition: (formationId: string, positionId: string, x: number, y: number) => void;
   updateLocalPositionDancer: (formationId: string, positionId: string, dancerId: string | null, color?: string) => void;
-  savePositions: (formationId: string, positions: DancerPositionInsert[], silent?: boolean) => Promise<void>;
+  markDirty: () => void;
+  clearDirty: () => void;
+  savePositions: (formationId: string, positions: DancerPositionInsert[], silent?: boolean) => Promise<boolean>;
   reorderFormations: (pieceId: string, orderedIds: string[]) => Promise<void>;
   goNext: () => void;
   goPrev: () => void;
@@ -36,6 +44,7 @@ export const useFormationStore = create<FormationState>()(
   activeFormationId: null,
   isLoading: false,
   isDirty: false,
+  editGeneration: 0,
   error: null,
 
   load: async (pieceId) => {
@@ -138,6 +147,7 @@ export const useFormationStore = create<FormationState>()(
       if (!formationPositions) return state;
       return {
         isDirty: true,
+        editGeneration: state.editGeneration + 1,
         positions: {
           ...state.positions,
           [formationId]: formationPositions.map((p) =>
@@ -168,9 +178,14 @@ export const useFormationStore = create<FormationState>()(
         );
       }
 
-      return { isDirty: true, positions: newPositions };
+      return { isDirty: true, editGeneration: state.editGeneration + 1, positions: newPositions };
     });
   },
+
+  markDirty: () =>
+    set((state) => ({ isDirty: true, editGeneration: state.editGeneration + 1 })),
+
+  clearDirty: () => set({ isDirty: false }),
 
   goNext: () => {
     const { formations, activeFormationId } = get();
@@ -189,16 +204,24 @@ export const useFormationStore = create<FormationState>()(
   },
 
   savePositions: async (formationId, positionInserts, silent = false) => {
+    // Snapshot before the await: if the user edits this formation while the
+    // save is in flight, the echo below must not clobber their newer state.
+    const before = get().positions[formationId];
     try {
       const saved = await positionsService.upsertPositions(formationId, positionInserts);
-      set((state) => ({
-        positions: { ...state.positions, [formationId]: saved },
-        isDirty: false,
-      }));
+      set((state) => {
+        if (state.positions[formationId] !== before) return state; // mid-flight edit wins
+        return { positions: { ...state.positions, [formationId]: saved } };
+      });
       if (!silent) toast.success('Positions saved');
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save positions';
-      toast.error(message);
+      // Silent (autosave) failures are surfaced by the orchestrator, not here —
+      // EXCEPT auth errors, which must keep flowing through the expired-session
+      // sign-out interception in toastStore.
+      if (!silent || isAuthError(message)) toast.error(message);
+      return false;
     }
   },
 
@@ -209,6 +232,7 @@ export const useFormationStore = create<FormationState>()(
       activeFormationId: null,
       isLoading: false,
       isDirty: false,
+      editGeneration: 0,
       error: null,
     }),
     }),
