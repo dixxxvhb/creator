@@ -9,6 +9,7 @@ import * as costumesService from '@/services/costumes';
 import * as accessoriesService from '@/services/costumeAccessories';
 import * as propsService from '@/services/props';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface CostumeState {
   costumes: Costume[];
@@ -49,12 +50,12 @@ export const useCostumeStore = create<CostumeState>((set) => ({
   load: async () => {
     set({ isLoading: true });
     try {
-      const [costumes, assignments, accessories, props] = await Promise.all([
+      const [costumes, assignments, accessories, props] = await withRetry(() => Promise.all([
         costumesService.fetchCostumes(),
         costumesService.fetchAssignments(),
         accessoriesService.fetchAccessories(),
         propsService.fetchProps(),
-      ]);
+      ]));
       set({ costumes, assignments, accessories, props, isLoading: false });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load costumes');

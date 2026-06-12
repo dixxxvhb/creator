@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { DancerPath, PathPoint } from '@/types';
 import * as pathsService from '@/services/dancerPaths';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface UndoEntry {
   type: 'save' | 'remove';
@@ -52,7 +53,7 @@ export const usePathStore = create<PathState>((set, get) => ({
 
   loadPaths: async (formationIds) => {
     try {
-      const paths = await pathsService.fetchPathsBatch(formationIds);
+      const paths = await withRetry(() => pathsService.fetchPathsBatch(formationIds));
       set({ paths, undoStack: [] });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load paths';

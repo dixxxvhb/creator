@@ -1,5 +1,6 @@
 import { useEffect, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { AppLayout } from '@/components/layout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { useAuthStore } from '@/stores/authStore';
@@ -60,6 +61,16 @@ export function App() {
         <Route path="/view/:token" element={<ViewerPage />} />
         <Route path="/*" element={<AuthenticatedApp />} />
       </Routes>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: 'var(--color-surface-elevated)',
+            border: '1px solid var(--color-border-light)',
+            color: 'var(--color-text-primary)',
+          },
+        }}
+      />
     </BrowserRouter>
   );
 }

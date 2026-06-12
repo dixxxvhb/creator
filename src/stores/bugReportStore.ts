@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { BugReport, BugReportInsert, BugStatus } from '@/types';
 import * as bugReportService from '@/services/bugReports';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface BugReportState {
   reports: BugReport[];
@@ -20,7 +21,7 @@ export const useBugReportStore = create<BugReportState>((set) => ({
   load: async () => {
     set({ isLoading: true, error: null });
     try {
-      const reports = await bugReportService.fetchBugReports();
+      const reports = await withRetry(() => bugReportService.fetchBugReports());
       set({ reports, isLoading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load bug reports';

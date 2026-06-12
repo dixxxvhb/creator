@@ -1,7 +1,6 @@
 import { useEffect, Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Toaster } from 'sonner';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { BottomTabBar } from './BottomTabBar';
@@ -85,16 +84,6 @@ export function AppLayout() {
       {/* Mobile bottom tabs */}
       <BottomTabBar />
 
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: 'var(--color-surface-elevated)',
-            border: '1px solid var(--color-border-light)',
-            color: 'var(--color-text-primary)',
-          },
-        }}
-      />
       <BugReportButton />
     </div>
   );

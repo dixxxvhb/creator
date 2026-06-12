@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Stage, Layer, Circle, Text, Line, Rect } from 'react-konva';
 import { ChevronLeft, ChevronRight, Play, Pause } from 'lucide-react';
 import { fetchSharedPiecePayload } from '@/services/pieceShares';
+import { withRetry } from '@/lib/withRetry';
 import { cn } from '@/lib/utils';
 import type { Piece, Formation, DancerPosition } from '@/types';
 
@@ -44,7 +45,7 @@ export function ViewerPage() {
 
     async function load() {
       try {
-        const payload = await fetchSharedPiecePayload(shareToken);
+        const payload = await withRetry(() => fetchSharedPiecePayload(shareToken));
         if (!payload) {
           setError('This share link is invalid, expired, or has been revoked.');
           return;

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Show, ShowInsert, ShowUpdate, ShowAct, ShowActInsert, ShowActUpdate } from '@/types';
 import * as showsService from '@/services/shows';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface ShowState {
   shows: Show[];
@@ -31,10 +32,11 @@ export const useShowStore = create<ShowState>((set, get) => ({
   loadAllShows: async () => {
     set({ isLoading: true, error: null });
     try {
-      const shows = await showsService.fetchAllShows();
+      const shows = await withRetry(() => showsService.fetchAllShows());
       set({ shows, isLoading: false });
-    } catch (e: any) {
-      set({ error: e.message, isLoading: false });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load shows';
+      set({ error: message, isLoading: false });
       toast.error('Failed to load shows');
     }
   },
@@ -42,10 +44,11 @@ export const useShowStore = create<ShowState>((set, get) => ({
   loadShows: async (seasonId) => {
     set({ isLoading: true, error: null });
     try {
-      const shows = await showsService.fetchShows(seasonId);
+      const shows = await withRetry(() => showsService.fetchShows(seasonId));
       set({ shows, isLoading: false });
-    } catch (e: any) {
-      set({ error: e.message, isLoading: false });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load shows';
+      set({ error: message, isLoading: false });
       toast.error('Failed to load shows');
     }
   },
@@ -56,7 +59,7 @@ export const useShowStore = create<ShowState>((set, get) => ({
       set({ shows: [...get().shows, created] });
       toast.success('Show created');
       return created;
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to create show');
       return null;
     }
@@ -66,7 +69,7 @@ export const useShowStore = create<ShowState>((set, get) => ({
     try {
       const updated = await showsService.updateShow(id, updates);
       set({ shows: get().shows.map((s) => (s.id === id ? updated : s)) });
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to update show');
     }
   },
@@ -79,16 +82,16 @@ export const useShowStore = create<ShowState>((set, get) => ({
         showActs: get().showActs.filter((a) => a.show_id !== id),
       });
       toast.success('Show deleted');
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to delete show');
     }
   },
 
   loadShowActs: async (showId) => {
     try {
-      const acts = await showsService.fetchShowActs(showId);
+      const acts = await withRetry(() => showsService.fetchShowActs(showId));
       set({ showActs: acts });
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to load acts');
     }
   },
@@ -98,7 +101,7 @@ export const useShowStore = create<ShowState>((set, get) => ({
       const created = await showsService.createShowAct(act);
       set({ showActs: [...get().showActs, created] });
       return created;
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to add act');
       return null;
     }
@@ -108,7 +111,7 @@ export const useShowStore = create<ShowState>((set, get) => ({
     try {
       const updated = await showsService.updateShowAct(id, updates);
       set({ showActs: get().showActs.map((a) => (a.id === id ? updated : a)) });
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to update act');
     }
   },
@@ -117,7 +120,7 @@ export const useShowStore = create<ShowState>((set, get) => ({
     try {
       await showsService.deleteShowAct(id);
       set({ showActs: get().showActs.filter((a) => a.id !== id) });
-    } catch (e: any) {
+    } catch {
       toast.error('Failed to delete act');
     }
   },
@@ -132,11 +135,16 @@ export const useShowStore = create<ShowState>((set, get) => ({
 
     try {
       await showsService.reorderShowActs(showId, orderedActIds);
-    } catch (e: any) {
-      // Reload on failure
+    } catch {
       toast.error('Failed to reorder acts');
-      const acts = await showsService.fetchShowActs(showId);
-      set({ showActs: acts });
+      // Recovery refetch gets its own guard — if it also fails, the
+      // optimistic order stays on screen rather than throwing unhandled.
+      try {
+        const acts = await showsService.fetchShowActs(showId);
+        set({ showActs: acts });
+      } catch {
+        // keep optimistic state; next loadShowActs will reconcile
+      }
     }
   },
 }));

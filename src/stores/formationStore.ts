@@ -4,6 +4,7 @@ import type { Formation, FormationInsert, FormationUpdate, DancerPosition, Dance
 import * as formationsService from '@/services/formations';
 import * as positionsService from '@/services/dancerPositions';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface FormationState {
   formations: Formation[];
@@ -40,10 +41,10 @@ export const useFormationStore = create<FormationState>()(
   load: async (pieceId) => {
     set({ isLoading: true, error: null });
     try {
-      const formations = await formationsService.fetchFormations(pieceId);
+      const formations = await withRetry(() => formationsService.fetchFormations(pieceId));
       const formationIds = formations.map((f) => f.id);
       const positions = formationIds.length > 0
-        ? await positionsService.fetchPositionsBatch(formationIds)
+        ? await withRetry(() => positionsService.fetchPositionsBatch(formationIds))
         : {};
       set({
         formations,

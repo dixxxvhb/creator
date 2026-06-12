@@ -9,7 +9,7 @@ const AUTH_ERROR_PATTERNS = [
   'invalid_grant',
 ];
 
-function isAuthError(message: string): boolean {
+export function isAuthError(message: string): boolean {
   return AUTH_ERROR_PATTERNS.some((p) => message.includes(p));
 }
 
