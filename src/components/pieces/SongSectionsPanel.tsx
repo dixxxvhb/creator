@@ -54,7 +54,7 @@ export function SongSectionsPanel({ piece, formations }: SongSectionsPanelProps)
         <Card>
           <div className="text-center py-8">
             <p className="text-sm text-text-secondary mb-1">No song duration set</p>
-            <p className="text-xs text-text-tertiary">Set the song length in piece info to use song sections.</p>
+            <p className="text-xs text-text-tertiary">Add your song length in Piece Details to start mapping your music.</p>
           </div>
         </Card>
       </div>
@@ -122,7 +122,7 @@ export function SongSectionsPanel({ piece, formations }: SongSectionsPanelProps)
           </div>
 
           {sections.length === 0 ? (
-            <p className="text-sm text-text-tertiary text-center py-4">No sections yet. Add one to map out the song structure.</p>
+            <p className="text-sm text-text-tertiary text-center py-4">No cues yet. Add one to map out your song.</p>
           ) : (
             <div className="space-y-2">
               {sections.map((section) => (

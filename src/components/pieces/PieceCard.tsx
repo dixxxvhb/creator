@@ -22,7 +22,7 @@ export function PieceCard({ piece }: PieceCardProps) {
 
   const songText =
     piece.song_title || piece.song_artist
-      ? [piece.song_title, piece.song_artist].filter(Boolean).join(' — ')
+      ? [piece.song_title, piece.song_artist].filter(Boolean).join(' · ')
       : 'No song';
 
   async function handleDuplicate(e: React.MouseEvent) {

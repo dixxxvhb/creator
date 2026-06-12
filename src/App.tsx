@@ -21,6 +21,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ defa
 const RehearsalPage = lazy(() => import('@/pages/RehearsalPage').then(m => ({ default: m.RehearsalPage })));
 const BackstagePage = lazy(() => import('@/pages/BackstagePage').then(m => ({ default: m.BackstagePage })));
 const ViewerPage = lazy(() => import('@/pages/ViewerPage').then(m => ({ default: m.ViewerPage })));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 
 function AuthenticatedApp() {
   return (
@@ -59,6 +60,7 @@ export function App() {
     <BrowserRouter basename="/creator">
       <Routes>
         <Route path="/view/:token" element={<ViewerPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/*" element={<AuthenticatedApp />} />
       </Routes>
       <Toaster

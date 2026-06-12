@@ -166,7 +166,7 @@ function TransitionIndicator({
             ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25'
             : 'text-text-tertiary hover:text-text-secondary'
         }`}
-        title={count > 0 ? `${count} path${count !== 1 ? 's' : ''} — click to manage` : 'No paths'}
+        title={count > 0 ? `${count} path${count !== 1 ? 's' : ''}. Tap to manage` : 'No paths'}
       >
         <ArrowRight size={10} />
         {count > 0 && <span>{count}</span>}

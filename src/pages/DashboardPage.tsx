@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Layers, Trophy, Users, ArrowRight, Music, Trash2 } from 'lucide-react';
+import { Plus, Layers, Trophy, Users, ArrowRight, Music, Trash2, Sparkles } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -15,6 +15,7 @@ import { staggerContainer, staggerItem } from '@/lib/motion';
 import { TierGate } from '@/components/ui/TierGate';
 import { BETA_ENABLED, RESET_TABLES } from '@/lib/beta';
 import { supabase } from '@/lib/supabase';
+import { createSamplePiece } from '@/lib/sampleData';
 import { toast } from '@/stores/toastStore';
 
 function formatDate(date: Date): string {
@@ -38,6 +39,22 @@ export function DashboardPage() {
   const customGreeting = useProfileStore((s) => s.customGreeting);
   const [isResetting, setIsResetting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [isCreatingSample, setIsCreatingSample] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleTrySample() {
+    setIsCreatingSample(true);
+    const { defaultStageWidth, defaultStageDepth } = useProfileStore.getState();
+    try {
+      const piece = await createSamplePiece(defaultStageWidth, defaultStageDepth);
+      await load();
+      navigate(`/pieces/${piece.id}`);
+    } catch {
+      toast.error('Could not set up the sample piece. You can still create one from scratch.');
+    } finally {
+      setIsCreatingSample(false);
+    }
+  }
 
   useEffect(() => {
     load();
@@ -194,12 +211,18 @@ export function DashboardPage() {
                 <p className="text-sm text-text-secondary mb-4">
                   No pieces yet. Create your first piece to get started.
                 </p>
-                <Link to="/pieces/new">
-                  <Button size="sm">
-                    <Plus size={14} />
-                    Create piece
+                <div className="flex items-center justify-center gap-2">
+                  <Link to="/pieces/new">
+                    <Button size="sm">
+                      <Plus size={14} />
+                      Create piece
+                    </Button>
+                  </Link>
+                  <Button size="sm" variant="secondary" onClick={handleTrySample} loading={isCreatingSample}>
+                    <Sparkles size={14} />
+                    Try a sample piece
                   </Button>
-                </Link>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

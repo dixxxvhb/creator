@@ -213,7 +213,7 @@ export function useFormationEditor(pieceId: string | undefined) {
           color: p.color,
         }));
         await savePositions(newFormation.id, copiedPositions);
-        toast.info('Positions copied — tap a dancer to draw their transition path.');
+        toast.info('Positions copied. Tap a dancer to draw their travel path.');
       }
     } catch {
       toast.error('Failed to add formation');
@@ -312,7 +312,7 @@ export function useFormationEditor(pieceId: string | undefined) {
 
       const newCount = piece.dancer_count + 1;
       if (newCount < 4) {
-        toast.info(`Only ${newCount} dancer${newCount !== 1 ? 's' : ''} so far — add more anytime from the toolbar.`);
+        toast.info(`Only ${newCount} dancer${newCount !== 1 ? 's' : ''} so far. Add more anytime from the toolbar.`);
       }
 
       if (piece.dancer_count === 0 && !templateHintShown.current) {

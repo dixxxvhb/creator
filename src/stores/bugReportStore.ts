@@ -33,7 +33,7 @@ export const useBugReportStore = create<BugReportState>((set) => ({
   submit: async (report) => {
     try {
       await bugReportService.createBugReport(report);
-      toast.success('Bug report submitted — thank you!');
+      toast.success('Bug report submitted. Thank you!');
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to submit bug report';

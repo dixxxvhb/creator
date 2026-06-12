@@ -590,7 +590,7 @@ export const FormationCanvas = forwardRef<FormationCanvasHandle, FormationCanvas
             {!isDrawing ? (
               'Grab a dancer and drag to draw their path'
             ) : (
-              <>Drawing <strong>{drawingDancerLabel}</strong> — release to finish</>
+              <>Drawing <strong>{drawingDancerLabel}</strong>. Release to finish.</>
             )}
             <span className="text-white/50 ml-2">Esc to cancel</span>
           </div>

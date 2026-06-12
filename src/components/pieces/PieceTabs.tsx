@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 const TABS = [
   { id: 'canvas', label: 'Canvas' },
   { id: 'notes', label: 'Notes' },
-  { id: 'sections', label: 'Song Sections' },
+  { id: 'sections', label: 'Music Cues' },
   { id: 'roster', label: 'Roster' },
 ] as const;
 

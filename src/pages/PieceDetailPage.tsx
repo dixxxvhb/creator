@@ -277,7 +277,7 @@ export function PieceDetailPage() {
   // --- Derived display values ---
   const songText =
     piece.song_title || piece.song_artist
-      ? [piece.song_title, piece.song_artist].filter(Boolean).join(' — ')
+      ? [piece.song_title, piece.song_artist].filter(Boolean).join(' · ')
       : null;
 
   const assignedDancerIds = new Set(
@@ -356,7 +356,7 @@ export function PieceDetailPage() {
         )}
         {avgAge !== null && (
           <Badge variant="default">
-            Avg age: {avgAge.toFixed(1)}
+            Average age {avgAge.toFixed(1)}
           </Badge>
         )}
       </div>

@@ -84,7 +84,7 @@ export function SettingsPage() {
               <div>
                 <Input
                   label="Custom Greeting"
-                  placeholder="e.g. Let's create, {name}"
+                  placeholder="e.g. Time to make magic"
                   value={customGreeting}
                   onChange={(e) => setCustomGreeting(e.target.value)}
                 />
@@ -106,7 +106,7 @@ export function SettingsPage() {
                     <span className="text-text-tertiary text-xs">Logo</span>
                   </div>
                   <p className="text-xs text-text-tertiary">
-                    Available after sign-in is enabled
+                    Coming soon
                   </p>
                 </div>
               </div>
@@ -121,7 +121,7 @@ export function SettingsPage() {
                     </span>
                   </div>
                   <p className="text-xs text-text-tertiary">
-                    Available after sign-in is enabled
+                    Coming soon
                   </p>
                 </div>
               </div>
@@ -241,7 +241,7 @@ export function SettingsPage() {
           <Card>
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Width (px)"
+                label="Stage Width"
                 type="number"
                 value={defaultStageWidth}
                 onChange={(e) => setDefaultStageWidth(parseInt(e.target.value) || 800)}
@@ -249,7 +249,7 @@ export function SettingsPage() {
                 max={1600}
               />
               <Input
-                label="Depth (px)"
+                label="Stage Depth"
                 type="number"
                 value={defaultStageDepth}
                 onChange={(e) => setDefaultStageDepth(parseInt(e.target.value) || 600)}
@@ -258,7 +258,7 @@ export function SettingsPage() {
               />
             </div>
             <p className="text-xs text-text-tertiary mt-3">
-              Stage size applied to new pieces.
+              Used for new pieces. Bigger numbers give dancers more room to spread out.
             </p>
           </Card>
         </section>

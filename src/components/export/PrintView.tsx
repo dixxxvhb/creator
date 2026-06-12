@@ -19,7 +19,7 @@ export function PrintView({ piece, formations, positions, stageImages, onClose }
     return () => clearTimeout(timeout);
   }, [onClose]);
 
-  const songText = [piece.song_title, piece.song_artist].filter(Boolean).join(' — ');
+  const songText = [piece.song_title, piece.song_artist].filter(Boolean).join(' · ');
 
   return (
     <div className="fixed inset-0 z-50 bg-white overflow-auto print:static print:z-auto">

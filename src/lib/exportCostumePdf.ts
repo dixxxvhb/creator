@@ -78,7 +78,7 @@ export function exportDancerCostumePdf(data: CostumePdfData) {
         const parts: string[] = [acc.accessory_type];
         if (acc.description) parts.push(acc.description);
         if (acc.color) parts.push(`(${acc.color})`);
-        doc.text(`  - ${parts.join(' — ')}`, 18, y); y += 5;
+        doc.text(`  - ${parts.join(' · ')}`, 18, y); y += 5;
       }
     }
 
@@ -93,7 +93,7 @@ export function exportAllCostumesPdf(allData: CostumePdfData[]) {
   const doc = new jsPDF();
 
   doc.setFontSize(20);
-  doc.text('Costume Breakdown — All Dancers', 14, 20);
+  doc.text('Costume Breakdown: All Dancers', 14, 20);
   doc.setFontSize(10);
   doc.setTextColor(128);
   doc.text(`Generated ${new Date().toLocaleDateString()}`, 14, 28);
@@ -122,7 +122,7 @@ export function exportAllCostumesPdf(allData: CostumePdfData[]) {
 
       doc.setFontSize(10);
       doc.setTextColor(40);
-      const titleText = `${piece.title} — ${costume.name}`;
+      const titleText = `${piece.title} · ${costume.name}`;
       const titleLines = doc.splitTextToSize(titleText, 174);
       doc.text(titleLines, 18, y); y += titleLines.length * 5;
 

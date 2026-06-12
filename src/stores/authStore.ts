@@ -12,6 +12,8 @@ interface AuthState {
   signUp: (email: string, password: string) => Promise<{ error: string | null }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInAnonymously: () => Promise<{ error: string | null }>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   initialize: () => void;
 }
@@ -49,6 +51,21 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   signInAnonymously: async () => {
     const { error } = await supabase.auth.signInAnonymously();
+    if (error) return { error: error.message };
+    return { error: null };
+  },
+
+  resetPassword: async (email) => {
+    // BASE_URL is '/creator/' in dev and prod, so this resolves to the
+    // /reset-password route on whichever origin is running.
+    const redirectTo = `${window.location.origin}${import.meta.env.BASE_URL}reset-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) return { error: error.message };
+    return { error: null };
+  },
+
+  updatePassword: async (password) => {
+    const { error } = await supabase.auth.updateUser({ password });
     if (error) return { error: error.message };
     return { error: null };
   },
