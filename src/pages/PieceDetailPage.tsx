@@ -31,6 +31,7 @@ import { ExportModal } from '@/components/export/ExportModal';
 import { PrintView } from '@/components/export/PrintView';
 import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
 import { ShareModal } from '@/components/pieces/ShareModal';
+import { DeletePieceDialog } from '@/components/pieces/DeletePieceDialog';
 
 export function PieceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -541,20 +542,12 @@ export function PieceDetailPage() {
       />
 
       {/* Delete piece confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface-elevated rounded-2xl border border-border p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-bold text-text-primary mb-2">Delete Piece</h3>
-            <p className="text-sm text-text-secondary mb-6">
-              This will permanently delete <strong>{piece?.title}</strong> and all its formations, positions, and paths. This cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-              <Button variant="danger" onClick={handleDeletePiece}>Delete</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeletePieceDialog
+        open={showDeleteConfirm}
+        pieceTitle={piece.title}
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeletePiece}
+      />
 
       {printData && piece && (
         <PrintView
