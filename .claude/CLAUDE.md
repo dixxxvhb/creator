@@ -1,16 +1,28 @@
 # Creator — Project Context & Memory
 
 > iPad-first choreography and formation tool for dance teachers and choreographers.
-> **Last updated:** 2026-03-24
+> **Last updated:** 2026-06-12 (overhaul branch `overhaul-2026-06`)
 
 ## Quick Start
 ```bash
-cd ~/Documents/Claude\ Projects/Code/creator
-npm run dev          # Vite dev server (port 5173)
-npm run build        # TypeScript check + Vite build
-npm run cap:build    # Build + sync native iOS assets
-npm run cap:open     # Open Xcode for iOS testing
+cd ~/Code/creator        # NOT iCloud / Documents — moved
+npm run dev              # Vite dev server (default port 5173; harness uses 5180)
+npm run build            # TypeScript check + Vite build (THE verification gate)
+npm run icons            # Regenerate PWA/home-screen icons from scripts/icon-source.svg
+npm run cap:build        # Build + sync native iOS assets (Capacitor scaffold parked, web-only for now)
 ```
+
+## Overhaul 2026-06-12 (branch `overhaul-2026-06`) — what changed
+- **Distribution decision: native-feel WEB app** (Safari + Add to Home Screen). No TestFlight/App Store this round; Capacitor scaffold stays untouched. **No service worker, ever** (iOS A2HS doesn't need one; sibling-project SW incident).
+- **Auth: beta access code now unlocks the real email/password form.** Anonymous sign-in retired (sessions still honored; `signInAnonymously` kept for them only). Forgot Password + `/reset-password` route (outside AuthGuard) shipped. Manual Supabase dashboard steps required before reset works in prod: Site URL + Redirect URLs + confirm-email OFF.
+- **Reliability layer:** `lib/withRetry.ts` wraps all 16 store load paths + auth boot (reads only — never wrap mutations); `lib/supabase.ts` has `fetchWithTimeout` (20s REST / 120s storage) + `noopLock`; `getCurrentUserId()` reads the local session. RootErrorBoundary above the router; Toaster lives in App.tsx (Backstage/Viewer covered).
+- **Autosave rewritten** (`useFormationEditor` + `formationStore`): serialized save queue with synchronous snapshots, `editGeneration` guard (mid-save edits never marked clean), echo guard in `savePositions`, flush on visibilitychange/pagehide/unmount AND before the navigation `reset()`, one quiet retry then a single toast, SaveStatusIndicator pill. Undo/redo mark dirty (undone layouts persist). Thumbnail delete X deletes the clicked formation.
+- **iOS feel:** viewport-fit=cover, apple metas (status bar `default` — deliberate, keeps top inset 0), dual theme-color synced by `applyTheme()`, early-theme inline script in index.html (**default is DARK**; honors legacy `creator-theme` key), all form controls ≥16px (un-layered CSS guard kills zoom-on-focus), overscroll/tap-highlight suppression, safe-area on Modal/Backstage/Viewer, BottomTabBar slides under the keyboard (`useKeyboardVisible`).
+- **PWA:** `public/manifest.webmanifest` (standalone, `/creator/` scope), icons via `scripts/generate-icons.mjs` (sharp; render 1024 → downscale; ivory-flattened, never alpha), InstallPromptCard in Settings.
+- **Pinch-zoom + two-finger pan** on FormationCanvas (midpoint-anchored; `Konva.hitOnDragEnabled` global; pinch cancels partial draws, drops in-flight drags in place, swallows stray taps for 350ms).
+- **Structure:** PieceDetailPage decomposed → `pieces/PieceDetailHeader|PieceDetailModals|DeletePieceDialog`. The four `display:none` tab wrappers in the page are LOAD-BEARING for canvas state — never convert to conditional rendering. ThumbnailStrip memoized via the handlersRef pattern.
+- **Onboarding:** WelcomeFlow step 2 = "Open a sample piece / Start fresh" (`lib/sampleData.ts` — 8 dancers, 3 template formations, a path, 3 music cues; creates NO roster dancers). Also on the empty Dashboard.
+- **Copy:** "Music Cues" tab (id `sections` unchanged), no em dashes in user-facing text, tap-not-click.
 
 ## Stack
 - **Frontend:** React 19, TypeScript ~5.9, Vite 8, Tailwind CSS v4 (CSS-first)
@@ -178,14 +190,15 @@ EmptyState, ConfirmDialog, SearchInput
 - (2026-03-24) Rehearsal mode is a separate route, not a modal — gives full screen real estate
 - (2026-03-20) All 12 Supabase migrations applied. RLS scopes all data to authenticated user.
 
-## Known Issues
-1. PieceDetailPage is monolithic — 13 modals, needs decomposition
-2. No undo/redo for formation layout changes (only for paths)
-3. Audio timeline not yet synced to formation cue points
-4. No offline-first strategy — app requires cloud connection for writes
-5. ThumbnailStrip re-renders mini canvas for each formation — may lag with 30+ formations
-6. iOS project not yet generated (needs `npx cap sync ios`)
-7. No test coverage — relies on `npm run build` verification only
+## Known Issues (refreshed 2026-06-12)
+1. Audio timeline not yet synced to formation cue points (music cues exist; playback link is the gap)
+2. No offline-first strategy — writes need a connection (autosave now retries + flushes, but no queue-and-sync)
+3. No test coverage — `npm run build` + manual checklists are the gates
+4. profileStore (name/studio/theme/stage defaults) is localStorage-only; `user_profiles` table exists but unused — matters once teachers use two devices
+5. Lead-dancer star meaning is tooltip-only (invisible on iPad) — needs an inline affordance
+6. ShowDetailPage (762 lines) / SeasonDetailPage (691) deferred decomposition; modals already extracted
+7. Tier/monetization disabled for beta (all features unlocked); `signInAnonymously` kept only for legacy beta sessions — remove once everyone's on email
+8. Resolved 2026-06-12: PieceDetailPage decomposition, formation undo persistence, ThumbnailStrip lag, autosave data loss, anonymous-only auth
 
 ## File Map
 ```

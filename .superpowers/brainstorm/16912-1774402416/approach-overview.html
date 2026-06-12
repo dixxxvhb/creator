@@ -1,0 +1,104 @@
+<h2>Beta Access + Bug Reporting — Approach</h2>
+<p class="subtitle">Two features, one goal: get Creator into tester hands fast</p>
+
+<div class="section">
+  <h3>1. Beta Access Gate</h3>
+  <div class="mockup">
+    <div class="mockup-header">Auth Flow Change</div>
+    <div class="mockup-body" style="padding: 24px; text-align: center;">
+      <div style="display: flex; flex-direction: column; gap: 20px; align-items: center;">
+        <!-- Current flow -->
+        <div style="width: 100%; max-width: 500px;">
+          <div class="label" style="margin-bottom: 8px;">Current Flow</div>
+          <div style="display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <div style="padding: 10px 16px; background: var(--surface-2); border-radius: 8px; font-size: 13px;">Login / Sign Up</div>
+            <span style="color: var(--text-3);">→</span>
+            <div style="padding: 10px 16px; background: var(--surface-2); border-radius: 8px; font-size: 13px;">Welcome Flow</div>
+            <span style="color: var(--text-3);">→</span>
+            <div style="padding: 10px 16px; background: var(--accent); color: white; border-radius: 8px; font-size: 13px;">App</div>
+          </div>
+        </div>
+        <!-- New flow -->
+        <div style="width: 100%; max-width: 600px;">
+          <div class="label" style="margin-bottom: 8px;">New Flow</div>
+          <div style="display: flex; align-items: center; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <div style="padding: 10px 16px; background: var(--surface-2); border-radius: 8px; font-size: 13px;">Login</div>
+            <span style="color: var(--text-3);">→</span>
+            <div style="padding: 10px 16px; background: var(--surface-2); border-radius: 8px; font-size: 13px;">Welcome Flow</div>
+            <span style="color: var(--text-3);">→</span>
+            <div style="padding: 10px 16px; background: var(--accent); color: white; border-radius: 8px; font-size: 13px;">App</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px; justify-content: center; margin-top: 12px; flex-wrap: wrap;">
+            <div style="padding: 10px 16px; border: 2px dashed var(--accent); border-radius: 8px; font-size: 13px; color: var(--accent);">Sign Up tab → requires access code first</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px; padding: 16px; background: var(--surface-2); border-radius: 12px;">
+    <p style="font-size: 14px; margin: 0;"><strong>How it works:</strong></p>
+    <ul style="font-size: 13px; margin: 8px 0 0; padding-left: 20px; color: var(--text-2);">
+      <li>Sign Up tab shows an "Access Code" field before email/password fields</li>
+      <li>Code is hardcoded (e.g. <code>CREATOR2026</code>) — you text it to testers</li>
+      <li>Wrong code = inline error, no account created</li>
+      <li>Login tab unchanged — existing accounts work normally</li>
+      <li>One constant to flip when you're ready for public signup</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. Bug Report System</h3>
+  <div class="mockup">
+    <div class="mockup-header">Bug Reporting Flow</div>
+    <div class="mockup-body" style="padding: 24px;">
+      <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+        <!-- Trigger -->
+        <div style="flex: 1; min-width: 200px; text-align: center;">
+          <div class="label" style="margin-bottom: 12px;">Trigger</div>
+          <div style="padding: 16px; background: var(--surface-2); border-radius: 12px;">
+            <div style="font-size: 13px; color: var(--text-2); margin-bottom: 8px;">Floating button (bottom-right)</div>
+            <div style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--accent); color: white; border-radius: 20px; font-size: 13px; font-weight: 500;">Report Bug</div>
+          </div>
+        </div>
+        <!-- Form -->
+        <div style="flex: 2; min-width: 280px;">
+          <div class="label" style="margin-bottom: 12px;">Modal Form</div>
+          <div style="padding: 20px; background: var(--surface-2); border-radius: 12px;">
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-3); margin-bottom: 4px;">What happened?</div>
+              <div class="mock-input" style="min-height: 60px;">Free text — describe the bug</div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-3); margin-bottom: 4px;">What did you expect?</div>
+              <div class="mock-input">Free text — expected behavior</div>
+            </div>
+            <div style="margin-bottom: 16px;">
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text-3); margin-bottom: 4px;">Severity</div>
+              <div style="display: flex; gap: 8px;">
+                <span style="padding: 4px 12px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; font-size: 12px;">Minor</span>
+                <span style="padding: 4px 12px; background: var(--surface-1); border: 2px solid var(--accent); border-radius: 16px; font-size: 12px; color: var(--accent);">Major</span>
+                <span style="padding: 4px 12px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 16px; font-size: 12px;">Blocker</span>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: var(--text-3); margin-bottom: 12px;">Auto-captured: page URL, screen size, browser, user email, timestamp</div>
+            <div class="mock-button" style="width: 100%; text-align: center;">Submit Report</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. Admin View (You Only)</h3>
+  <div style="padding: 16px; background: var(--surface-2); border-radius: 12px;">
+    <ul style="font-size: 13px; margin: 0; padding-left: 20px; color: var(--text-2);">
+      <li>New "Bug Reports" section in Settings page (your email only)</li>
+      <li>List of all reports: severity badge, summary, who reported, when</li>
+      <li>Expand to see full details + auto-captured context</li>
+      <li>Mark as resolved / dismiss</li>
+    </ul>
+  </div>
+</div>

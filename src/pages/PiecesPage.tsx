@@ -4,8 +4,8 @@ import { motion } from 'framer-motion';
 import { Plus, Layers } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
-import { Spinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { SkeletonCardGrid } from '@/components/shared/SkeletonCard';
 import { SearchInput } from '@/components/shared/SearchInput';
 import { PieceCard } from '@/components/pieces';
 import { usePieceStore } from '@/stores/pieceStore';
@@ -57,9 +57,7 @@ export function PiecesPage() {
       }
     >
       {isLoading ? (
-        <div className="flex justify-center py-16">
-          <Spinner size="lg" />
-        </div>
+        <SkeletonCardGrid count={6} />
       ) : pieces.length === 0 ? (
         <EmptyState
           icon={Layers}

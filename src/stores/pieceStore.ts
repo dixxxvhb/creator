@@ -11,6 +11,7 @@ import { usePathStore } from '@/stores/pathStore';
 import { useSongSectionStore } from '@/stores/songSectionStore';
 import { useCostumeStore } from '@/stores/costumeStore';
 import { useSeasonStore } from '@/stores/seasonStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface PieceState {
   pieces: Piece[];
@@ -32,7 +33,7 @@ export const usePieceStore = create<PieceState>((set, get) => ({
   load: async () => {
     set({ isLoading: true, error: null });
     try {
-      const pieces = await piecesService.fetchPieces();
+      const pieces = await withRetry(() => piecesService.fetchPieces());
       set({ pieces, isLoading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load pieces';

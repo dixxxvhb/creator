@@ -76,7 +76,7 @@ export function FormationNotesPanel({
       <Card
         header={
           <h3 className="text-sm font-semibold text-text-primary">
-            {activeFormation.label} — Notes
+            {activeFormation.label} Notes
           </h3>
         }
       >

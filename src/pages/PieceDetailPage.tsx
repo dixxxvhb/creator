@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Music, Users, Pencil, Download, Trash2, Share2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
 import { Spinner } from '@/components/ui/Spinner';
-import { TemplatePickerModal } from '@/components/canvas';
 import { PieceTabs, PieceNotesPanel, SongSectionsPanel, PieceRosterPanel, CanvasTab, FormationNotesPanel } from '@/components/pieces';
 import type { PieceTab } from '@/components/pieces';
 import { useSongSectionStore } from '@/stores/songSectionStore';
 import type { FormationCanvasHandle } from '@/components/canvas';
+import { PieceDetailHeader } from '@/components/pieces/PieceDetailHeader';
 import { usePlayback } from '@/hooks/usePlayback';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useFormationEditor } from '@/hooks/useFormationEditor';
@@ -23,13 +22,8 @@ import { usePlaybackStore } from '@/stores/playbackStore';
 import { computeAverageAge } from '@/lib/age';
 import { toast } from '@/stores/toastStore';
 import { uploadAudio, deleteAudio } from '@/services/audioStorage';
-import { AddDancerModal } from '@/components/canvas/AddDancerModal';
-import { PieceInfoModal } from '@/components/canvas/PieceInfoModal';
-import { DancerManageModal } from '@/components/canvas/DancerManageModal';
-import { ExportModal } from '@/components/export/ExportModal';
-import { PrintView } from '@/components/export/PrintView';
-import { KeyboardShortcutsModal } from '@/components/ui/KeyboardShortcutsModal';
-import { ShareModal } from '@/components/pieces/ShareModal';
+import { PieceDetailModals } from '@/components/pieces/PieceDetailModals';
+import { DeletePieceDialog } from '@/components/pieces/DeletePieceDialog';
 
 export function PieceDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -82,6 +76,8 @@ export function PieceDetailPage() {
     handleQuickPopulate,
     handleQuickAddDancer,
     handleSavePositions,
+    saveStatus,
+    flushPendingSaves,
     canUndo,
     canRedo,
     handleUndo,
@@ -144,10 +140,14 @@ export function PieceDetailPage() {
   useEffect(() => {
     if (id) loadFormations(id);
     return () => {
+      // Flush BEFORE wiping the store — edits younger than the autosave
+      // debounce would otherwise be lost on every navigation away.
+      // (performSave snapshots synchronously, so reset() right after is safe.)
+      void flushPendingSaves();
       useFormationStore.getState().reset();
       usePathStore.getState().reset();
     };
-  }, [id, loadFormations]);
+  }, [id, loadFormations, flushPendingSaves]);
 
   useEffect(() => {
     if (id) loadSongSections(id);
@@ -268,11 +268,6 @@ export function PieceDetailPage() {
   }
 
   // --- Derived display values ---
-  const songText =
-    piece.song_title || piece.song_artist
-      ? [piece.song_title, piece.song_artist].filter(Boolean).join(' — ')
-      : null;
-
   const assignedDancerIds = new Set(
     Object.values(positions).flat().map((p) => p.dancer_id).filter(Boolean) as string[]
   );
@@ -283,75 +278,20 @@ export function PieceDetailPage() {
 
   return (
     <PageContainer fullWidth>
-      {/* Top bar */}
-      <div className="flex items-center justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <button
-            onClick={() => navigate('/pieces')}
-            className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition-colors shrink-0"
-            aria-label="Back to pieces"
-          >
-            <ArrowLeft size={18} />
-          </button>
-
-          <button
-            onClick={() => setPieceInfoOpen(true)}
-            className="flex items-center gap-2 group text-left min-w-0"
-          >
-            <h2 className="text-lg font-bold text-text-primary truncate">
-              {piece.title}
-            </h2>
-            <Pencil
-              size={14}
-              className="text-text-tertiary group-hover:text-text-secondary transition-colors shrink-0"
-            />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1.5 shrink-0">
-          <Button variant="secondary" size="sm" onClick={() => setShareModalOpen(true)}>
-            <Share2 size={14} />
-            <span className="hidden sm:inline">Share</span>
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => setExportModalOpen(true)}>
-            <Download size={14} />
-            <span className="hidden sm:inline">Export</span>
-          </Button>
-          <Button size="sm" onClick={onSavePositions} loading={isSaving} disabled={isPlaying || isPaused}>
-            <Save size={14} />
-            <span className="hidden sm:inline">Save</span>
-          </Button>
-          <Button variant="danger" size="sm" onClick={() => setShowDeleteConfirm(true)}>
-            <Trash2 size={14} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Metadata badges */}
-      <div className="flex items-center gap-1.5 flex-wrap mb-3 ml-9">
-        {piece.style && (
-          <button onClick={() => setPieceInfoOpen(true)} className="cursor-pointer hover:brightness-90 transition-all">
-            <Badge>{piece.style}</Badge>
-          </button>
-        )}
-        <button onClick={() => setDancerManageOpen(true)} className="cursor-pointer hover:brightness-90 transition-all">
-          <Badge variant="info">
-            <Users size={12} className="mr-1" />
-            {piece.dancer_count} dancer{piece.dancer_count !== 1 ? 's' : ''}
-          </Badge>
-        </button>
-        {songText && (
-          <Badge variant="default">
-            <Music size={12} className="mr-1" />
-            {songText}
-          </Badge>
-        )}
-        {avgAge !== null && (
-          <Badge variant="default">
-            Avg age: {avgAge.toFixed(1)}
-          </Badge>
-        )}
-      </div>
+      <PieceDetailHeader
+        piece={piece}
+        avgAge={avgAge}
+        saveStatus={saveStatus}
+        isSaving={isSaving}
+        saveDisabled={isPlaying || isPaused}
+        onBack={() => navigate('/pieces')}
+        onOpenInfo={() => setPieceInfoOpen(true)}
+        onOpenDancerManage={() => setDancerManageOpen(true)}
+        onOpenShare={() => setShareModalOpen(true)}
+        onOpenExport={() => setExportModalOpen(true)}
+        onSave={onSavePositions}
+        onDelete={() => setShowDeleteConfirm(true)}
+      />
 
       {/* Tab bar */}
       <div className="mb-3">
@@ -466,107 +406,51 @@ export function PieceDetailPage() {
         />
       </div>
 
-      {/* Modals */}
-      <AddDancerModal
-        open={addDancerModalOpen}
-        onClose={() => setAddDancerModalOpen(false)}
+      {/* Modals + overlays */}
+      <PieceDetailModals
+        piece={piece}
+        formations={formations}
+        positions={positions}
+        activePositions={activePositions}
+        activeIdx={activeIdx}
+        activeFormationId={activeFormationId}
         rosterDancers={rosterDancers}
         assignedDancerIds={assignedDancerIds}
-        formations={formations}
-        activeFormationIndex={activeIdx}
+        addDancerOpen={addDancerModalOpen}
+        templatePickerOpen={templatePickerOpen}
+        dancerManageOpen={dancerManageOpen}
+        pieceInfoOpen={pieceInfoOpen}
+        exportModalOpen={exportModalOpen}
+        shortcutsOpen={shortcutsOpen}
+        shareModalOpen={shareModalOpen}
+        onCloseAddDancer={() => setAddDancerModalOpen(false)}
+        onCloseTemplatePicker={() => setTemplatePickerOpen(false)}
+        onCloseDancerManage={() => setDancerManageOpen(false)}
+        onClosePieceInfo={() => setPieceInfoOpen(false)}
+        onCloseExportModal={() => setExportModalOpen(false)}
+        onCloseShortcuts={() => setShortcutsOpen(false)}
+        onCloseShareModal={() => setShareModalOpen(false)}
         onAddDancers={handleAddDancers}
-      />
-
-      <TemplatePickerModal
-        open={templatePickerOpen}
-        onClose={() => setTemplatePickerOpen(false)}
-        onSelect={handleApplyTemplate}
-        dancerCount={piece.dancer_count}
-        hasExistingPositions={activePositions.length > 0}
-        currentPositions={activePositions.map((p) => ({
-          dancer_label: p.dancer_label,
-          dancer_id: p.dancer_id,
-          color: p.color,
-        }))}
-        rosterDancers={rosterDancers}
-      />
-
-      <DancerManageModal
-        open={dancerManageOpen}
-        onClose={() => setDancerManageOpen(false)}
-        positions={activePositions}
-        rosterDancers={rosterDancers}
-        dancerCount={piece.dancer_count}
+        onApplyTemplate={handleApplyTemplate}
         onAssign={updateLocalPositionDancer}
-        activeFormationId={activeFormationId}
-        onAddDancer={() => setAddDancerModalOpen(true)}
+        onOpenAddDancer={() => setAddDancerModalOpen(true)}
         onRemoveDancer={() => handleRemoveDancer()}
-      />
-
-      <PieceInfoModal
-        open={pieceInfoOpen}
-        onClose={() => setPieceInfoOpen(false)}
-        piece={piece}
-        onSave={async (updates) => {
+        onSavePieceInfo={async (updates) => {
           await updatePiece(piece.id, updates);
         }}
-      />
-
-      <ExportModal
-        open={exportModalOpen}
-        onClose={() => setExportModalOpen(false)}
         onExport={handleExport}
         isExporting={isExporting}
-        formationCount={formations.length}
-      />
-
-      <KeyboardShortcutsModal
-        open={shortcutsOpen}
-        onClose={() => setShortcutsOpen(false)}
-      />
-
-      <ShareModal
-        open={shareModalOpen}
-        onClose={() => setShareModalOpen(false)}
-        pieceId={piece.id}
-        pieceTitle={piece.title}
+        printData={printData}
+        onClosePrint={() => setPrintData(null)}
       />
 
       {/* Delete piece confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-surface-elevated rounded-2xl border border-border p-6 max-w-sm w-full mx-4 shadow-xl">
-            <h3 className="text-lg font-bold text-text-primary mb-2">Delete Piece</h3>
-            <p className="text-sm text-text-secondary mb-6">
-              This will permanently delete <strong>{piece?.title}</strong> and all its formations, positions, and paths. This cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button variant="secondary" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
-              <Button variant="danger" onClick={handleDeletePiece}>Delete</Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {printData && piece && (
-        <PrintView
-          piece={piece}
-          formations={formations}
-          positions={positions}
-          stageImages={printData.stageImages}
-          onClose={() => setPrintData(null)}
-        />
-      )}
-
-      {/* Export overlay */}
-      {isExporting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-auto">
-          <div className="flex flex-col items-center gap-3">
-            <Spinner size="lg" />
-            <p className="text-sm font-medium text-white">Exporting...</p>
-          </div>
-        </div>
-      )}
+      <DeletePieceDialog
+        open={showDeleteConfirm}
+        pieceTitle={piece.title}
+        onCancel={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeletePiece}
+      />
     </PageContainer>
   );
 }

@@ -220,7 +220,7 @@ export function DancerDot({
       if (isDrawing) return;
 
       if (!hasNextFormation) {
-        toast.info('This is the last formation — go to a previous formation to draw paths.');
+        toast.info('This is the last formation. Go back one to draw a travel path.');
         return;
       }
 

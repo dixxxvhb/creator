@@ -9,3 +9,6 @@ export { QuickAddPieceModal } from './QuickAddPieceModal';
 export { PositionRow } from './PositionRow';
 export { CanvasTab } from './CanvasTab';
 export { FormationNotesPanel } from './FormationNotesPanel';
+export { DeletePieceDialog } from './DeletePieceDialog';
+export { PieceDetailHeader } from './PieceDetailHeader';
+export { PieceDetailModals } from './PieceDetailModals';

@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Dancer, DancerInsert, DancerUpdate } from '@/types';
 import * as dancersService from '@/services/dancers';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface RosterState {
   dancers: Dancer[];
@@ -21,10 +22,10 @@ export const useRosterStore = create<RosterState>((set) => ({
   load: async () => {
     set({ isLoading: true });
     try {
-      const [dancers, pieceAssignments] = await Promise.all([
+      const [dancers, pieceAssignments] = await withRetry(() => Promise.all([
         dancersService.fetchDancers(),
         dancersService.fetchDancerPieceAssignments(),
-      ]);
+      ]));
       set({ dancers, pieceAssignments, isLoading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load dancers';

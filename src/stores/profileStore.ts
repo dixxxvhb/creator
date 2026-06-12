@@ -79,7 +79,19 @@ function applyTheme(pref: 'light' | 'dark' | 'system') {
   root.classList.toggle('dark', isDark);
   // Remove legacy 'light' class if present
   root.classList.remove('light');
+
+  // Keep the iOS status bar / browser chrome tint in sync. The theme is
+  // user-overridable, so the static media-scoped metas in index.html can
+  // disagree with html.dark — overwrite both with the active surface color.
+  const themeColor = isDark ? '#171412' : '#FDFBF7';
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => {
+    m.setAttribute('content', themeColor);
+  });
 }
+
+// initProfile runs on every AppLayout mount (twice under StrictMode) — the
+// system-theme listener must attach exactly once for the app's lifetime.
+let systemThemeListenerAttached = false;
 
 interface ProfileState extends UserProfile {
   setAccentColor: (hex: string) => void;
@@ -147,15 +159,18 @@ export const useProfileStore = create<ProfileState>((set, get) => {
       applyTheme(profile.themePreference);
       set(profile);
 
-      // Listen for system theme changes
-      if (profile.themePreference === 'system') {
+      // Listen for system theme changes. Attached unconditionally (the
+      // handler checks the preference at fire time) so switching to System
+      // later still tracks the OS — and only once, to avoid accumulating
+      // listeners across re-mounts.
+      if (!systemThemeListenerAttached) {
+        systemThemeListenerAttached = true;
         const mq = window.matchMedia('(prefers-color-scheme: dark)');
-        const handler = () => {
+        mq.addEventListener('change', () => {
           if (get().themePreference === 'system') {
             applyTheme('system');
           }
-        };
-        mq.addEventListener('change', handler);
+        });
       }
     },
   };

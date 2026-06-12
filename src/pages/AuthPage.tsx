@@ -8,39 +8,42 @@ import { cn } from '@/lib/utils';
 import { BETA_ENABLED, ACCESS_CODE } from '@/lib/beta';
 
 export function AuthPage() {
-  const [mode, setMode] = useState<'login' | 'signup'>('signup');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   const [accessCode, setAccessCode] = useState('');
   const [accessGranted, setAccessGranted] = useState(false);
 
   const signIn = useAuthStore((s) => s.signIn);
   const signUp = useAuthStore((s) => s.signUp);
-  const signInAnonymously = useAuthStore((s) => s.signInAnonymously);
+  const resetPassword = useAuthStore((s) => s.resetPassword);
 
-  async function handleAccessCode() {
+  function handleAccessCode() {
     if (accessCode.toUpperCase().trim() !== ACCESS_CODE) {
       setError('Invalid access code');
       return;
     }
     setError(null);
-
-    if (BETA_ENABLED) {
-      setIsSubmitting(true);
-      const { error } = await signInAnonymously();
-      setIsSubmitting(false);
-      if (error) {
-        setError('Sign-in failed. Please try again.');
-        return;
-      }
-      return;
-    }
-
+    // The code unlocks the real account form. (Earlier betas minted anonymous
+    // sessions here — those had no credentials and unrecoverable data.)
     setAccessGranted(true);
+  }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
+    const { error } = await resetPassword(email);
+    setIsSubmitting(false);
+    if (error) {
+      setError(error);
+    } else {
+      setResetEmailSent(true);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -64,11 +67,9 @@ export function AuthPage() {
       if (error) setError(error);
     } else {
       const { error } = await signUp(email, password);
-      if (error) {
-        setError(error);
-      } else {
-        setSignupSuccess(true);
-      }
+      if (error) setError(error);
+      // On success the session lands via onAuthStateChange and AuthGuard
+      // swaps straight into the app (email confirmation is off during beta).
     }
 
     setIsSubmitting(false);
@@ -120,22 +121,55 @@ export function AuthPage() {
               </Button>
             </form>
           </Card>
-        ) : signupSuccess ? (
+        ) : mode === 'forgot' ? (
           <Card>
-            <div className="text-center py-4">
-              <p className="text-sm text-text-primary font-medium mb-2">Check your email</p>
-              <p className="text-xs text-text-secondary">
-                We sent a confirmation link to <strong>{email}</strong>.
-                Click it to activate your account.
-              </p>
-              <Button
-                variant="secondary"
-                className="mt-4"
-                onClick={() => { setSignupSuccess(false); setMode('login'); }}
-              >
-                Back to Login
-              </Button>
-            </div>
+            {resetEmailSent ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-text-primary font-medium mb-2">Check your email</p>
+                <p className="text-xs text-text-secondary">
+                  We sent a link to <strong>{email}</strong> to set a new password.
+                </p>
+                <Button
+                  variant="secondary"
+                  className="mt-4"
+                  onClick={() => { setResetEmailSent(false); setMode('login'); setError(null); }}
+                >
+                  Back to Log In
+                </Button>
+              </div>
+            ) : (
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="text-center mb-2">
+                  <p className="text-sm text-text-secondary">
+                    Enter your email and we'll send you a link to set a new password.
+                  </p>
+                </div>
+                <Input
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                  autoFocus
+                />
+                {error && (
+                  <p className="text-sm text-danger-500 bg-danger-50 px-3 py-2 rounded-lg">
+                    {error}
+                  </p>
+                )}
+                <Button type="submit" loading={isSubmitting} className="w-full">
+                  Email me a reset link
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => { setMode('login'); setError(null); }}
+                  className="w-full text-xs text-text-tertiary hover:text-text-secondary transition-colors pt-1"
+                >
+                  Back to Log In
+                </button>
+              </form>
+            )}
           </Card>
         ) : (
           /* Login/signup form (shown after access code validated, or when beta is off) */
@@ -143,7 +177,7 @@ export function AuthPage() {
             {BETA_ENABLED && (
               <div className="text-center mb-4">
                 <p className="text-xs text-accent-600 font-medium">
-                  Access granted — create your account or log in
+                  Access granted. Create your account or log in.
                 </p>
               </div>
             )}
@@ -190,6 +224,15 @@ export function AuthPage() {
                 placeholder="At least 6 characters"
                 required
               />
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  onClick={() => { setMode('forgot'); setError(null); }}
+                  className="text-xs text-text-tertiary hover:text-text-secondary transition-colors -mt-2 self-start"
+                >
+                  Forgot your password?
+                </button>
+              )}
               {mode === 'signup' && (
                 <Input
                   label="Confirm Password"

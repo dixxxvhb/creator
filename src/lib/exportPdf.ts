@@ -35,7 +35,7 @@ export function exportPdf({ piece, formations, positions, stageImages, rosterDan
   if (piece.style) meta.push(piece.style);
   meta.push(`${piece.dancer_count} dancer${piece.dancer_count !== 1 ? 's' : ''}`);
   if (piece.song_title || piece.song_artist) {
-    meta.push([piece.song_title, piece.song_artist].filter(Boolean).join(' — '));
+    meta.push([piece.song_title, piece.song_artist].filter(Boolean).join(' · '));
   }
   doc.text(meta.join('  |  '), PAGE_W / 2, 150, { align: 'center' });
 
@@ -93,7 +93,7 @@ export function exportPdf({ piece, formations, positions, stageImages, rosterDan
           y = MARGIN;
         }
         const rosterMatch = pos.dancer_id ? rosterDancers?.find((d) => d.id === pos.dancer_id) : null;
-        const nameStr = rosterMatch ? ` — ${rosterMatch.full_name}` : '';
+        const nameStr = rosterMatch ? ` · ${rosterMatch.full_name}` : '';
         doc.text(
           `${pos.dancer_label}${nameStr}  (${Math.round(pos.x)}, ${Math.round(pos.y)})`,
           MARGIN + 10,

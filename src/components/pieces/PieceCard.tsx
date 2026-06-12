@@ -22,7 +22,7 @@ export function PieceCard({ piece }: PieceCardProps) {
 
   const songText =
     piece.song_title || piece.song_artist
-      ? [piece.song_title, piece.song_artist].filter(Boolean).join(' — ')
+      ? [piece.song_title, piece.song_artist].filter(Boolean).join(' · ')
       : 'No song';
 
   async function handleDuplicate(e: React.MouseEvent) {
@@ -52,7 +52,7 @@ export function PieceCard({ piece }: PieceCardProps) {
               </h3>
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMenu(!showMenu); }}
-                className="p-1 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-secondary transition-colors opacity-0 group-hover:opacity-100 -mr-1 -mt-1"
+                className="p-1 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-secondary transition-colors opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 -mr-1 -mt-1"
               >
                 <MoreVertical size={16} />
               </button>

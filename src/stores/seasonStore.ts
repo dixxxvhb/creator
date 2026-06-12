@@ -8,6 +8,7 @@ import type {
 import * as seasonsService from '@/services/seasons';
 import * as competitionsService from '@/services/competitions';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface SeasonState {
   seasons: Season[];
@@ -56,10 +57,10 @@ export const useSeasonStore = create<SeasonState>((set, get) => ({
   loadSeasons: async () => {
     set({ isLoading: true, error: null });
     try {
-      const [seasons, pieceSeasons] = await Promise.all([
+      const [seasons, pieceSeasons] = await withRetry(() => Promise.all([
         seasonsService.fetchSeasons(),
         seasonsService.fetchPieceSeasons(),
-      ]);
+      ]));
       set({ seasons, pieceSeasons, isLoading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load seasons';
@@ -145,7 +146,7 @@ export const useSeasonStore = create<SeasonState>((set, get) => ({
 
   loadAllCompetitions: async () => {
     try {
-      const competitions = await competitionsService.fetchAllCompetitions();
+      const competitions = await withRetry(() => competitionsService.fetchAllCompetitions());
       set({ competitions });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load competitions');
@@ -154,7 +155,7 @@ export const useSeasonStore = create<SeasonState>((set, get) => ({
 
   loadCompetitions: async (seasonId) => {
     try {
-      const competitions = await competitionsService.fetchCompetitions(seasonId);
+      const competitions = await withRetry(() => competitionsService.fetchCompetitions(seasonId));
       set({ competitions });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load competitions');
@@ -201,7 +202,7 @@ export const useSeasonStore = create<SeasonState>((set, get) => ({
 
   loadEntries: async (competitionId) => {
     try {
-      const entries = await competitionsService.fetchEntries(competitionId);
+      const entries = await withRetry(() => competitionsService.fetchEntries(competitionId));
       set((s) => ({
         // Merge: replace entries for this competition, keep others
         entries: [
@@ -216,7 +217,7 @@ export const useSeasonStore = create<SeasonState>((set, get) => ({
 
   loadEntriesBySeason: async (seasonId) => {
     try {
-      const entries = await competitionsService.fetchEntriesBySeason(seasonId);
+      const entries = await withRetry(() => competitionsService.fetchEntriesBySeason(seasonId));
       set({ entries });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load entries');

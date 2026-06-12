@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { SongSection, SongSectionInsert, SongSectionUpdate } from '@/types';
 import * as service from '@/services/songSections';
 import { toast } from '@/stores/toastStore';
+import { withRetry } from '@/lib/withRetry';
 
 interface SongSectionState {
   sections: SongSection[];
@@ -20,7 +21,7 @@ export const useSongSectionStore = create<SongSectionState>((set) => ({
   load: async (pieceId) => {
     set({ isLoading: true });
     try {
-      const sections = await service.fetchSongSections(pieceId);
+      const sections = await withRetry(() => service.fetchSongSections(pieceId));
       set({ sections, isLoading: false });
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load song sections';

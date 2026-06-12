@@ -1,0 +1,14 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- App icon source: the five-dancer formation mark on brand ivory.
+       Full-bleed background (iOS composites transparency onto black);
+       mark held to the central ~60% so the maskable variant stays safe.
+       No pre-rounded corners — iOS applies its own mask. -->
+  <rect width="1024" height="1024" fill="#FDFBF7"/>
+  <g transform="translate(204.8, 255.2) scale(9.6)">
+    <circle cx="32" cy="14" r="5.5" fill="#1C1C1E"/>
+    <circle cx="20" cy="26" r="5.5" fill="#1C1C1E"/>
+    <circle cx="44" cy="26" r="5.5" fill="#1C1C1E"/>
+    <circle cx="12" cy="40" r="5" fill="#1C1C1E"/>
+    <circle cx="52" cy="40" r="5" fill="#1C1C1E"/>
+  </g>
+</svg>

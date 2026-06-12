@@ -140,7 +140,7 @@ export function CanvasToolbar({
   const setToolbarAdvanced = useProfileStore((s) => s.setToolbarAdvanced);
 
   return (
-    <div className="bg-surface-elevated/80 backdrop-blur-sm border border-border rounded-xl px-2 py-1">
+    <div className="bg-surface-elevated/80 backdrop-blur-sm border border-border rounded-xl px-2 py-1 select-none-chrome">
       {/* Essential toolbar row */}
       <div className="flex items-center gap-0.5 flex-wrap">
         {/* Formation navigation */}
@@ -257,7 +257,7 @@ export function CanvasToolbar({
           <ToolButton onClick={onToggleStageNumbers} active={showStageNumbers} title="Show stage position numbers along the front edge (0, 2, 4, 6...)" label="Numbers">
             <Hash size={14} />
           </ToolButton>
-          <ToolButton onClick={onToggleAudiencePosition} title={`Audience at ${audiencePosition === 'top' ? 'top' : 'bottom'} — click to flip`} label={audiencePosition === 'top' ? 'Aud Top' : 'Aud Bot'}>
+          <ToolButton onClick={onToggleAudiencePosition} title={`Audience is at the ${audiencePosition === 'top' ? 'top' : 'bottom'}. Tap to flip the stage.`} label={audiencePosition === 'top' ? 'Audience Top' : 'Audience Bottom'}>
             {audiencePosition === 'top' ? <ArrowUpFromLine size={14} /> : <ArrowDownFromLine size={14} />}
           </ToolButton>
 
@@ -268,7 +268,7 @@ export function CanvasToolbar({
                 onClick={onToggleComparison}
                 active={showComparison}
                 disabled={!canCompare}
-                title={canCompare ? 'Compare with previous/next formation — shows ghost dots and movement arrows' : 'Need at least 2 formations to compare'}
+                title={canCompare ? 'Compare with the previous or next formation. Shows ghost dots and movement arrows.' : 'Need at least 2 formations to compare'}
                 label="Compare"
               >
                 <GitCompareArrows size={14} />

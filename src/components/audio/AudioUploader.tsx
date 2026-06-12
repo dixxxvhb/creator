@@ -96,7 +96,7 @@ export function AudioUploader({ onUpload, hasAudio, onRemove }: AudioUploaderPro
           <p className="text-sm text-text-secondary">
             Drop audio file or click to browse
           </p>
-          <p className="text-xs text-text-tertiary">MP3, WAV, M4A, OGG — max 50MB</p>
+          <p className="text-xs text-text-tertiary">MP3, WAV, M4A, or OGG, up to 50MB</p>
         </div>
       )}
     </div>

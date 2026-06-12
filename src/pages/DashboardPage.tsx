@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Plus, Layers, Trophy, Users, ArrowRight, Music, Trash2 } from 'lucide-react';
+import { Plus, Layers, Trophy, Users, ArrowRight, Music, Trash2, Sparkles } from 'lucide-react';
 import { PageContainer } from '@/components/layout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Spinner } from '@/components/ui/Spinner';
 import { usePieceStore } from '@/stores/pieceStore';
 import { useSeasonStore } from '@/stores/seasonStore';
 import { useRosterStore } from '@/stores/rosterStore';
@@ -15,6 +14,7 @@ import { staggerContainer, staggerItem } from '@/lib/motion';
 import { TierGate } from '@/components/ui/TierGate';
 import { BETA_ENABLED, RESET_TABLES } from '@/lib/beta';
 import { supabase } from '@/lib/supabase';
+import { createSamplePiece } from '@/lib/sampleData';
 import { toast } from '@/stores/toastStore';
 
 function formatDate(date: Date): string {
@@ -38,6 +38,22 @@ export function DashboardPage() {
   const customGreeting = useProfileStore((s) => s.customGreeting);
   const [isResetting, setIsResetting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [isCreatingSample, setIsCreatingSample] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleTrySample() {
+    setIsCreatingSample(true);
+    const { defaultStageWidth, defaultStageDepth } = useProfileStore.getState();
+    try {
+      const piece = await createSamplePiece(defaultStageWidth, defaultStageDepth);
+      await load();
+      navigate(`/pieces/${piece.id}`);
+    } catch {
+      toast.error('Could not set up the sample piece. You can still create one from scratch.');
+    } finally {
+      setIsCreatingSample(false);
+    }
+  }
 
   useEffect(() => {
     load();
@@ -54,7 +70,7 @@ export function DashboardPage() {
     try {
       for (const table of RESET_TABLES) {
         const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) console.warn(`Failed to clear ${table}:`, error.message);
+        if (error && import.meta.env.DEV) console.warn(`Failed to clear ${table}:`, error.message);
       }
       toast.success('All test data cleared');
       // Reload stores
@@ -183,8 +199,16 @@ export function DashboardPage() {
             </div>
 
             {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Spinner size="lg" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-center gap-3 p-3.5 rounded-xl bg-surface-secondary">
+                    <div className="skeleton w-10 h-10 rounded-xl shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="skeleton h-3.5 w-3/4" />
+                      <div className="skeleton h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : pieces.length === 0 ? (
               <div className="text-center py-8">
@@ -194,12 +218,18 @@ export function DashboardPage() {
                 <p className="text-sm text-text-secondary mb-4">
                   No pieces yet. Create your first piece to get started.
                 </p>
-                <Link to="/pieces/new">
-                  <Button size="sm">
-                    <Plus size={14} />
-                    Create piece
+                <div className="flex items-center justify-center gap-2">
+                  <Link to="/pieces/new">
+                    <Button size="sm">
+                      <Plus size={14} />
+                      Create piece
+                    </Button>
+                  </Link>
+                  <Button size="sm" variant="secondary" onClick={handleTrySample} loading={isCreatingSample}>
+                    <Sparkles size={14} />
+                    Try a sample piece
                   </Button>
-                </Link>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">

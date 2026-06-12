@@ -297,7 +297,7 @@ export function EntryFormModal({
           />
           {selectedPiece?.song_title && (
             <p className="text-xs text-text-secondary mt-1.5">
-              Song: {selectedPiece.song_title}{selectedPiece.song_artist ? ` — ${selectedPiece.song_artist}` : ''}
+              Song: {selectedPiece.song_title}{selectedPiece.song_artist ? ` · ${selectedPiece.song_artist}` : ''}
             </p>
           )}
           <button

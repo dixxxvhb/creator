@@ -111,7 +111,7 @@ export function PieceInfoModal({ open, onClose, piece, onSave }: PieceInfoModalP
             placeholder="120"
           />
           <Input
-            label="Duration (seconds)"
+            label="Song Length (seconds)"
             type="number"
             min={0}
             value={durationSeconds}

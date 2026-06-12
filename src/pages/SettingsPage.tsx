@@ -12,6 +12,7 @@ import type { BugStatus } from '@/types';
 import { cn } from '@/lib/utils';
 import { ADMIN_EMAIL } from '@/lib/beta';
 import { Badge } from '@/components/ui/Badge';
+import { InstallPromptCard } from '@/components/shared/InstallPromptCard';
 
 type ThemePref = 'light' | 'dark' | 'system';
 
@@ -83,7 +84,7 @@ export function SettingsPage() {
               <div>
                 <Input
                   label="Custom Greeting"
-                  placeholder="e.g. Let's create, {name}"
+                  placeholder="e.g. Time to make magic"
                   value={customGreeting}
                   onChange={(e) => setCustomGreeting(e.target.value)}
                 />
@@ -105,7 +106,7 @@ export function SettingsPage() {
                     <span className="text-text-tertiary text-xs">Logo</span>
                   </div>
                   <p className="text-xs text-text-tertiary">
-                    Available after sign-in is enabled
+                    Coming soon
                   </p>
                 </div>
               </div>
@@ -120,7 +121,7 @@ export function SettingsPage() {
                     </span>
                   </div>
                   <p className="text-xs text-text-tertiary">
-                    Available after sign-in is enabled
+                    Coming soon
                   </p>
                 </div>
               </div>
@@ -229,6 +230,9 @@ export function SettingsPage() {
           </Card>
         </section>
 
+        {/* Install on iPad (hidden once installed / on desktop) */}
+        <InstallPromptCard />
+
         {/* Stage Defaults Section */}
         <section>
           <h2 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3 px-1">
@@ -237,7 +241,7 @@ export function SettingsPage() {
           <Card>
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Width (px)"
+                label="Stage Width"
                 type="number"
                 value={defaultStageWidth}
                 onChange={(e) => setDefaultStageWidth(parseInt(e.target.value) || 800)}
@@ -245,7 +249,7 @@ export function SettingsPage() {
                 max={1600}
               />
               <Input
-                label="Depth (px)"
+                label="Stage Depth"
                 type="number"
                 value={defaultStageDepth}
                 onChange={(e) => setDefaultStageDepth(parseInt(e.target.value) || 600)}
@@ -254,7 +258,7 @@ export function SettingsPage() {
               />
             </div>
             <p className="text-xs text-text-tertiary mt-3">
-              Stage size applied to new pieces.
+              Used for new pieces. Bigger numbers give dancers more room to spread out.
             </p>
           </Card>
         </section>

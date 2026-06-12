@@ -1,5 +1,6 @@
 import { useEffect, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import { AppLayout } from '@/components/layout';
 import { AuthGuard } from '@/components/layout/AuthGuard';
 import { useAuthStore } from '@/stores/authStore';
@@ -20,6 +21,7 @@ const SettingsPage = lazy(() => import('@/pages/SettingsPage').then(m => ({ defa
 const RehearsalPage = lazy(() => import('@/pages/RehearsalPage').then(m => ({ default: m.RehearsalPage })));
 const BackstagePage = lazy(() => import('@/pages/BackstagePage').then(m => ({ default: m.BackstagePage })));
 const ViewerPage = lazy(() => import('@/pages/ViewerPage').then(m => ({ default: m.ViewerPage })));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPasswordPage').then(m => ({ default: m.ResetPasswordPage })));
 
 function AuthenticatedApp() {
   return (
@@ -58,8 +60,19 @@ export function App() {
     <BrowserRouter basename="/creator">
       <Routes>
         <Route path="/view/:token" element={<ViewerPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/*" element={<AuthenticatedApp />} />
       </Routes>
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: 'var(--color-surface-elevated)',
+            border: '1px solid var(--color-border-light)',
+            color: 'var(--color-text-primary)',
+          },
+        }}
+      />
     </BrowserRouter>
   );
 }

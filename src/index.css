@@ -54,6 +54,33 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── iOS app feel ─── */
+html {
+  -webkit-tap-highlight-color: transparent; /* no grey flash on tap */
+  -webkit-text-size-adjust: 100%;
+}
+html,
+body {
+  overscroll-behavior: none; /* no whole-page rubber band in standalone */
+}
+body {
+  touch-action: manipulation; /* kills double-tap zoom; pan/pinch still work where allowed */
+}
+input,
+textarea,
+select {
+  touch-action: auto;
+  /* iOS zooms the whole page when focusing a control under 16px — never
+     allow that. Un-layered rule, so it wins over Tailwind's text-sm. */
+  font-size: max(16px, 1em);
+}
+/* App chrome shouldn't long-press-select like a web page */
+.select-none-chrome {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
 /* ─── Dark Mode (rich charcoal, not pure black) ─── */
 html.dark {
   --color-surface: #171412;
@@ -140,6 +167,13 @@ html.dark {
   }
   .safe-top {
     padding-top: env(safe-area-inset-top);
+  }
+  .safe-x {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  .pb-safe-max-8 {
+    padding-bottom: max(2rem, env(safe-area-inset-bottom));
   }
 }
 

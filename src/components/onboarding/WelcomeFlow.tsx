@@ -1,12 +1,16 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, Check } from 'lucide-react';
+import { ArrowRight, Sparkles, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
+import { Spinner } from '@/components/ui/Spinner';
 import { CreatorLogo } from '@/components/branding/CreatorLogo';
 import { useProfileStore } from '@/stores/profileStore';
-import { DANCE_STYLES } from '@/types';
+import { usePieceStore } from '@/stores/pieceStore';
+import { createSamplePiece } from '@/lib/sampleData';
+import { toast } from '@/stores/toastStore';
 import { cn } from '@/lib/utils';
 
 const ONBOARDING_KEY = 'creator-onboarding-complete';
@@ -26,25 +30,40 @@ interface WelcomeFlowProps {
 }
 
 export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
+  const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [studio, setStudio] = useState('');
-  const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
+  const [creatingSample, setCreatingSample] = useState(false);
 
   const setDisplayName = useProfileStore((s) => s.setDisplayName);
   const setStudioName = useProfileStore((s) => s.setStudioName);
 
-  function toggleStyle(style: string) {
-    setSelectedStyles((prev) =>
-      prev.includes(style) ? prev.filter((s) => s !== style) : [...prev, style],
-    );
-  }
-
-  function handleFinish() {
+  function finish() {
     if (name.trim()) setDisplayName(name.trim());
     if (studio.trim()) setStudioName(studio.trim());
     markOnboardingComplete();
+    // Must run before any navigation: AuthGuard renders WelcomeFlow INSTEAD
+    // of the app until this flips its local state.
     onComplete();
+  }
+
+  async function handleSamplePiece() {
+    setCreatingSample(true);
+    const { defaultStageWidth, defaultStageDepth } = useProfileStore.getState();
+    try {
+      const piece = await createSamplePiece(defaultStageWidth, defaultStageDepth);
+      await usePieceStore.getState().load();
+      finish();
+      navigate(`/pieces/${piece.id}`);
+    } catch {
+      toast.error('Could not set up the sample piece. You can still create one from scratch.');
+      finish();
+    }
+  }
+
+  function handleStartFresh() {
+    finish();
   }
 
   const slideVariants = {
@@ -89,7 +108,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
                     placeholder="e.g. Momentum Dance Company"
                     value={studio}
                     onChange={(e) => setStudio(e.target.value)}
-                    hint="Optional — shown on your dashboard"
+                    hint="Optional. Shown on your dashboard."
                   />
                   <Button onClick={() => setStep(1)} className="w-full">
                     Continue
@@ -102,7 +121,7 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
 
           {step === 1 && (
             <motion.div
-              key="styles"
+              key="start"
               variants={slideVariants}
               initial="enter"
               animate="center"
@@ -111,41 +130,64 @@ export function WelcomeFlow({ onComplete }: WelcomeFlowProps) {
             >
               <div className="text-center mb-8">
                 <h2 className="font-display text-2xl font-semibold text-text-primary mb-2">
-                  What do you teach?
+                  How would you like to start?
                 </h2>
                 <p className="text-sm text-text-secondary">
-                  Select any styles you work with. This helps us set defaults for new pieces.
+                  You can always do the other one later.
                 </p>
               </div>
-              <Card>
-                <div className="flex flex-wrap gap-2 mb-6">
-                  {DANCE_STYLES.map((style) => (
-                    <button
-                      key={style}
-                      onClick={() => toggleStyle(style)}
-                      className={cn(
-                        'px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 border min-h-[44px]',
-                        selectedStyles.includes(style)
-                          ? 'accent-bg text-white border-transparent shadow-sm'
-                          : 'bg-surface-secondary text-text-secondary border-border-light hover:text-text-primary hover:border-border',
-                      )}
-                      style={selectedStyles.includes(style) ? { backgroundColor: 'var(--color-accent)' } : undefined}
-                    >
-                      {selectedStyles.includes(style) && <Check size={14} className="inline mr-1.5 -mt-0.5" />}
-                      {style}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="secondary" onClick={() => setStep(0)} className="flex-1">
-                    Back
-                  </Button>
-                  <Button onClick={handleFinish} className="flex-1">
-                    {selectedStyles.length > 0 ? "Let's go" : 'Skip for now'}
-                    <ArrowRight size={16} />
-                  </Button>
-                </div>
-              </Card>
+              <div className="space-y-3">
+                <button
+                  onClick={handleSamplePiece}
+                  disabled={creatingSample}
+                  className={cn(
+                    'w-full text-left bg-surface-elevated border border-border-light rounded-2xl p-5',
+                    'hover:border-border transition-all card-interactive',
+                    creatingSample && 'opacity-70 pointer-events-none',
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    {creatingSample ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <Sparkles size={20} className="accent-text mt-0.5 shrink-0" strokeWidth={1.75} />
+                    )}
+                    <div>
+                      <p className="font-semibold text-text-primary mb-0.5">
+                        {creatingSample ? 'Setting up your sample piece…' : 'Open a sample piece'}
+                      </p>
+                      <p className="text-sm text-text-secondary leading-relaxed">
+                        See 8 dancers and 3 formations already set up. Play with everything, delete it anytime.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={handleStartFresh}
+                  disabled={creatingSample}
+                  className="w-full text-left bg-surface-elevated border border-border-light rounded-2xl p-5 hover:border-border transition-all card-interactive"
+                >
+                  <div className="flex items-start gap-3">
+                    <PenLine size={20} className="text-text-secondary mt-0.5 shrink-0" strokeWidth={1.75} />
+                    <div>
+                      <p className="font-semibold text-text-primary mb-0.5">Start fresh</p>
+                      <p className="text-sm text-text-secondary leading-relaxed">
+                        Go to your studio and build your first piece from scratch.
+                      </p>
+                    </div>
+                  </div>
+                </button>
+
+                <Button
+                  variant="secondary"
+                  onClick={() => setStep(0)}
+                  disabled={creatingSample}
+                  className="w-full"
+                >
+                  Back
+                </Button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

@@ -111,7 +111,7 @@ export function TemplatePickerModal({
     const pos = currentPositions.find((p) => p.dancer_label === dancerLabel);
     if (pos?.dancer_id) {
       const roster = rosterDancers.find((d) => d.id === pos.dancer_id);
-      if (roster) return `${dancerLabel} — ${roster.short_name}`;
+      if (roster) return `${dancerLabel} · ${roster.short_name}`;
     }
     return dancerLabel;
   }

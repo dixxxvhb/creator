@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
+import type { MutableRefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, X, Trash2, ArrowRight, Pencil, Play, Lock } from 'lucide-react';
 import { useTierStore } from '@/stores/tierStore';
@@ -23,39 +24,57 @@ interface ThumbnailStripProps {
   bpm?: number | null;
 }
 
-function MiniFormation({
+// Handler bundle passed by ref so memoized children never re-render just
+// because the parent recreated its callbacks. Assigned fresh during every
+// parent render — children read .current at call time, so nothing is stale.
+interface StripHandlers {
+  onSelect: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onDeletePath?: (formationId: string, dancerLabel: string) => void;
+  onDeleteAllPaths?: (formationId: string) => void;
+  onEditPath?: (formationId: string, dancerLabel: string) => void;
+  onPlayPath?: (formationId: string, dancerLabel: string) => void;
+  onUpdateTransition?: (formationId: string, updates: { transition_duration_ms?: number; transition_easing?: string }) => void;
+}
+type HandlersRef = MutableRefObject<StripHandlers>;
+
+// Stable empties: a formation with no positions/paths must not bust memo.
+const NO_POSITIONS: DancerPosition[] = [];
+const NO_PATHS: DancerPath[] = [];
+
+const MiniFormation = memo(function MiniFormation({
   formation,
   positions,
-  piece,
+  stageWidth,
+  stageDepth,
   isActive,
   canDelete,
-  onClick,
-  onDelete,
+  handlersRef,
 }: {
   formation: Formation;
   positions: DancerPosition[];
-  piece: Piece;
+  stageWidth: number;
+  stageDepth: number;
   isActive: boolean;
   canDelete: boolean;
-  onClick: () => void;
-  onDelete?: () => void;
+  handlersRef: HandlersRef;
 }) {
   const thumbW = 120;
   const thumbH = 80;
-  const scale = Math.min(thumbW / piece.stage_width, thumbH / piece.stage_depth) * 0.85;
-  const offsetX = (thumbW - piece.stage_width * scale) / 2;
-  const offsetY = (thumbH - piece.stage_depth * scale) / 2;
+  const scale = Math.min(thumbW / stageWidth, thumbH / stageDepth) * 0.85;
+  const offsetX = (thumbW - stageWidth * scale) / 2;
+  const offsetY = (thumbH - stageDepth * scale) / 2;
 
   return (
     <button
-      onClick={onClick}
+      onClick={() => handlersRef.current.onSelect(formation.id)}
       className={`shrink-0 flex flex-col items-center gap-1 group relative`}
     >
-      {/* Delete button */}
+      {/* Delete button (always visible on touch — hover doesn't exist there) */}
       {canDelete && (
         <span
-          onClick={(e) => { e.stopPropagation(); onDelete?.(); }}
-          className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 rounded-full bg-danger-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-danger-600"
+          onClick={(e) => { e.stopPropagation(); handlersRef.current.onDelete?.(formation.id); }}
+          className="absolute -top-1.5 -right-1.5 z-10 w-5 h-5 rounded-full bg-danger-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-coarse:opacity-100 transition-opacity cursor-pointer hover:bg-danger-600"
           title="Delete formation"
         >
           <X size={12} />
@@ -74,8 +93,8 @@ function MiniFormation({
           <rect
             x={offsetX}
             y={offsetY}
-            width={piece.stage_width * scale}
-            height={piece.stage_depth * scale}
+            width={stageWidth * scale}
+            height={stageDepth * scale}
             fill="var(--color-surface-secondary, #1a1f2e)"
             rx={2}
           />
@@ -100,37 +119,29 @@ function MiniFormation({
       </span>
     </button>
   );
-}
+});
 
 /** Path indicator between two formation thumbnails */
-function TransitionIndicator({
+const TransitionIndicator = memo(function TransitionIndicator({
   formationId,
   nextFormationId,
   formationPaths,
   allPositions,
   dancerNameMap,
-  onDeletePath,
-  onDeleteAll,
-  onEditPath,
-  onPlayPath,
   transitionDurationMs,
   transitionEasing,
   bpm,
-  onUpdateTransition,
+  handlersRef,
 }: {
   formationId: string;
   nextFormationId: string;
   formationPaths: DancerPath[];
   allPositions: DancerPosition[];
   dancerNameMap: Map<string, string>;
-  onDeletePath?: (formationId: string, dancerLabel: string) => void;
-  onDeleteAll?: (formationId: string) => void;
-  onEditPath?: (formationId: string, dancerLabel: string) => void;
-  onPlayPath?: (formationId: string, dancerLabel: string) => void;
   transitionDurationMs: number;
   transitionEasing: string;
   bpm?: number | null;
-  onUpdateTransition?: (formationId: string, updates: { transition_duration_ms?: number; transition_easing?: string }) => void;
+  handlersRef: HandlersRef;
 }) {
   const hasTransitionAnimations = useTierStore((s) => s.hasFeature('transition_animations'));
   const [open, setOpen] = useState(false);
@@ -166,7 +177,7 @@ function TransitionIndicator({
             ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/25'
             : 'text-text-tertiary hover:text-text-secondary'
         }`}
-        title={count > 0 ? `${count} path${count !== 1 ? 's' : ''} — click to manage` : 'No paths'}
+        title={count > 0 ? `${count} path${count !== 1 ? 's' : ''}. Tap to manage` : 'No paths'}
       >
         <ArrowRight size={10} />
         {count > 0 && <span>{count}</span>}
@@ -175,7 +186,7 @@ function TransitionIndicator({
         {(transitionDurationMs / 1000).toFixed(1)}s
       </span>
 
-      {/* Portal dropdown — escapes overflow:auto parent */}
+      {/* Portal dropdown escapes the overflow:auto parent */}
       {open && pos && createPortal(
         <div
           className="fixed z-50 bg-surface-elevated border border-border rounded-lg shadow-lg p-1.5 min-w-[180px]"
@@ -196,7 +207,7 @@ function TransitionIndicator({
                 max={5000}
                 step={100}
                 value={transitionDurationMs}
-                onChange={(e) => onUpdateTransition?.(nextFormationId, { transition_duration_ms: parseInt(e.target.value) })}
+                onChange={(e) => handlersRef.current.onUpdateTransition?.(nextFormationId, { transition_duration_ms: parseInt(e.target.value) })}
                 className="w-full h-1.5 accent-[var(--color-accent)]"
               />
               <div className="flex justify-between text-[9px] text-text-tertiary mt-0.5">
@@ -208,7 +219,7 @@ function TransitionIndicator({
               <label className="block text-[10px] font-medium text-text-secondary mb-1">Easing</label>
               <select
                 value={transitionEasing}
-                onChange={(e) => onUpdateTransition?.(nextFormationId, { transition_easing: e.target.value })}
+                onChange={(e) => handlersRef.current.onUpdateTransition?.(nextFormationId, { transition_easing: e.target.value })}
                 className="w-full rounded border border-border bg-surface-secondary px-2 py-1 text-[11px] text-text-primary focus:outline-none"
               >
                 <option value="linear">Linear</option>
@@ -245,7 +256,7 @@ function TransitionIndicator({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onEditPath?.(formationId, path.dancer_label);
+                    handlersRef.current.onEditPath?.(formationId, path.dancer_label);
                     setOpen(false);
                   }}
                   className="p-0.5 text-text-tertiary hover:text-[var(--color-accent)] transition-colors"
@@ -256,7 +267,7 @@ function TransitionIndicator({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onPlayPath?.(formationId, path.dancer_label);
+                    handlersRef.current.onPlayPath?.(formationId, path.dancer_label);
                     setOpen(false);
                   }}
                   className="p-0.5 text-text-tertiary hover:text-green-400 transition-colors"
@@ -267,7 +278,7 @@ function TransitionIndicator({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onDeletePath?.(formationId, path.dancer_label);
+                    handlersRef.current.onDeletePath?.(formationId, path.dancer_label);
                   }}
                   className="p-0.5 text-text-tertiary hover:text-red-400 transition-colors"
                   title="Delete path"
@@ -281,7 +292,7 @@ function TransitionIndicator({
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onDeleteAll?.(formationId);
+                handlersRef.current.onDeleteAllPaths?.(formationId);
                 setOpen(false);
               }}
               className="w-full text-left px-2 py-1 rounded text-[11px] text-red-400 hover:bg-red-500/10 transition-colors"
@@ -295,7 +306,7 @@ function TransitionIndicator({
       )}
     </div>
   );
-}
+});
 
 export function ThumbnailStrip({
   piece,
@@ -315,7 +326,22 @@ export function ThumbnailStrip({
   onReorder,
   bpm,
 }: ThumbnailStripProps) {
-  const dancerNameMap = new Map(rosterDancers.map((d) => [d.id, d.short_name]));
+  // Always-fresh handlers behind a stable ref (see StripHandlers above).
+  const handlersRef = useRef<StripHandlers>({ onSelect });
+  handlersRef.current = {
+    onSelect,
+    onDelete,
+    onDeletePath,
+    onDeleteAllPaths,
+    onEditPath,
+    onPlayPath,
+    onUpdateTransition,
+  };
+
+  const dancerNameMap = useMemo(
+    () => new Map(rosterDancers.map((d) => [d.id, d.short_name])),
+    [rosterDancers],
+  );
 
   // Drag-and-drop state
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -385,12 +411,12 @@ export function ThumbnailStrip({
           >
             <MiniFormation
               formation={f}
-              positions={positions[f.id] ?? []}
-              piece={piece}
+              positions={positions[f.id] ?? NO_POSITIONS}
+              stageWidth={piece.stage_width}
+              stageDepth={piece.stage_depth}
               isActive={f.id === activeFormationId}
               canDelete={formations.length > 1}
-              onClick={() => onSelect(f.id)}
-              onDelete={() => onDelete?.(f.id)}
+              handlersRef={handlersRef}
             />
           </div>
           {/* Drop indicator after this item */}
@@ -402,17 +428,13 @@ export function ThumbnailStrip({
             <TransitionIndicator
               formationId={f.id}
               nextFormationId={formations[i + 1]?.id ?? ''}
-              formationPaths={paths[f.id] ?? []}
-              allPositions={positions[f.id] ?? []}
+              formationPaths={paths[f.id] ?? NO_PATHS}
+              allPositions={positions[f.id] ?? NO_POSITIONS}
               dancerNameMap={dancerNameMap}
-              onDeletePath={onDeletePath}
-              onDeleteAll={onDeleteAllPaths}
-              onEditPath={onEditPath}
-              onPlayPath={onPlayPath}
               transitionDurationMs={formations[i + 1]?.transition_duration_ms ?? 2000}
               transitionEasing={formations[i + 1]?.transition_easing ?? 'ease-in-out'}
               bpm={bpm}
-              onUpdateTransition={onUpdateTransition}
+              handlersRef={handlersRef}
             />
           )}
         </div>

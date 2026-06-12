@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useKeyboardVisible } from '@/hooks/useKeyboardVisible';
 import { useTierStore } from '@/stores/tierStore';
 import { toast } from '@/stores/toastStore';
 import { TIER_LABELS, TIER_FEATURES } from '@/types';
@@ -42,6 +43,7 @@ const moreItems: TabItem[] = [
 
 export function BottomTabBar() {
   const hasFeature = useTierStore((s) => s.hasFeature);
+  const keyboardVisible = useKeyboardVisible();
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -66,7 +68,15 @@ export function BottomTabBar() {
   const isMoreActive = moreItems.some((item) => location.pathname.startsWith(item.to));
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border-light safe-bottom">
+    <nav
+      className={cn(
+        'md:hidden fixed bottom-0 left-0 right-0 z-40 glass border-t border-border-light safe-bottom select-none-chrome',
+        // Native iOS behavior: the keyboard covers the tab bar; it never
+        // floats mid-screen above the keyboard.
+        'transition-transform duration-200',
+        keyboardVisible && 'translate-y-full pointer-events-none',
+      )}
+    >
       <div className="flex items-center justify-around px-2 py-1.5">
         {tabs.map(({ to, label, icon: Icon, tierFeature }) => {
           const locked = tierFeature ? !hasFeature(tierFeature) : false;

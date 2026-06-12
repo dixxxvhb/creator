@@ -123,7 +123,7 @@ export function generateProgramPDF(options: ProgramOptions): void {
 
     const labelWidth = doc.getTextWidth(actLabel) + 6;
     let titleLine = act.title;
-    if (act.style) titleLine += `  —  ${act.style}`;
+    if (act.style) titleLine += `  ·  ${act.style}`;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);

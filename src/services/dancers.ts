@@ -45,8 +45,9 @@ export async function fetchDancerPieceAssignments(): Promise<Record<string, { id
   const map: Record<string, { id: string; title: string }[]> = {};
   for (const row of data ?? []) {
     const dancerId = row.dancer_id as string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const piece = (row as any).formations?.pieces;
+    const piece = (row as unknown as {
+      formations: { pieces: { id: string; title: string } | null } | null;
+    }).formations?.pieces;
     if (!dancerId || !piece) continue;
     if (!map[dancerId]) map[dancerId] = [];
     if (!map[dancerId].some((p) => p.id === piece.id)) {

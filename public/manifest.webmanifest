@@ -1,0 +1,17 @@
+{
+  "name": "CREATOR",
+  "short_name": "CREATOR",
+  "description": "Choreography, visualized. Formations, music, and rosters for dance teachers.",
+  "id": "/creator/",
+  "start_url": "/creator/",
+  "scope": "/creator/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FDFBF7",
+  "theme_color": "#FDFBF7",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

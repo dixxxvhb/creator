@@ -428,7 +428,7 @@ export function ShowDetailPage() {
           >
             <AlertTriangle size={16} className="text-warning-500 shrink-0" />
             <span className="text-sm font-medium text-warning-500 flex-1">
-              {conflicts.length} conflict{conflicts.length !== 1 ? 's' : ''} — some dancers appear in back-to-back acts
+              {conflicts.length} conflict{conflicts.length !== 1 ? 's' : ''}. Some dancers appear in back-to-back acts
             </span>
             {conflictsExpanded
               ? <ChevronUp size={14} className="text-warning-500" />
@@ -442,7 +442,7 @@ export function ShowDetailPage() {
                   Act {c.actIndex1 + 1} ({getPieceTitle(sortedActs[c.actIndex1]?.piece_id ?? '')})
                   {' & '}
                   Act {c.actIndex2 + 1} ({getPieceTitle(sortedActs[c.actIndex2]?.piece_id ?? '')})
-                  {' — '}
+                  {': '}
                   {c.dancerIds.length} shared dancer{c.dancerIds.length !== 1 ? 's' : ''}, gap: {c.gap} (need {c.requiredGap})
                 </div>
               ))}
