@@ -3,10 +3,9 @@
   "configurations": [
     {
       "name": "creator-dev",
-      "runtimeExecutable": "/usr/local/bin/npx",
-      "runtimeArgs": ["vite", "--port", "5180"],
-      "port": 5180,
-      "cwd": "/Users/dixxx/Code/creator"
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "5180"],
+      "port": 5180
     }
   ]
 }

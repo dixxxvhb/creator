@@ -9,9 +9,10 @@ export async function createBugReport(report: BugReportInsert): Promise<BugRepor
   } catch {
     // Not authenticated — submit anonymously
   }
+  const payload: BugReportInsert = user_id ? { ...report, user_id } : report;
   const { data, error } = await supabase
     .from('bug_reports')
-    .insert(user_id ? { ...report, user_id } : report)
+    .insert(payload)
     .select()
     .single();
   if (error) throw new Error(`Failed to submit bug report: ${error.message}`);

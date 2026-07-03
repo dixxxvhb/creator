@@ -455,6 +455,7 @@ export interface BugReport {
 
 export type BugReportInsert = Pick<BugReport, 'description' | 'severity'> & {
   user_email: string;
+  user_id?: string | null;
   expected?: string | null;
   page_url?: string | null;
   screen_width?: number | null;
