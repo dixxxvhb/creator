@@ -1,7 +1,23 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
 import { withRetry } from '@/lib/withRetry';
+import { DEV_AUTOLOGIN, DEV_ACCOUNT } from '@/lib/beta';
 import type { User, Session } from '@supabase/supabase-js';
+
+// Dev-only: provision (once) and sign in a throwaway account so `npm run dev`
+// drops straight into the app without the access code / login. import.meta.env.DEV
+// is false in production, so every caller is tree-shaken out of prod builds.
+async function devAutoLogin(): Promise<Session | null> {
+  const { email, password } = DEV_ACCOUNT;
+  let res = await supabase.auth.signInWithPassword({ email, password });
+  if (res.error) {
+    // First run against this project — create the dev user. Beta has email
+    // confirmation off, so sign-up returns a usable session immediately.
+    await supabase.auth.signUp({ email, password });
+    res = await supabase.auth.signInWithPassword({ email, password });
+  }
+  return res.data.session ?? null;
+}
 
 interface AuthState {
   user: User | null;
@@ -85,7 +101,15 @@ export const useAuthStore = create<AuthState>((set) => ({
     // Get initial session, retrying transient network failures (flaky Wi-Fi
     // at launch should not strand a logged-in teacher on the login page).
     withRetry(() => supabase.auth.getSession())
-      .then(({ data: { session } }) => {
+      .then(async ({ data: { session } }) => {
+        // Dev-only login bypass (stripped from prod builds).
+        if (!session && import.meta.env.DEV && DEV_AUTOLOGIN) {
+          try {
+            session = await devAutoLogin();
+          } catch {
+            // Dev login failed — fall through to the normal login page.
+          }
+        }
         set({
           session,
           user: session?.user ?? null,
